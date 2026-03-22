@@ -1,0 +1,30 @@
+
+# IDE folders
+.idea/
+.vscode/
+*.iml
+
+# Build output
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and environment
+*.log
+*.env
+
+# Python cache (if any)
+__pycache__/
+*.pyc
+
+# Misc
+node_modules/
+.classpath
+.project
+.settings/
