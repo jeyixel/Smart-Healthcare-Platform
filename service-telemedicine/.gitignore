@@ -33,4 +33,5 @@ build/
 .vscode/
 
 ### sensitive files ###
-src/main/resources/application.properties
+
+.env
