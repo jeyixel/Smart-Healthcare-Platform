@@ -1,6 +1,7 @@
 package com.smarthealth.doctor.service;
 
 import com.smarthealth.doctor.dto.*;
+import com.smarthealth.doctor.entity.ConsultationMode;
 import com.smarthealth.doctor.entity.Doctor;
 import com.smarthealth.doctor.entity.DoctorAvailability;
 import com.smarthealth.doctor.exception.BusinessException;
@@ -128,22 +129,43 @@ public class DoctorServiceImpl implements DoctorService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorSearchResponse> searchDoctors(String specialty, String category) {
+    public List<DoctorSearchResponse> searchDoctors(String specialty, String category, String consultationMode) {
         List<Doctor> doctors;
+        ConsultationMode mode = parseConsultationMode(consultationMode);
 
-        if (specialty != null && category != null) {
-            doctors = doctorRepository.findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndCategoryIgnoreCase(
-                    specialty, category
-            );
+        if (specialty != null && category != null && mode != null) {
+            doctors = doctorRepository
+                    .findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndCategoryIgnoreCaseAndConsultationMode(
+                            specialty, category, mode
+                    );
+        } else if (specialty != null && category != null) {
+            doctors = doctorRepository
+                    .findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndCategoryIgnoreCase(
+                            specialty, category
+                    );
+        } else if (specialty != null && mode != null) {
+            doctors = doctorRepository
+                    .findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndConsultationMode(
+                            specialty, mode
+                    );
+        } else if (category != null && mode != null) {
+            doctors = doctorRepository
+                    .findByVerifiedTrueAndActiveTrueAndCategoryIgnoreCaseAndConsultationMode(
+                            category, mode
+                    );
         } else if (specialty != null) {
             doctors = doctorRepository.findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCase(specialty);
         } else if (category != null) {
             doctors = doctorRepository.findByVerifiedTrueAndActiveTrueAndCategoryIgnoreCase(category);
+        } else if (mode != null) {
+            doctors = doctorRepository.findByVerifiedTrueAndActiveTrueAndConsultationMode(mode);
         } else {
             doctors = doctorRepository.findByVerifiedTrueAndActiveTrue();
         }
 
-        return doctors.stream().map(DoctorMapper::toSearchResponse).toList();
+        return doctors.stream()
+                .map(DoctorMapper::toSearchResponse)
+                .toList();
     }
 
     @Override
@@ -160,6 +182,26 @@ public class DoctorServiceImpl implements DoctorService{
             if (!req.startTime().isBefore(req.endTime())) {
                 throw new BusinessException("Availability startTime must be before endTime");
             }
+        }
+    }
+
+    @Override
+    public void deleteDoctor(UUID id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + id));
+
+        doctorRepository.delete(doctor);
+    }
+
+    private ConsultationMode parseConsultationMode(String consultationMode) {
+        if (consultationMode == null || consultationMode.isBlank()) {
+            return null;
+        }
+
+        try {
+            return ConsultationMode.valueOf(consultationMode.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException("Invalid consultation mode: " + consultationMode);
         }
     }
 }
