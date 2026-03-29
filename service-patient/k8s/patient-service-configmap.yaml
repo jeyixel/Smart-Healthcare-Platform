@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patient-service-config
+  labels:
+    app: patient-service
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  PATIENT_DB_DDL_AUTO: "update"
+  PATIENT_DB_SHOW_SQL: "false"
+  PATIENT_DB_SCHEMA: "patient_schema"
