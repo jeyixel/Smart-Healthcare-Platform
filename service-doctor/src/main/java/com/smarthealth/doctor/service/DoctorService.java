@@ -20,7 +20,9 @@ public interface DoctorService {
 
     DoctorResponse replaceAvailability(UUID doctorId, List<DoctorAvailabilityRequest> requests);
 
-    List<DoctorSearchResponse> searchDoctors(String specialty, String category);
+    List<DoctorSearchResponse> searchDoctors(String specialty, String category, String consultationMode);
 
     List<DoctorSearchResponse> listVerifiedActiveDoctors();
+
+    void deleteDoctor(UUID id);
 }

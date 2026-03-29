@@ -1,5 +1,6 @@
 package com.smarthealth.doctor.repository;
 
+import com.smarthealth.doctor.entity.ConsultationMode;
 import com.smarthealth.doctor.entity.Doctor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -23,8 +24,26 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
 
     List<Doctor> findByVerifiedTrueAndActiveTrueAndCategoryIgnoreCase(String category);
 
+    List<Doctor> findByVerifiedTrueAndActiveTrueAndConsultationMode(ConsultationMode consultationMode);
+
     List<Doctor> findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndCategoryIgnoreCase(
             String specialty,
             String category
+    );
+
+    List<Doctor> findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndConsultationMode(
+            String specialty,
+            ConsultationMode consultationMode
+    );
+
+    List<Doctor> findByVerifiedTrueAndActiveTrueAndCategoryIgnoreCaseAndConsultationMode(
+            String category,
+            ConsultationMode consultationMode
+    );
+
+    List<Doctor> findByVerifiedTrueAndActiveTrueAndSpecialtyIgnoreCaseAndCategoryIgnoreCaseAndConsultationMode(
+            String specialty,
+            String category,
+            ConsultationMode consultationMode
     );
 }

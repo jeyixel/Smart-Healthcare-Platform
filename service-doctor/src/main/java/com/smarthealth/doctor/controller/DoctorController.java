@@ -57,16 +57,25 @@ public class DoctorController {
         return doctorService.replaceAvailability(id, requests);
     }
 
+
     @GetMapping("/search")
     public List<DoctorSearchResponse> searchDoctors(
             @RequestParam(required = false) String specialty,
-            @RequestParam(required = false) String category
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String consultationMode
     ) {
-        return doctorService.searchDoctors(specialty, category);
+        return doctorService.searchDoctors(specialty, category, consultationMode);
     }
+
 
     @GetMapping
     public List<DoctorSearchResponse> listVerifiedActiveDoctors() {
         return doctorService.listVerifiedActiveDoctors();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteDoctor(@PathVariable UUID id) {
+        doctorService.deleteDoctor(id);
     }
 }
