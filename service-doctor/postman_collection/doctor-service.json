@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "Doctor Service API",
+    "_postman_id": "doctor-service-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Doctor",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"11111111-1111-1111-1111-111111111111\",\n  \"fullName\": \"Dr. Nimal Perera\",\n  \"email\": \"nimal@example.com\",\n  \"phone\": \"0771234567\",\n  \"specialty\": \"Cardiology\",\n  \"category\": \"Heart Specialist\",\n  \"qualification\": \"MBBS, MD\",\n  \"experienceYears\": 10,\n  \"hospitalOrClinic\": \"Nawaloka Hospital\",\n  \"consultationFee\": 2500,\n  \"consultationMode\": \"BOTH\",\n  \"bio\": \"Experienced cardiologist\",\n  \"profileImageUrl\": \"https://image.com/doc.jpg\",\n  \"licenseNumber\": \"SLMC12345\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/v1/doctors",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "v1", "doctors"]
+        }
+      }
+    },
+    {
+      "name": "Get Doctor By ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8082/api/v1/doctors/{{doctorId}}"
+      }
+    },
+    {
+      "name": "Get Doctor by User ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/api/v1/doctors/user/{{userId}}",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "v1", "doctors", "user", "{{userId}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Doctor",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Dr. Updated\",\n  \"phone\": \"0779999999\",\n  \"specialty\": \"Cardiology\",\n  \"category\": \"Heart Specialist\",\n  \"qualification\": \"MBBS\",\n  \"experienceYears\": 12,\n  \"hospitalOrClinic\": \"Asiri Hospital\",\n  \"consultationFee\": 3000,\n  \"consultationMode\": \"ONLINE\",\n  \"bio\": \"Updated bio\",\n  \"profileImageUrl\": \"https://image.com/new.jpg\"\n}"
+        },
+        "url": "http://localhost:8082/api/v1/doctors/{{doctorId}}"
+      }
+    },
+    {
+      "name": "Change Doctor Active Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"active\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/v1/doctors/{{doctorId}}/active-status",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "v1", "doctors", "{{doctorId}}", "active-status"]
+        }
+      }
+    },
+    {
+      "name": "Replace Doctor Availability",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"availabilities\": [\n    {\n      \"dayOfWeek\": \"MONDAY\",\n      \"startTime\": \"09:00:00\",\n      \"endTime\": \"17:00:00\",\n      \"isAvailable\": true,\n      \"consultationMode\": \"IN_PERSON\"\n    },\n    {\n      \"dayOfWeek\": \"TUESDAY\",\n      \"startTime\": \"09:00:00\",\n      \"endTime\": \"17:00:00\",\n      \"isAvailable\": true,\n      \"consultationMode\": \"VIDEO\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/v1/doctors/{{doctorId}}/availability",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "v1", "doctors", "{{doctorId}}", "availability"]
+        }
+      }
+    },
+    {
+      "name": "Verify Doctor",
+      "request": {
+        "method": "PATCH",
+        "url": "http://localhost:8082/api/v1/doctors/{{doctorId}}/verify?verified=true"
+      }
+    },
+    {
+      "name": "Search Doctors",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8082/api/v1/doctors/search?specialty=Cardiology"
+      }
+    },
+    {
+      "name": "Delete Doctor",
+      "request": {
+        "method": "DELETE",
+        "url": "http://localhost:8082/api/v1/doctors/{{doctorId}}"
+      }
+    }
+  ]
+}
