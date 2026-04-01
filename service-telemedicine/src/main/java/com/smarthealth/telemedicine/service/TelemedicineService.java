@@ -39,4 +39,14 @@ public class TelemedicineService {
     public Optional<TelemedicineSession> getSessionByAppointment(String appointmentId) {
         return repository.findByAppointmentId(appointmentId);
     }
+
+    // Fetches a specific session by its primary key (UUID)
+    public Optional<TelemedicineSession> getSessionById(UUID sessionId) {
+        return repository.findById(sessionId);
+    }
+
+    // Saves any updates made to an existing session back to Supabase
+    public TelemedicineSession updateSession(TelemedicineSession session) {
+        return repository.save(session);
+    }
 }
