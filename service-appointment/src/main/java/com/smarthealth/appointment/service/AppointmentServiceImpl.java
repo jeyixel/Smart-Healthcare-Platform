@@ -1,12 +1,16 @@
 package com.smarthealth.appointment.service;
+
 import com.smarthealth.appointment.dto.*;
 import com.smarthealth.appointment.entity.Appointment;
 import com.smarthealth.appointment.entity.AppointmentStatus;
+import com.smarthealth.appointment.entity.ConsultationType;
+import com.smarthealth.appointment.event.OnlineAppointmentCreatedEvent;
 import com.smarthealth.appointment.exception.BusinessException;
 import com.smarthealth.appointment.exception.ResourceNotFoundException;
 import com.smarthealth.appointment.mapper.AppointmentMapper;
 import com.smarthealth.appointment.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +23,7 @@ import java.util.UUID;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
@@ -44,7 +49,21 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .status(AppointmentStatus.PENDING)
                 .build();
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        // Save first so the event carries a persistent appointment id.
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+
+        // If appointment is online, publish an event to trigger telemedicine session creation. We do this after saving
+        // to ensure the appointment ID is generated and available in the event.
+        if (savedAppointment.getConsultationType() == ConsultationType.ONLINE) {
+            //
+            eventPublisher.publishEvent(new OnlineAppointmentCreatedEvent(
+                    savedAppointment.getId(),
+                    savedAppointment.getPatientId(),
+                    savedAppointment.getDoctorId()
+            ));
+        }
+
+        return AppointmentMapper.toResponse(savedAppointment);
     }
 
     @Override
@@ -131,3 +150,4 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentRepository.delete(appointment);
     }
 }
+
