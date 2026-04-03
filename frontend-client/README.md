@@ -18,6 +18,15 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Telemedicine Module (Mocked Auth for Now)
+
+- Production route: `/telemedicine`
+- Legacy test route `/telemedicine-test` now redirects to `/telemedicine`
+- Role detection is currently mocked with a local constant in `app/lib/telemedicine/mocks.ts`
+- Join meeting calls `GET http://localhost:8085/api/telemedicine/sessions/appointment/mock-appt-123`
+
+To switch between doctor and patient UI locally, update `MOCK_ROLE` in `app/lib/telemedicine/mocks.ts`.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
