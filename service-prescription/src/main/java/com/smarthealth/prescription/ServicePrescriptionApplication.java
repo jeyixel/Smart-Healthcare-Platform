@@ -1,4 +1,4 @@
-package com.smarthealth.doctor;
+package com.smarthealth.prescription;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing
-public class ServiceDoctorApplication {
+public class ServicePrescriptionApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ServiceDoctorApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ServicePrescriptionApplication.class, args);
+    }
 
 }
