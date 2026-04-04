@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: patient-service
+  namespace: smart-healthcare
   labels:
     app: patient-service
 spec:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
         - name: patient-service
-          image: your-registry/patient-service:latest
+          image: patient-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
