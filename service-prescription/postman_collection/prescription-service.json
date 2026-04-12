@@ -1,0 +1,86 @@
+{
+  "info": {
+    "name": "Prescription Service API",
+    "_postman_id": "prescription-service-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Prescription",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": \"11111111-1111-1111-1111-111111111111\",\n  \"patientId\": \"22222222-2222-2222-2222-222222222222\",\n  \"doctorId\": \"33333333-3333-3333-3333-333333333333\",\n  \"diagnosis\": \"Fever\",\n  \"clinicalNotes\": \"Take rest\",\n  \"followUpRequired\": true,\n  \"followUpDate\": \"2026-04-10\",\n  \"items\": [\n    {\n      \"medicineName\": \"Paracetamol\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"3 times\",\n      \"duration\": \"5 days\",\n      \"instructions\": \"After meals\",\n      \"quantity\": \"15\"\n    }\n  ]\n}"
+        },
+        "url": "http://localhost:8088/api/v1/prescriptions"
+      }
+    },
+    {
+      "name": "Get Prescription By ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/v1/prescriptions/{{prescriptionId}}"
+      }
+    },
+    {
+      "name": "Get Prescription By Appointment ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/v1/prescriptions/appointment/{{appointmentId}}"
+      }
+    },
+    {
+      "name": "Get Prescription By Patient ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/v1/prescriptions/patient/{{patientId}}"
+      }
+    },
+    {
+      "name": "Get Prescription By Doctor ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8088/api/v1/prescriptions/doctor/{{doctorId}}"
+      }
+    },
+    {
+      "name": "Update Prescription (PATCH)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diagnosis\": \"Updated Diagnosis\",\n  \"items\": [\n    {\n      \"medicineName\": \"Amoxicillin\",\n      \"dosage\": \"250mg\",\n      \"frequency\": \"2 times\",\n      \"duration\": \"5 days\",\n      \"instructions\": \"After meals\",\n      \"quantity\": \"10\"\n    }\n  ]\n}"
+        },
+        "url": "http://localhost:8088/api/v1/prescriptions/{{prescriptionId}}"
+      }
+    },
+    {
+      "name": "Update Prescription Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"ISSUED\"\n}"
+        },
+        "url": "http://localhost:8088/api/v1/prescriptions/{{prescriptionId}}/status"
+      }
+    },
+    {
+      "name": "Delete Prescription",
+      "request": {
+        "method": "DELETE",
+        "url": "http://localhost:8088/api/v1/prescriptions/{{prescriptionId}}"
+      }
+    }
+  ]
+}
