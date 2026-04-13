@@ -1,6 +1,5 @@
-package com.smarthealth.admin.service;
+package com.smarthealth.appointment.service;
 
-import com.smarthealth.admin.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -11,57 +10,29 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
 public class JwtService {
 
-    private static final String CLAIM_USER_ID = "userId";
-    private static final String CLAIM_ROLE = "role";
-
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
-
-    @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public Long extractUserId(String token) {
-        Number userId = extractClaim(token, claims -> claims.get(CLAIM_USER_ID, Number.class));
-        return userId == null ? null : userId.longValue();
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
-    public String extractRole(String token) {
-        return extractClaim(token, claims -> claims.get(CLAIM_ROLE, String.class));
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
-    }
-
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> extraClaims = new HashMap<>();
-        if (userDetails instanceof User user) {
-            extraClaims.put(CLAIM_USER_ID, user.getId());
-            extraClaims.put(CLAIM_ROLE, user.getRole().name());
-        }
-        return generateToken(extraClaims, userDetails);
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return Jwts.builder()
-                .claims(extraClaims)
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSignInKey())
-                .compact();
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {

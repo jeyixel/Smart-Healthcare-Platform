@@ -130,4 +130,18 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointmentRepository.delete(appointment);
     }
+
+    @Override
+    public boolean isAppointmentOwner(UUID appointmentId, UUID userId) {
+        return appointmentRepository.findById(appointmentId)
+                .map(appointment -> appointment.getPatientId().equals(userId))
+                .orElse(false);
+    }
+
+    @Override
+    public boolean isDoctorAppointment(UUID appointmentId, UUID doctorId) {
+        return appointmentRepository.findById(appointmentId)
+                .map(appointment -> appointment.getDoctorId().equals(doctorId))
+                .orElse(false);
+    }
 }
