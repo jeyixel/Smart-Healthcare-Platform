@@ -38,7 +38,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("(hasRole('DOCTOR') and @doctorServiceImpl.isDoctorOwner(#id, authentication.principal.userId))")
+    @PreAuthorize("(hasRole('DOCTOR') and @doctorService.isDoctorOwner(#id, authentication.principal.userId))")
     public DoctorResponse updateDoctor(@PathVariable UUID id,
                                        @Valid @RequestBody UpdateDoctorRequest request) {
         return doctorService.updateDoctor(id, request);
@@ -59,7 +59,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}/availability")
-    @PreAuthorize("(hasRole('DOCTOR') and @doctorServiceImpl.isDoctorOwner(#id, authentication.principal.userId))")
+    @PreAuthorize("(hasRole('DOCTOR') and @doctorService.isDoctorOwner(#id, authentication.principal.userId))")
     public DoctorResponse replaceAvailability(@PathVariable UUID id,
                                               @Valid @RequestBody List<DoctorAvailabilityRequest> requests) {
         return doctorService.replaceAvailability(id, requests);
