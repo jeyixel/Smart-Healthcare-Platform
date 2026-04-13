@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+
 public class AdminAuditService {
 
     private static final String DEFAULT_ADMIN_USER = "system-admin";
