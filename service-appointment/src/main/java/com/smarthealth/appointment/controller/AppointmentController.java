@@ -5,6 +5,7 @@ import com.smarthealth.appointment.service.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,16 +20,19 @@ public class AppointmentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('PATIENT') or hasRole('ADMIN')")
     public AppointmentResponse create(@Valid @RequestBody CreateAppointmentRequest request) {
         return appointmentService.create(request);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @appointmentService.isAppointmentOwner(#id, authentication.principal.userId)")
     public AppointmentResponse getById(@PathVariable UUID id) {
         return appointmentService.getById(id);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('PATIENT') and #patientId == authentication.principal.userId) or (hasRole('DOCTOR') and #doctorId == authentication.principal.userId)")
     public List<AppointmentResponse> getAll(
             @RequestParam(required = false) UUID patientId,
             @RequestParam(required = false) UUID doctorId,
@@ -38,6 +42,7 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('DOCTOR') and @appointmentService.isDoctorAppointment(#id, authentication.principal.userId) or hasRole('ADMIN')")
     public AppointmentResponse updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAppointmentStatusRequest request
@@ -46,6 +51,7 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/reschedule")
+    @PreAuthorize("hasRole('PATIENT') and @appointmentService.isAppointmentOwner(#id, authentication.principal.userId)")
     public AppointmentResponse reschedule(
             @PathVariable UUID id,
             @Valid @RequestBody RescheduleAppointmentRequest request
@@ -54,6 +60,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('PATIENT') and @appointmentService.isAppointmentOwner(#id, authentication.principal.userId) or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
         appointmentService.delete(id);
