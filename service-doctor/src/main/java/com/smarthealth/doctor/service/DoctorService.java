@@ -25,4 +25,6 @@ public interface DoctorService {
     List<DoctorSearchResponse> listVerifiedActiveDoctors();
 
     void deleteDoctor(UUID id);
+
+    boolean isDoctorOwner(UUID doctorId, UUID userId);
 }

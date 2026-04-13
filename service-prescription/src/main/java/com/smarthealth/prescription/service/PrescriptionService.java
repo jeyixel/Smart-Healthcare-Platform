@@ -25,4 +25,6 @@ public interface PrescriptionService {
     PrescriptionResponse updateStatus(UUID id, UpdatePrescriptionStatusRequest request);
 
     void deletePrescription(UUID id);
+
+    boolean isPrescriptionOwnerById(UUID prescriptionId, UUID userId);
 }
