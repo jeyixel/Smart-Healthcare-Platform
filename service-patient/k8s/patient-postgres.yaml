@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: patient-postgres-secret
+  namespace: smart-healthcare
+type: Opaque
+stringData:
+  POSTGRES_DB: patient_db
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patient-postgres-init
+  namespace: smart-healthcare
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS patient_schema AUTHORIZATION postgres;
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-postgres
+  namespace: smart-healthcare
+  labels:
+    app: patient-postgres
+spec:
+  selector:
+    app: patient-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-postgres
+  namespace: smart-healthcare
+  labels:
+    app: patient-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: patient-postgres
+  template:
+    metadata:
+      labels:
+        app: patient-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: patient-postgres-secret
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d/init.sql
+              subPath: init.sql
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+        - name: init-script
+          configMap:
+            name: patient-postgres-init

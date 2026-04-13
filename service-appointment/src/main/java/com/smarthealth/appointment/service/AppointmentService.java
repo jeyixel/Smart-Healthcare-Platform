@@ -19,4 +19,8 @@ public interface AppointmentService {
 
     void delete(UUID id);
 
+    boolean isAppointmentOwner(UUID appointmentId, UUID userId);
+
+    boolean isDoctorAppointment(UUID appointmentId, UUID doctorId);
+
 }
