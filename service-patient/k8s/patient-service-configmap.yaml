@@ -10,3 +10,6 @@ data:
   PATIENT_DB_DDL_AUTO: "update"
   PATIENT_DB_SHOW_SQL: "false"
   PATIENT_DB_SCHEMA: "patient_schema"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  KAFKA_CONSUMER_GROUP: "service-patient-group"
+  PATIENT_EVENTS_TOPIC: "patient-events"
