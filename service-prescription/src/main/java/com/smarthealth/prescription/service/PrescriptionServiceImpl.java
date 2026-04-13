@@ -170,6 +170,16 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescriptionRepository.delete(prescription);
     }
 
+    @Override
+    public boolean isPrescriptionOwnerById(UUID prescriptionId, UUID userId) {
+        return prescriptionRepository.findById(prescriptionId)
+                .map(prescription ->
+                        prescription.getPatientId().equals(userId) ||
+                                prescription.getDoctorId().equals(userId)
+                )
+                .orElse(false);
+    }
+
     private void ensureDraftOnly(Prescription prescription) {
         if (prescription.getStatus() != PrescriptionStatus.DRAFT) {
             throw new BusinessException("Only DRAFT prescriptions can be updated ");
