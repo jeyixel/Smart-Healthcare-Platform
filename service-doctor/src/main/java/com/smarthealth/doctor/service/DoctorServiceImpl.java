@@ -204,4 +204,11 @@ public class DoctorServiceImpl implements DoctorService{
             throw new BusinessException("Invalid consultation mode: " + consultationMode);
         }
     }
+
+    @Override
+    public boolean isDoctorOwner(UUID doctorId, UUID userId) {
+        return doctorRepository.findById(doctorId)
+                .map(doctor -> doctor.getUserId().equals(userId))
+                .orElse(false);
+    }
 }
