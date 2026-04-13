@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: smart-healthcare
+  name: service-prescription
+  labels:
+    app: service-prescription
+spec:
+  selector:
+    app: service-prescription
+  ports:
+    - protocol: TCP
+      port: 8088
+      targetPort: 8088
+  type: ClusterIP
