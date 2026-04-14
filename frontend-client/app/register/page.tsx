@@ -1,16 +1,18 @@
 "use client";
 
 import { registerAdmin } from "@/lib/api";
+import { PublicRegisterRole } from "@/types/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function RegisterPage() {
 	const router = useRouter();
-	const [email, setEmail] = useState("admin@example.com");
-	const [password, setPassword] = useState("Admin123!");
-	const [firstName, setFirstName] = useState("Smart");
-	const [lastName, setLastName] = useState("Admin");
+	const [email, setEmail] = useState("user@example.com");
+	const [password, setPassword] = useState("Password123!");
+	const [firstName, setFirstName] = useState("John");
+	const [lastName, setLastName] = useState("Doe");
+	const [role, setRole] = useState<PublicRegisterRole>("PATIENT");
 	const [loading, setLoading] = useState(false);
 	const [notice, setNotice] = useState("");
 
@@ -24,13 +26,24 @@ export default function RegisterPage() {
 				password,
 				firstName,
 				lastName,
-				role: "ADMIN",
+				role,
 			});
 
-			localStorage.setItem("smart_admin_token", response.token);
-			localStorage.setItem("smart_admin_role", response.role);
-			localStorage.setItem("smart_admin_email", email);
-			router.push("/");
+			if (role === "DOCTOR") {
+				setNotice("Doctor registration submitted. Admin approval is required before login.");
+				setTimeout(() => {
+					router.push("/login");
+				}, 1200);
+				return;
+			}
+
+			if (response.token) {
+				localStorage.setItem("smart_admin_token", response.token);
+				localStorage.setItem("smart_admin_role", response.role);
+				localStorage.setItem("smart_admin_email", email);
+			}
+
+			router.push("/patient");
 			router.refresh();
 		} catch (error) {
 			setNotice(error instanceof Error ? error.message : "Registration failed");
@@ -70,7 +83,7 @@ export default function RegisterPage() {
 								</span>
 							</div>
 							<h2 className="text-3xl font-bold text-slate-900">Create account</h2>
-							<p className="mt-2 text-slate-500">Register your admin details to continue.</p>
+							<p className="mt-2 text-slate-500">Register your {role.toLowerCase()} account</p>
 						</header>
 
 						<div className="space-y-6">
@@ -122,6 +135,34 @@ export default function RegisterPage() {
 									placeholder="••••••••"
 									className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-slate-900 transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none"
 								/>
+							</div>
+
+							<div>
+								<label className="mb-3 block text-sm font-semibold text-slate-700">Account Type</label>
+								<div className="grid grid-cols-2 gap-3">
+									{(["PATIENT", "DOCTOR"] as const).map((r) => (
+										<label key={r} className={`relative flex cursor-pointer items-center justify-center rounded-2xl border-2 p-4 transition-all ${
+											role === r
+												? "border-blue-500 bg-blue-50"
+												: "border-slate-200 bg-slate-50/50 hover:border-slate-300"
+										}`}>
+											<input
+												type="radio"
+												name="role"
+												value={r}
+												checked={role === r}
+												onChange={(e) => setRole(e.target.value as PublicRegisterRole)}
+												className="sr-only"
+											/>
+											<span className="text-center">
+												<div className="text-2xl mb-1">
+													{r === "PATIENT" ? "👤" : "👨‍⚕️"}
+												</div>
+												<div className="text-xs font-semibold text-slate-700">{r}</div>
+											</span>
+										</label>
+									))}
+								</div>
 							</div>
 						</div>
 

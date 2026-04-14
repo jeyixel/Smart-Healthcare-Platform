@@ -1,7 +1,6 @@
 "use client";
 
 import { loginAdmin, registerAdmin } from "@/lib/api";
-import { UserRole } from "@/types/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -24,7 +23,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
 
   const isRegister = mode === "register";
   const title = useMemo(
-    () => (isRegister ? "Create admin account" : "Welcome back"),
+    () => (isRegister ? "Create account" : "Welcome back"),
     [isRegister],
   );
 
@@ -39,7 +38,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
             password,
             firstName,
             lastName,
-            role: "ADMIN" as UserRole,
+            role: "PATIENT",
           })
         : await loginAdmin({ email, password });
 
@@ -64,7 +63,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
           <h1>{title}</h1>
           <p>
             {isRegister
-              ? "Register a secure admin identity to control patient operations."
+              ? "Register your patient account and start using the platform."
               : "Login to manage patient statuses and monitor live clinical events."}
           </p>
           <div className="hero-highlights" aria-label="Capabilities">
@@ -76,7 +75,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
 
         <section className="auth-page-card panel" aria-label="Authentication form">
           <p className="eyebrow">{isRegister ? "Register" : "Login"}</p>
-          <h2>{isRegister ? "Admin registration" : "Admin sign in"}</h2>
+          <h2>{isRegister ? "Account registration" : "Sign in"}</h2>
 
           <div className="grid-two">
             <label>
