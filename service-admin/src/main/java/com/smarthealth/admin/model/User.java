@@ -33,11 +33,15 @@ public class User implements UserDetails {
     private String firstName;
     private String lastName;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null) {
+            return List.of();
+        }
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
