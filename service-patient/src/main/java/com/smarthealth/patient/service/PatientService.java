@@ -61,6 +61,14 @@ public class PatientService {
         return map(saved);
     }
 
+    public PatientResponse setActiveStatus(UUID id, boolean active) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found for id " + id));
+        patient.setActive(active);
+        Patient saved = patientRepository.save(patient);
+        return map(saved);
+    }
+
     public void delete(UUID id) {
         if (!patientRepository.existsById(id)) {
             throw new ResourceNotFoundException("Patient not found for id " + id);

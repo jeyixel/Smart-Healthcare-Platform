@@ -1,5 +1,6 @@
 package com.smarthealth.admin.service;
 
+import com.smarthealth.admin.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -17,6 +18,9 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    private static final String CLAIM_USER_ID = "userId";
+    private static final String CLAIM_ROLE = "role";
+
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
@@ -27,13 +31,29 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Long extractUserId(String token) {
+        Number userId = extractClaim(token, claims -> claims.get(CLAIM_USER_ID, Number.class));
+        return userId == null ? null : userId.longValue();
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_ROLE, String.class));
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof User user) {
+            extraClaims.put(CLAIM_USER_ID, user.getId());
+            if (user.getRole() != null) {
+                extraClaims.put(CLAIM_ROLE, user.getRole().name());
+            }
+        }
+        return generateToken(extraClaims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
