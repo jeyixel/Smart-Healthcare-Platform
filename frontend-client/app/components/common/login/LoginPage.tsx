@@ -1,6 +1,6 @@
 "use client";
 
-import { loginAdmin } from "@/lib/api";
+import { loginAdmin, requestPasswordOtp, resetForgotPassword } from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +11,13 @@ export default function LoginPage() {
 	const [password, setPassword] = useState("Admin123!");
 	const [loading, setLoading] = useState(false);
 	const [notice, setNotice] = useState("");
+	const [forgotOpen, setForgotOpen] = useState(false);
+	const [otpEmail, setOtpEmail] = useState("admin@example.com");
+	const [otpCode, setOtpCode] = useState("");
+	const [newPassword, setNewPassword] = useState("");
+	const [forgotLoading, setForgotLoading] = useState(false);
+	const [forgotNotice, setForgotNotice] = useState("");
+	const [otpRequested, setOtpRequested] = useState(false);
 
 	async function onLogin() {
 		setLoading(true);
@@ -21,12 +28,56 @@ export default function LoginPage() {
 			localStorage.setItem("smart_admin_token", response.token);
 			localStorage.setItem("smart_admin_role", response.role);
 			localStorage.setItem("smart_admin_email", email);
-			router.push("/");
+
+			// Navigate to role-specific dashboard
+			const dashboardPath = response.role === "ADMIN" ? "/admin" : 
+			                      response.role === "DOCTOR" ? "/doctor" : "/patient";
+			router.push(dashboardPath);
 			router.refresh();
 		} catch (error) {
 			setNotice(error instanceof Error ? error.message : "Login failed");
 		} finally {
 			setLoading(false);
+		}
+	}
+
+	async function onRequestOtp() {
+		setForgotLoading(true);
+		setForgotNotice("");
+
+		try {
+			const result = await requestPasswordOtp({ email: otpEmail });
+			setOtpRequested(true);
+			setForgotNotice(result.message || "OTP sent to your email.");
+		} catch (error) {
+			setForgotNotice(error instanceof Error ? error.message : "Failed to send OTP");
+		} finally {
+			setForgotLoading(false);
+		}
+	}
+
+	async function onResetPassword() {
+		setForgotLoading(true);
+		setForgotNotice("");
+
+		try {
+			const result = await resetForgotPassword({
+				email: otpEmail,
+				otp: otpCode,
+				newPassword,
+			});
+
+			setForgotNotice(result.message || "Password reset successful.");
+			setPassword(newPassword);
+			setForgotOpen(false);
+			setOtpRequested(false);
+			setOtpCode("");
+			setNewPassword("");
+			setNotice("Password reset successful. Please login with your new password.");
+		} catch (error) {
+			setForgotNotice(error instanceof Error ? error.message : "Failed to reset password");
+		} finally {
+			setForgotLoading(false);
 		}
 	}
 
@@ -81,7 +132,14 @@ export default function LoginPage() {
 							<div>
 								<div className="mb-2 flex items-center justify-between">
 									<label className="text-sm font-semibold text-slate-700">Password</label>
-									<button type="button" className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+									<button
+										type="button"
+										onClick={() => {
+											setOtpEmail(email);
+											setForgotOpen((prev) => !prev);
+										}}
+										className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+									>
 										Forgot password?
 									</button>
 								</div>
@@ -94,6 +152,59 @@ export default function LoginPage() {
 								/>
 							</div>
 						</div>
+
+						{forgotOpen && (
+							<div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+								<p className="text-sm font-semibold text-blue-800">Reset password with OTP</p>
+								<div className="mt-3 space-y-3">
+									<input
+										type="email"
+										value={otpEmail}
+										onChange={(e) => setOtpEmail(e.target.value)}
+										placeholder="Enter your email"
+										className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+									/>
+
+									<button
+										type="button"
+										onClick={onRequestOtp}
+										disabled={forgotLoading}
+										className="w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
+									>
+										{forgotLoading ? "Sending OTP..." : "Send OTP"}
+									</button>
+
+									{otpRequested && (
+										<>
+											<input
+												type="text"
+												value={otpCode}
+												onChange={(e) => setOtpCode(e.target.value)}
+												placeholder="Enter 6-digit OTP"
+												className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+											/>
+											<input
+												type="password"
+												value={newPassword}
+												onChange={(e) => setNewPassword(e.target.value)}
+												placeholder="Enter new password"
+												className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+											/>
+											<button
+												type="button"
+												onClick={onResetPassword}
+												disabled={forgotLoading}
+												className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+											>
+												{forgotLoading ? "Resetting..." : "Reset Password"}
+											</button>
+										</>
+									)}
+
+									{forgotNotice && <p className="text-xs text-blue-800">{forgotNotice}</p>}
+								</div>
+							</div>
+						)}
 
 						{notice && (
 							<div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 animate-in fade-in slide-in-from-top-2">
