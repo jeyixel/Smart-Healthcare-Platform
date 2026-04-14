@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "Appointment Service API",
+    "_postman_id": "appointment-service-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Appointment",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"patientId\": \"22222222-2222-2222-2222-222222222222\",\n  \"doctorId\": \"33333333-3333-3333-3333-333333333333\",\n  \"category\": \"General Consultation\",\n  \"specialty\": \"Cardiology\",\n  \"appointmentDate\": \"2026-04-01\",\n  \"appointmentTime\": \"10:30:00\",\n  \"consultationType\": \"PHYSICAL\",\n  \"reason\": \"Chest pain\"\n}"
+        },
+        "url": "http://localhost:8083/api/v1/appointments"
+      }
+    },
+    {
+      "name": "Get Appointment By ID",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8083/api/v1/appointments/{{appointmentId}}"
+      }
+    },
+    {
+      "name": "Get Appointments By Patient",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8083/api/v1/appointments/patient/{{patientId}}"
+      }
+    },
+    {
+      "name": "Update Appointment Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+        },
+        "url": "http://localhost:8083/api/v1/appointments/{{appointmentId}}/status"
+      }
+    },
+    {
+      "name": "Reschedule Appointment",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentDate\": \"2026-04-05\",\n  \"appointmentTime\": \"14:30:00\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8083/api/v1/appointments/{{appointmentId}}/reschedule",
+          "host": ["localhost"],
+          "port": "8083",
+          "path": ["api", "v1", "appointments", "{{appointmentId}}", "reschedule"]
+        }
+      }
+    },
+    {
+      "name": "Delete Appointment",
+      "request": {
+        "method": "DELETE",
+        "url": "http://localhost:8083/api/v1/appointments/{{appointmentId}}"
+      }
+    }
+  ]
+}

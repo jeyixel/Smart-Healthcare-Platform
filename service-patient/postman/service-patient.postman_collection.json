@@ -1,0 +1,297 @@
+{
+  "info": {
+    "_postman_id": "2f0e8f7b-4fd7-4ce9-bd0f-ece4cd2f3f11",
+    "name": "Service Patient API",
+    "description": "Postman collection for Smart Healthcare Patient Management microservice.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "patientId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Patient Core",
+      "item": [
+        {
+          "name": "Create Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var data = pm.response.json();",
+                  "if (data && data.id) {",
+                  "    pm.collectionVariables.set('patientId', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authUserId\": \"auth-user-001\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera\",\n  \"email\": \"nimal@example.com\",\n  \"phoneNumber\": \"0771234567\",\n  \"dateOfBirth\": \"1999-05-10\",\n  \"gender\": \"Male\",\n  \"bloodGroup\": \"A+\",\n  \"address\": \"Colombo, Sri Lanka\",\n  \"emergencyContactName\": \"Saman Perera\",\n  \"emergencyContactPhone\": \"0779876543\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authUserId\": \"auth-user-001\",\n  \"firstName\": \"Nimal\",\n  \"lastName\": \"Perera Updated\",\n  \"email\": \"nimal.updated@example.com\",\n  \"phoneNumber\": \"0771234567\",\n  \"dateOfBirth\": \"1999-05-10\",\n  \"gender\": \"Male\",\n  \"bloodGroup\": \"A+\",\n  \"address\": \"Kandy, Sri Lanka\",\n  \"emergencyContactName\": \"Saman Perera\",\n  \"emergencyContactPhone\": \"0779876543\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Medical History",
+      "item": [
+        {
+          "name": "Add Medical History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conditionName\": \"Hypertension\",\n  \"diagnosisDate\": \"2024-01-10\",\n  \"source\": \"Doctor\",\n  \"notes\": \"Patient is on regular follow-up.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/medical-histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}",
+                "medical-histories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Medical Histories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/medical-histories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}",
+                "medical-histories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Medical Reports",
+      "item": [
+        {
+          "name": "Add Medical Report Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"Lab Result\",\n  \"title\": \"CBC Report - March\",\n  \"storageKey\": \"patient-reports/patient-001/cbc-march-2026.pdf\",\n  \"fileName\": \"cbc-march-2026.pdf\",\n  \"mimeType\": \"application/pdf\",\n  \"fileSize\": 245760,\n  \"checksum\": \"sha256-abc123\",\n  \"uploadedByRole\": \"PATIENT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}",
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Medical Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}",
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Prescriptions",
+      "item": [
+        {
+          "name": "List Prescription Snapshots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/patients/{{patientId}}/prescriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patients",
+                "{{patientId}}",
+                "prescriptions"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
