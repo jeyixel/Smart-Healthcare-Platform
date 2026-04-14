@@ -70,6 +70,9 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
+        if (role == Role.DOCTOR) {
+            return Boolean.TRUE.equals(approved);
+        }
         return true;
     }
 }

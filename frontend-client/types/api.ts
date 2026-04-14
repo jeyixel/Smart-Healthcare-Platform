@@ -64,3 +64,9 @@ export interface DoctorApprovalItem {
   role: "DOCTOR";
   approved: boolean;
 }
+
+export interface CurrentUserProfile {
+  email: string;
+  role: UserRole;
+  approved: boolean;
+}

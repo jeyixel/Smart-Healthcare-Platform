@@ -15,11 +15,12 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("Admin123!");
-  const [firstName, setFirstName] = useState("Smart");
-  const [lastName, setLastName] = useState("Admin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const isRegister = mode === "register";
   const title = useMemo(
@@ -84,20 +85,43 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@hospital.com"
+                placeholder="Enter your email address"
                 autoComplete="email"
               />
             </label>
 
             <label>
               <span>Password</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                autoComplete={isRegister ? "new-password" : "current-password"}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isRegister ? "Create a password" : "Enter your password"}
+                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  className="pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 flex items-center text-slate-500 transition hover:text-slate-800"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 3l18 18" />
+                      <path d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+                      <path d="M9.88 5.09A10.94 10.94 0 0112 5c7 0 10 7 10 7a19.34 19.34 0 01-3.66 4.96" />
+                      <path d="M6.61 6.61C3.9 8.51 2 12 2 12s3 7 10 7a10.97 10.97 0 005.39-1.39" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </label>
 
             {isRegister ? (
@@ -107,7 +131,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Admin"
+                    placeholder="First name"
                     autoComplete="given-name"
                   />
                 </label>
@@ -117,7 +141,7 @@ export function AuthPageCard({ mode }: AuthPageCardProps) {
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="User"
+                    placeholder="Last name"
                     autoComplete="family-name"
                   />
                 </label>

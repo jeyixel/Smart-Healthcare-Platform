@@ -5,12 +5,15 @@ import com.smarthealth.admin.dto.AuthResponse;
 import com.smarthealth.admin.dto.ForgotPasswordOtpRequest;
 import com.smarthealth.admin.dto.ForgotPasswordResetRequest;
 import com.smarthealth.admin.dto.RegisterRequest;
+import com.smarthealth.admin.model.User;
 import com.smarthealth.admin.service.AuthenticationService;
 import com.smarthealth.admin.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +34,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authenticationService.register(request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthorized"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "email", user.getEmail(),
+                "role", user.getRole() == null ? "" : user.getRole().name(),
+                "approved", Boolean.TRUE.equals(user.getApproved())
+        ));
     }
 
     @PostMapping("/login")
