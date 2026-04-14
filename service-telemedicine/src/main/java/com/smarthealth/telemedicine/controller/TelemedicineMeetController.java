@@ -24,6 +24,7 @@ public class TelemedicineMeetController {
         this.service = service;
     }
 
+    // To create a Jitsi meeting token for a client. The client will then use this token to join the meeting room.
     @GetMapping("/token")
     public ResponseEntity<?> getJitsiToken(
             @RequestParam(value = "room", required = false, defaultValue = "*") String room,
@@ -39,12 +40,14 @@ public class TelemedicineMeetController {
         }
 
         try {
+            // Generate a Jitsi token for the specified room and user
             String token = service.generateJitsiToken(room, userName, userEmail);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("token", token);
             response.put("room", room);
-            
+
+            // Optionally include user info in the response for debugging or client-side display
             return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {

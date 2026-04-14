@@ -47,9 +47,28 @@ public class AuthenticationFilter implements Filter {
 
         String token = authHeader.substring(7);
         try {
+            // this part is important for the telemedicine service, extracts username and pw then 
+            // sends it to the telemedicine service via headers
             if (jwtUtil.validateToken(token)) {
+                // Extract claims
+                String userName = jwtUtil.extractUsername(token);
+                String userEmail = jwtUtil.extractClaim(token, claims -> claims.get("email", String.class));
+                if (userEmail == null) {
+                    userEmail = userName;
+                }
+
+                // Create a mutable request wrapper to inject headers  
+                HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {  
+                    @Override  
+                    public String getHeader(String name) {  
+                        if ("X-User-Name".equalsIgnoreCase(name)) return userName;  
+                        if ("X-User-Email".equalsIgnoreCase(name)) return userEmail;  
+                        return super.getHeader(name);  
+                    }  
+                };  
+
                 // If valid, continue the filter chain
-                chain.doFilter(request, response);
+                chain.doFilter(wrappedRequest, response);
             } else {
                 httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 httpResponse.getWriter().write("Invalid or expired token");

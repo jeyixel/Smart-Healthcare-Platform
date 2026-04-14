@@ -17,7 +17,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/telemedicine/sessions")
+
+// explanation on this API: This is meant to be called backend-to-backend by your Appointment Service
+// either when an appointment is booked or confirmed.
+
+@RequestMapping("/api/v1/telemedicine/sessions")
 @CrossOrigin(origins = "*") // Allows your frontend to call this API later without CORS blocking
 public class TelemedicineController {
 
@@ -38,8 +42,10 @@ public class TelemedicineController {
         String patientId     = requestData.get("patientId");
         String doctorId      = requestData.get("doctorId");
 
+        // Collect all validation errors in a map so we can return them all at once
         Map<String, String> errors = new LinkedHashMap<>();
 
+        // Check for missing or empty fields and add specific error messages for each
         if (appointmentId == null || appointmentId.isBlank()) {
             errors.put("appointmentId", "appointmentId is missing or empty");
         }
@@ -65,7 +71,7 @@ public class TelemedicineController {
         try {
             // If validation passed, attempt to create the session
             TelemedicineSession session = service.createSession(appointmentId, patientId, doctorId);
-            return ResponseEntity.ok(session);
+            return ResponseEntity.ok(session); // Return the created session with all its details (including meeting URL) to the caller
 
         } catch (EntityNotFoundException e) {
             // e.g. appointment / patient / doctor not found in the DB
@@ -91,6 +97,7 @@ public class TelemedicineController {
     }
 
     // Endpoint to retrieve a meeting link (Will be called by Frontend when clicking "Join Call")
+    // The frontend uses this to look up which room the appointment corresponds to and retrieves the JaaS meetingUrl and roomName.
     @GetMapping("/appointment/{appointmentId}")
     public ResponseEntity<TelemedicineSession> getSession(@PathVariable String appointmentId) {
         Optional<TelemedicineSession> session = service.getSessionByAppointment(appointmentId);

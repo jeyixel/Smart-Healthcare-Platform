@@ -15,6 +15,7 @@ import {
 
 export default function TelemedicinePage() {
   const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export default function TelemedicinePage() {
       setIsJoining(true);
       setErrorMessage(null);
       const session = await fetchSessionByAppointmentId(MOCK_APPOINTMENT.id);
+      setSessionId(session.sessionId);
       setMeetingUrl(session.meetingUrl);
     } catch (error) {
       const fallbackMessage = "Unable to join meeting right now. Please try again.";
@@ -42,8 +44,8 @@ export default function TelemedicinePage() {
     }
   };
 
-  if (meetingUrl) {
-    return <JitsiVideoCall meetingUrl={meetingUrl} userName={userDisplayName} />;
+  if (meetingUrl && sessionId) {
+    return <JitsiVideoCall meetingUrl={meetingUrl} userName={userDisplayName} sessionId={sessionId} />;
   }
 
   return (
