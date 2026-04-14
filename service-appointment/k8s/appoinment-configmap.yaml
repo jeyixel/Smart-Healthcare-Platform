@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: smart-healthcare
+  name: service-appointment-config
+  labels:
+    app: service-appointment
+data:
+  SPRING_APPLICATION_NAME: "service-appointment"
+  SERVER_PORT: "8083"
