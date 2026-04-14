@@ -7,35 +7,48 @@ import { useState } from "react";
 
 export default function LoginPage() {
 	const router = useRouter();
-	const [email, setEmail] = useState("admin@example.com");
-	const [password, setPassword] = useState("Admin123!");
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [notice, setNotice] = useState("");
+	const [noticeType, setNoticeType] = useState<"error" | "info">("error");
 	const [forgotOpen, setForgotOpen] = useState(false);
-	const [otpEmail, setOtpEmail] = useState("admin@example.com");
+	const [otpEmail, setOtpEmail] = useState("");
 	const [otpCode, setOtpCode] = useState("");
 	const [newPassword, setNewPassword] = useState("");
 	const [forgotLoading, setForgotLoading] = useState(false);
 	const [forgotNotice, setForgotNotice] = useState("");
 	const [otpRequested, setOtpRequested] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
 
 	async function onLogin() {
 		setLoading(true);
 		setNotice("");
+		setNoticeType("error");
+		localStorage.removeItem("smart_admin_token");
+		localStorage.removeItem("smart_admin_role");
+		localStorage.removeItem("smart_admin_email");
 
 		try {
 			const response = await loginAdmin({ email, password });
 			localStorage.setItem("smart_admin_token", response.token);
 			localStorage.setItem("smart_admin_role", response.role);
 			localStorage.setItem("smart_admin_email", email);
-
-			// Navigate to role-specific dashboard
-			const dashboardPath = response.role === "ADMIN" ? "/admin" : 
-			                      response.role === "DOCTOR" ? "/doctor" : "/patient";
+			const dashboardPath = response.role === "ADMIN" ? "/admin" : response.role === "DOCTOR" ? "/doctor" : "/patient";
 			router.push(dashboardPath);
 			router.refresh();
 		} catch (error) {
-			setNotice(error instanceof Error ? error.message : "Login failed");
+			localStorage.removeItem("smart_admin_token");
+			localStorage.removeItem("smart_admin_role");
+			localStorage.removeItem("smart_admin_email");
+			const message = error instanceof Error ? error.message : "Login failed";
+			if (message.toLowerCase().includes("pending admin approval")) {
+				setNoticeType("info");
+				setNotice("Your doctor account is waiting for admin verification. Please try again after approval.");
+			} else {
+				setNoticeType("error");
+				setNotice(message);
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -90,7 +103,7 @@ export default function LoginPage() {
 						className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
 						style={{ backgroundImage: "url('/auth-bg.png')" }}
 					/>
-					<div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-cyan-800/20" />
+					<div className="absolute inset-0 bg-linear-to-br from-blue-900/40 to-cyan-800/20" />
 					<div className="absolute inset-x-0 bottom-0 p-12 text-white">
 						<div className="mb-6 inline-block rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
 							SMART HEALTHCARE PLATFORM
@@ -143,13 +156,35 @@ export default function LoginPage() {
 										Forgot password?
 									</button>
 								</div>
-								<input
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder="••••••••"
-									className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 text-slate-900 transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none"
-								/>
+								<div className="relative">
+									<input
+										type={showPassword ? "text" : "password"}
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										placeholder="Enter your password"
+										className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-4 pr-12 text-slate-900 transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none"
+									/>
+									<button
+										type="button"
+										onClick={() => setShowPassword((prev) => !prev)}
+										className="absolute inset-y-0 right-3 flex items-center text-slate-500 transition hover:text-slate-800"
+										aria-label={showPassword ? "Hide password" : "Show password"}
+									>
+										{showPassword ? (
+											<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+												<path d="M3 3l18 18" />
+												<path d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+												<path d="M9.88 5.09A10.94 10.94 0 0112 5c7 0 10 7 10 7a19.34 19.34 0 01-3.66 4.96" />
+												<path d="M6.61 6.61C3.9 8.51 2 12 2 12s3 7 10 7a10.97 10.97 0 005.39-1.39" />
+											</svg>
+										) : (
+											<svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+												<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+												<circle cx="12" cy="12" r="3" />
+											</svg>
+										)}
+									</button>
+								</div>
 							</div>
 						</div>
 
@@ -161,7 +196,7 @@ export default function LoginPage() {
 										type="email"
 										value={otpEmail}
 										onChange={(e) => setOtpEmail(e.target.value)}
-										placeholder="Enter your email"
+										placeholder="Enter your email address"
 										className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
 									/>
 
@@ -207,9 +242,17 @@ export default function LoginPage() {
 						)}
 
 						{notice && (
-							<div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 animate-in fade-in slide-in-from-top-2">
-								<svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-									<path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+							<div className={`mt-6 flex items-center gap-3 rounded-2xl border p-4 text-sm animate-in fade-in slide-in-from-top-2 ${
+								noticeType === "info"
+									? "border-amber-100 bg-amber-50 text-amber-700"
+									: "border-red-100 bg-red-50 text-red-600"
+							}`}>
+								<svg className="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+									{noticeType === "info" ? (
+										<path fillRule="evenodd" d="M18 10A8 8 0 112 10a8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm-1 4a1 1 0 000 2v2a1 1 0 102 0v-2a1 1 0 00-1-1z" clipRule="evenodd" />
+									) : (
+										<path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+									)}
 								</svg>
 								<p>{notice}</p>
 							</div>

@@ -1,5 +1,6 @@
 import {
   AuthResponse,
+  CurrentUserProfile,
   DoctorApprovalItem,
   ForgotPasswordOtpInput,
   ForgotPasswordResetInput,
@@ -147,4 +148,15 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   });
 
   return safeJson<DoctorApprovalItem>(response);
+}
+
+export async function fetchCurrentUser(token: string): Promise<CurrentUserProfile> {
+  const response = await fetch(`${ADMIN_API}/api/v1/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<CurrentUserProfile>(response);
 }

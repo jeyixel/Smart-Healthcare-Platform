@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchCurrentUser } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -15,17 +16,38 @@ export default function DoctorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("smart_admin_token");
-    const role = localStorage.getItem("smart_admin_role");
-    const email = localStorage.getItem("smart_admin_email");
+    const verifyDoctorAccess = async () => {
+      const token = localStorage.getItem("smart_admin_token");
+      const role = localStorage.getItem("smart_admin_role");
 
-    if (!token || role !== "DOCTOR") {
-      router.push("/login");
-      return;
-    }
+      if (!token || role !== "DOCTOR") {
+        router.push("/login");
+        return;
+      }
 
-    setSession({ email: email || "", role: role || "", token });
-    setLoading(false);
+      try {
+        const profile = await fetchCurrentUser(token);
+        if (profile.role !== "DOCTOR" || !profile.approved) {
+          localStorage.removeItem("smart_admin_token");
+          localStorage.removeItem("smart_admin_role");
+          localStorage.removeItem("smart_admin_email");
+          router.push("/login");
+          return;
+        }
+
+        localStorage.setItem("smart_admin_email", profile.email);
+        setSession({ email: profile.email, role: profile.role, token });
+      } catch {
+        localStorage.removeItem("smart_admin_token");
+        localStorage.removeItem("smart_admin_role");
+        localStorage.removeItem("smart_admin_email");
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void verifyDoctorAccess();
   }, [router]);
 
   const handleLogout = () => {

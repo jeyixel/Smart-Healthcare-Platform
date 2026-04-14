@@ -61,6 +61,10 @@ public class AuthenticationService {
 
     public AuthResponse login(AuthRequest request) {
         String normalizedEmail = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        var existingUser = userRepository.findByEmailIgnoreCase(normalizedEmail).orElse(null);
+        if (existingUser != null && existingUser.getRole() == Role.DOCTOR && !Boolean.TRUE.equals(existingUser.getApproved())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your doctor account is pending admin approval. Please try again later.");
+        }
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -70,9 +74,6 @@ public class AuthenticationService {
             );
             var user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bad credentials"));
-            if (user.getRole() == Role.DOCTOR && !Boolean.TRUE.equals(user.getApproved())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctor account is pending admin approval");
-            }
             var jwtToken = jwtService.generateToken(user);
             return AuthResponse.builder()
                     .token(jwtToken)
