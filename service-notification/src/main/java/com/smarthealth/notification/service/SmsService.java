@@ -33,7 +33,7 @@ public class SmsService {
                 .build();
 
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(NOTIFY_LK_URL)
+            String url = UriComponentsBuilder.fromUriString(NOTIFY_LK_URL)
                     .queryParam("user_id", notifyLkConfig.getUserId())
                     .queryParam("api_key", notifyLkConfig.getApiKey())
                     .queryParam("sender_id", notifyLkConfig.getSenderId())
