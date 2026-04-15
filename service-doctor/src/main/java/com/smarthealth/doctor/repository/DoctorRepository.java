@@ -10,9 +10,9 @@ import java.util.UUID;
 
 public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
 
-    Optional<Doctor> findByUserId(UUID userId);
+    Optional<Doctor> findByUserId(Long userId);
 
-    boolean existsByUserId(UUID userId);
+    boolean existsByUserId(Long userId);
 
     boolean existsByEmail(String email);
 

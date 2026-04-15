@@ -20,6 +20,8 @@ public class JwtService {
 
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_ROLE = "role";
+    private static final String CLAIM_FIRST_NAME = "firstName";
+    private static final String CLAIM_LAST_NAME = "lastName";
 
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
@@ -40,6 +42,14 @@ public class JwtService {
         return extractClaim(token, claims -> claims.get(CLAIM_ROLE, String.class));
     }
 
+    public String extractFirstName(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_FIRST_NAME, String.class));
+    }
+
+    public String extractLastName(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_LAST_NAME, String.class));
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -49,7 +59,11 @@ public class JwtService {
         Map<String, Object> extraClaims = new HashMap<>();
         if (userDetails instanceof User user) {
             extraClaims.put(CLAIM_USER_ID, user.getId());
-            extraClaims.put(CLAIM_ROLE, user.getRole().name());
+            if (user.getRole() != null) {
+                extraClaims.put(CLAIM_ROLE, user.getRole().name());
+            }
+            extraClaims.put(CLAIM_FIRST_NAME, user.getFirstName());
+            extraClaims.put(CLAIM_LAST_NAME, user.getLastName());
         }
         return generateToken(extraClaims, userDetails);
     }

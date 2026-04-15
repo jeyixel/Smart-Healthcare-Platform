@@ -24,6 +24,14 @@ public class PatientAdminService {
         this.adminAuditService = adminAuditService;
     }
 
+    public void registerPatient(com.smarthealth.admin.dto.PatientUpsertRequest request) {
+        patientRestClient.post()
+                .uri(properties.getEndpoints().getBase())
+                .body(request)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
     public PatientResponse setPatientActiveStatus(UUID patientId, boolean active, String requestedBy) {
         PatientResponse response = patientRestClient.patch()
             .uri(uriBuilder -> uriBuilder

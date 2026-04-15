@@ -39,7 +39,7 @@ public class AdminAuditService {
 
         // Publish event to Kafka
         PatientEventDto event = PatientEventDto.builder()
-            .patientId(uuidToLong(patientId))
+            .patientId(patientId.toString())
                 .eventType("PATIENT_STATUS_UPDATED")
                 .description("Patient status updated to: " + (active ? "ACTIVE" : "INACTIVE"))
                 .status("COMPLETED")
@@ -59,17 +59,13 @@ public class AdminAuditService {
 
         // Publish event to Kafka
         PatientEventDto event = PatientEventDto.builder()
-                .patientId(uuidToLong(request.getPatientId()))
+                .patientId(request.getPatientId().toString())
                 .eventType("PRESCRIPTION_SNAPSHOT_UPSERTED")
                 .description("Prescription snapshot upserted: " + request.getExternalPrescriptionId())
                 .status("COMPLETED")
                 .timestamp(System.currentTimeMillis())
                 .build();
         kafkaTemplate.send(patientEventsTopic, request.getPatientId().toString(), event);
-    }
-
-    private Long uuidToLong(UUID value) {
-        return value == null ? null : value.getMostSignificantBits();
     }
 
     private String normalizeRequestedBy(String requestedBy) {
