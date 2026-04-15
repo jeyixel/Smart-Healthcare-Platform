@@ -32,7 +32,7 @@ public class AppointmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('PATIENT') and #patientId == authentication.principal.userId) or (hasRole('DOCTOR') and #doctorId == authentication.principal.userId)")
+    @PreAuthorize("isAuthenticated()")
     public List<AppointmentResponse> getAll(
             @RequestParam(required = false) UUID patientId,
             @RequestParam(required = false) UUID doctorId,
@@ -42,7 +42,7 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('DOCTOR') and @appointmentService.isDoctorAppointment(#id, authentication.principal.userId) or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('DOCTOR')  or hasRole('ADMIN')")
     public AppointmentResponse updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAppointmentStatusRequest request

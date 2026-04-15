@@ -33,7 +33,7 @@ public class DoctorController {
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
-    public DoctorResponse getDoctorByUserId(@PathVariable UUID userId) {
+    public DoctorResponse getDoctorByUserId(@PathVariable Long userId) {
         return doctorService.getDoctorByUserId(userId);
     }
 

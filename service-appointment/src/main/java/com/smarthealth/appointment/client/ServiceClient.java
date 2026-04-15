@@ -72,6 +72,16 @@ public class ServiceClient {
     }
 
     private String getJwtFromContext() {
-        return (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+        // Extract JWT from Authorization header instead of security context
+        // Since we're using stateless JWT, the token is not stored in credentials
+        Object auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            // The JWT token is typically passed as the credentials in our custom setup
+            Object credentials = SecurityContextHolder.getContext().getAuthentication().getCredentials();
+            if (credentials instanceof String) {
+                return (String) credentials;
+            }
+        }
+        throw new IllegalStateException("No JWT token found in security context");
     }
 }
