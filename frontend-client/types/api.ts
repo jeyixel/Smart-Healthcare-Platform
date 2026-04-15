@@ -1,4 +1,5 @@
 export type UserRole = "ADMIN" | "DOCTOR" | "PATIENT";
+export type PublicRegisterRole = "DOCTOR" | "PATIENT";
 
 export interface AuthResponse {
   token: string;
@@ -37,10 +38,35 @@ export interface RegisterInput {
   password: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  role: PublicRegisterRole;
 }
 
 export interface LoginInput {
   email: string;
   password: string;
+}
+
+export interface ForgotPasswordOtpInput {
+  email: string;
+}
+
+export interface ForgotPasswordResetInput {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+export interface DoctorApprovalItem {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: "DOCTOR";
+  approved: boolean;
+}
+
+export interface CurrentUserProfile {
+  email: string;
+  role: UserRole;
+  approved: boolean;
 }

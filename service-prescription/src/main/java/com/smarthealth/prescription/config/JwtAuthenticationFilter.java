@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -44,14 +47,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String role = jwtService.extractRole(jwt);
-            
-            // Build UserDetails from JWT claims instead of loading from database
-            UserDetails userDetails = User.withUsername(userEmail)
-                    .password("") // Password is not needed for JWT auth
-                    .authorities(new SimpleGrantedAuthority("ROLE_" + role))
+            UserDetails userDetails = org.springframework.security.core.userdetails.User
+                    .withUsername(userEmail)
+                    .password("")
+                    .authorities("ROLE_" + role)
                     .build();
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
+                Collection<GrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + role)
+                );
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         jwt,

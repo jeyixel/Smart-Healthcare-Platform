@@ -1,5 +1,9 @@
 import {
   AuthResponse,
+  CurrentUserProfile,
+  DoctorApprovalItem,
+  ForgotPasswordOtpInput,
+  ForgotPasswordResetInput,
   LoginInput,
   Patient,
   PatientEvent,
@@ -66,6 +70,26 @@ export async function loginAdmin(input: LoginInput): Promise<AuthResponse> {
   return safeJson<AuthResponse>(response);
 }
 
+export async function requestPasswordOtp(input: ForgotPasswordOtpInput): Promise<{ message: string }> {
+  const response = await fetch(`${ADMIN_API}/api/v1/auth/forgot-password/request-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  return safeJson<{ message: string }>(response);
+}
+
+export async function resetForgotPassword(input: ForgotPasswordResetInput): Promise<{ message: string }> {
+  const response = await fetch(`${ADMIN_API}/api/v1/auth/forgot-password/reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  return safeJson<{ message: string }>(response);
+}
+
 export async function fetchPatients(): Promise<Patient[]> {
   const response = await fetch(`${PATIENT_API}/api/v1/patients`, {
     cache: "no-store",
@@ -102,4 +126,37 @@ export async function fetchPatientEvents(): Promise<PatientEvent[]> {
 
   const payload = await safeJson<unknown>(response);
   return normalizeListResponse<PatientEvent>(payload);
+}
+
+export async function fetchPendingDoctors(token: string): Promise<DoctorApprovalItem[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/doctors/pending`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<DoctorApprovalItem[]>(response);
+}
+
+export async function approveDoctor(token: string, doctorId: number): Promise<DoctorApprovalItem> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/doctors/${doctorId}/approve`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return safeJson<DoctorApprovalItem>(response);
+}
+
+export async function fetchCurrentUser(token: string): Promise<CurrentUserProfile> {
+  const response = await fetch(`${ADMIN_API}/api/v1/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<CurrentUserProfile>(response);
 }

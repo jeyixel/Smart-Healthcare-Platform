@@ -49,6 +49,20 @@ export default function Home() {
       setToken(savedToken);
     }
 
+    // Redirect to appropriate dashboard based on role
+    if (savedRole === "DOCTOR") {
+      window.location.href = "/doctor";
+      return;
+    }
+    if (savedRole === "PATIENT") {
+      window.location.href = "/patient";
+      return;
+    }
+    if (savedRole === "ADMIN") {
+      window.location.href = "/admin";
+      return;
+    }
+
     if (savedRole) {
       setAuthRole(savedRole);
     }
