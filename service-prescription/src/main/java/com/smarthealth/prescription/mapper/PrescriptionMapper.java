@@ -22,7 +22,8 @@ public class PrescriptionMapper {
                 prescription.getIssuedAt(),
                 prescription.getItems().stream().map(PrescriptionMapper::toItemResponse).toList(),
                 prescription.getCreatedAt(),
-                prescription.getUpdatedAt()
+                prescription.getUpdatedAt(),
+                prescription.getDigitalSignature()
         );
     }
 

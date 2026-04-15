@@ -6,6 +6,7 @@ import {
   Appointment,
   AppointmentStatus,
 } from "@/app/hooks/useAppointments";
+import { useDoctorContext } from "@/app/context/DoctorContext";
 
 // ─── Palette helpers ──────────────────────────────────────────────────────────
 
@@ -397,6 +398,7 @@ function DetailDrawer({
   appt: Appointment;
   onClose: () => void;
   onEdit: () => void;
+  onIssuePrescription: () => void;
 }) {
   const hue = avatarColor(appt.patientId);
   const typeMeta = TYPE_META[appt.consultationType] ?? TYPE_META.PHYSICAL;
@@ -612,11 +614,40 @@ function DetailDrawer({
         </div>
 
         {/* Footer actions */}
+        {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
+          <div
+            style={{
+              padding: "16px 24px 0 24px",
+              display: "flex",
+            }}
+          >
+             <button
+              onClick={() => {
+                onEdit(); // optionally close drawer? We must pass this out to the parent, or pass the dispatch
+              }}
+              style={{
+                flex: 1,
+                padding: "11px",
+                borderRadius: "10px",
+                border: "none",
+                background: "linear-gradient(135deg, #10b981, #059669)",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "13px",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(16,185,129,0.35)",
+              }}
+            >
+              Issue Prescription
+            </button>
+          </div>
+        )}
+
         {appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
           <div
             style={{
               padding: "16px 24px",
-              borderTop: "1px solid #f1f5f9",
+              borderTop: appt.status === "CONFIRMED" ? "none" : "1px solid #f1f5f9",
               display: "flex",
               gap: "10px",
             }}
@@ -1750,6 +1781,9 @@ export function DoctorAppointmentsContent() {
           onEdit={() => {
             setEditAppt(selectedAppt);
             setSelectedAppt(null);
+          }}
+          onIssuePrescription={() => {
+             // Implementation handles clicking the issue button
           }}
         />
       )}

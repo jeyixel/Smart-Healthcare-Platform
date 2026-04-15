@@ -30,7 +30,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @prescriptionService.isPrescriptionOwnerById(#id, authentication.principal.userId)")
+    @PreAuthorize("isAuthenticated()")
     public PrescriptionResponse getById(@PathVariable UUID id) {
         return prescriptionService.getById(id);
     }
@@ -42,33 +42,33 @@ public class PrescriptionController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('PATIENT') and #patientId == authentication.principal.userId) or hasRole('DOCTOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
     public List<PrescriptionResponse> getByPatientId(@PathVariable UUID patientId) {
         return prescriptionService.getByPatientId(patientId);
     }
 
     @GetMapping("/doctor/{doctorId}")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and #doctorId == authentication.principal.userId)")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR'))")
     public List<PrescriptionResponse> getByDoctorId(@PathVariable UUID doctorId) {
         return prescriptionService.getByDoctorId(doctorId);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR') and  @prescriptionService.isPrescriptionOwnerById(#id, authentication.principal.userId)")
+    @PreAuthorize("hasRole('DOCTOR')")
     public PrescriptionResponse updatePrescription(@PathVariable UUID id,
                                                    @Valid @RequestBody UpdatePrescriptionRequest request) {
         return prescriptionService.updatePrescription(id, request);
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and @prescriptionService.isPrescriptionOwnerById(#id, authentication.principal.userId))")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR'))")
     public PrescriptionResponse updateStatus(@PathVariable UUID id,
                                              @Valid @RequestBody UpdatePrescriptionStatusRequest request) {
         return prescriptionService.updateStatus(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @prescriptionService.isPrescriptionOwnerById(#id, authentication.principal.userId)")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR'))")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePrescription(@PathVariable UUID id) {
         prescriptionService.deletePrescription(id);
