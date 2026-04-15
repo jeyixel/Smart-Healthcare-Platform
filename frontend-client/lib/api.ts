@@ -150,6 +150,24 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
+export async function fetchPatientByEmail(email: string): Promise<Patient> {
+  const response = await fetch(`${PATIENT_API}/api/v1/patients/email/${email}`, {
+    cache: "no-store",
+  });
+
+  return safeJson<Patient>(response);
+}
+
+export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
+  const response = await fetch(`${PATIENT_API}/api/v1/patients/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<Patient>(response);
+}
+
 export async function fetchCurrentUser(token: string): Promise<CurrentUserProfile> {
   const response = await fetch(`${ADMIN_API}/api/v1/auth/me`, {
     headers: {

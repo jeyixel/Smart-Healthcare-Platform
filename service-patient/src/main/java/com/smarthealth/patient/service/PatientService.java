@@ -44,6 +44,12 @@ public class PatientService {
         return map(patient);
     }
 
+    public PatientResponse getByEmail(String email) {
+        Patient patient = patientRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found for email " + email));
+        return map(patient);
+    }
+
     public List<PatientResponse> getAll() {
         return patientRepository.findAll().stream().map(this::map).toList();
     }

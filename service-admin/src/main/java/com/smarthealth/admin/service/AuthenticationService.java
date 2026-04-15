@@ -23,6 +23,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final PatientAdminService patientAdminService;
 
     public AuthResponse register(RegisterRequest request) {
         String normalizedEmail = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
@@ -49,6 +50,21 @@ public class AuthenticationService {
                 .approved(!doctorPendingApproval)
                 .build();
         userRepository.save(user);
+
+        if (user.getRole() == Role.PATIENT) {
+            try {
+                patientAdminService.registerPatient(com.smarthealth.admin.dto.PatientUpsertRequest.builder()
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .email(user.getEmail())
+                        .authUserId(user.getId().toString())
+                        .phoneNumber("NONE") // Default placeholder as it's required by Patient service
+                        .build());
+            } catch (Exception e) {
+                // Log error but continue for now, or handle as needed
+                System.err.println("Failed to sync patient record: " + e.getMessage());
+            }
+        }
 
         var jwtToken = doctorPendingApproval ? "" : jwtService.generateToken(user);
         return AuthResponse.builder()
