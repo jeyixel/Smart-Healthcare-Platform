@@ -35,4 +35,6 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    // UserDetailsService has been removed to avoid circular dependencies and because it's not used in this stateless microservice
 }
