@@ -30,7 +30,7 @@ public class Doctor extends AuditableEntity{
     private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Long userId;
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;

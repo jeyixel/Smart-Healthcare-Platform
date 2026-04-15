@@ -10,7 +10,7 @@ public interface DoctorService {
 
     DoctorResponse getDoctorById(UUID id);
 
-    DoctorResponse getDoctorByUserId(UUID userId);
+    DoctorResponse getDoctorByUserId(Long userId);
 
     DoctorResponse updateDoctor(UUID id, UpdateDoctorRequest request);
 
@@ -26,5 +26,5 @@ public interface DoctorService {
 
     void deleteDoctor(UUID id);
 
-    boolean isDoctorOwner(UUID doctorId, UUID userId);
+    boolean isDoctorOwner(UUID doctorId, Long userId);
 }
