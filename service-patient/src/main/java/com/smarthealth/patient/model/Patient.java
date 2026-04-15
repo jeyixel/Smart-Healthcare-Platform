@@ -19,19 +19,19 @@ public class Patient {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String email;
 
     @Column(unique = true)
     private String authUserId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String phoneNumber;
 
     private String dateOfBirth;
@@ -46,13 +46,13 @@ public class Patient {
 
     private String emergencyContactPhone;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private boolean active;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private OffsetDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private OffsetDateTime updatedAt;
 
     @PrePersist
