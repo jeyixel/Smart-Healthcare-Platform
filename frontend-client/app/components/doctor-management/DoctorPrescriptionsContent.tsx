@@ -365,25 +365,186 @@ function PrescriptionRow({ rx, index, onView, onStatusUpdate, onEdit, onDelete }
         {statusPill(rx.status)}
       </td>
       <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap" }}>
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }} onClick={(e) => e.stopPropagation()}>
-           <button onClick={() => handlePrint(rx)} title="Print PDF" style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-             🖨️
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }} onClick={(e) => e.stopPropagation()}>
+           <button 
+             onClick={() => handlePrint(rx)} 
+             title="Print PDF" 
+             style={{ 
+               width: "36px", 
+               height: "36px", 
+               borderRadius: "10px", 
+               border: "2px solid #e2e8f0", 
+               background: "#fff", 
+               cursor: "pointer", 
+               display: "flex", 
+               alignItems: "center", 
+               justifyContent: "center", 
+               color: "#64748b",
+               fontSize: "16px",
+               fontWeight: "500",
+               transition: "all 0.2s ease",
+               boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.background = "#f8fafc";
+               e.currentTarget.style.borderColor = "#cbd5e1";
+               e.currentTarget.style.color = "#475569";
+               e.currentTarget.style.transform = "translateY(-1px)";
+               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.background = "#fff";
+               e.currentTarget.style.borderColor = "#e2e8f0";
+               e.currentTarget.style.color = "#64748b";
+               e.currentTarget.style.transform = "translateY(0)";
+               e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+             }}
+           >
+             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
            </button>
-           <button onClick={() => handleDownload(rx)} title="Download PDF" style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-             📥
+           <button 
+             onClick={() => handleDownload(rx)} 
+             title="Download PDF" 
+             style={{ 
+               width: "36px", 
+               height: "36px", 
+               borderRadius: "10px", 
+               border: "2px solid #e2e8f0", 
+               background: "#fff", 
+               cursor: "pointer", 
+               display: "flex", 
+               alignItems: "center", 
+               justifyContent: "center", 
+               color: "#64748b",
+               fontSize: "16px",
+               fontWeight: "500",
+               transition: "all 0.2s ease",
+               boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.background = "#f8fafc";
+               e.currentTarget.style.borderColor = "#cbd5e1";
+               e.currentTarget.style.color = "#475569";
+               e.currentTarget.style.transform = "translateY(-1px)";
+               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.background = "#fff";
+               e.currentTarget.style.borderColor = "#e2e8f0";
+               e.currentTarget.style.color = "#64748b";
+               e.currentTarget.style.transform = "translateY(0)";
+               e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+             }}
+           >
+             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
            </button>
            {rx.status !== "CANCELLED" && (
-             <button onClick={onStatusUpdate} title="Update Status" style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg,#06b6d4,#0891b2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 2px 8px rgba(6,182,212,0.3)" }}>
-               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+             <button 
+               onClick={onStatusUpdate} 
+               title="Update Status" 
+               style={{ 
+                 width: "36px", 
+                 height: "36px", 
+                 borderRadius: "10px", 
+                 border: "none", 
+                 background: "linear-gradient(135deg,#06b6d4,#0891b2)", 
+                 cursor: "pointer", 
+                 display: "flex", 
+                 alignItems: "center", 
+                 justifyContent: "center", 
+                 color: "#fff", 
+                 boxShadow: "0 2px 8px rgba(6,182,212,0.3)",
+                 fontSize: "16px",
+                 fontWeight: "500",
+                 transition: "all 0.2s ease"
+               }}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.background = "linear-gradient(135deg,#0891b2,#0e7490)";
+                 e.currentTarget.style.transform = "translateY(-1px)";
+                 e.currentTarget.style.boxShadow = "0 4px 12px rgba(6,182,212,0.4)";
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.background = "linear-gradient(135deg,#06b6d4,#0891b2)";
+                 e.currentTarget.style.transform = "translateY(0)";
+                 e.currentTarget.style.boxShadow = "0 2px 8px rgba(6,182,212,0.3)";
+               }}
+             >
+               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
              </button>
            )}
            {rx.status === "DRAFT" && (
-             <button onClick={onEdit} title="Edit Draft" style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#06b6d4" }}>
-               ✏️
+             <button 
+               onClick={onEdit} 
+               title="Edit Draft" 
+               style={{ 
+                 width: "36px", 
+                 height: "36px", 
+                 borderRadius: "10px", 
+                 border: "2px solid #06b6d4", 
+                 background: "#fff", 
+                 cursor: "pointer", 
+                 display: "flex", 
+                 alignItems: "center", 
+                 justifyContent: "center", 
+                 color: "#06b6d4",
+                 fontSize: "16px",
+                 fontWeight: "500",
+                 transition: "all 0.2s ease",
+                 boxShadow: "0 1px 3px rgba(6,182,212,0.2)"
+               }}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.background = "#f0f9ff";
+                 e.currentTarget.style.borderColor = "#0891b2";
+                 e.currentTarget.style.color = "#0891b2";
+                 e.currentTarget.style.transform = "translateY(-1px)";
+                 e.currentTarget.style.boxShadow = "0 4px 12px rgba(6,182,212,0.3)";
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.background = "#fff";
+                 e.currentTarget.style.borderColor = "#06b6d4";
+                 e.currentTarget.style.color = "#06b6d4";
+                 e.currentTarget.style.transform = "translateY(0)";
+                 e.currentTarget.style.boxShadow = "0 1px 3px rgba(6,182,212,0.2)";
+               }}
+             >
+               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
              </button>
            )}
-           <button onClick={(e) => onDelete(e)} title="Delete" style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #fecaca", background: "#fef2f2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444" }}>
-             🗑️
+           <button 
+             onClick={(e) => onDelete(e)} 
+             title="Delete" 
+             style={{ 
+               width: "36px", 
+               height: "36px", 
+               borderRadius: "10px", 
+               border: "2px solid #fecaca", 
+               background: "#fef2f2", 
+               cursor: "pointer", 
+               display: "flex", 
+               alignItems: "center", 
+               justifyContent: "center", 
+               color: "#ef4444",
+               fontSize: "16px",
+               fontWeight: "500",
+               transition: "all 0.2s ease",
+               boxShadow: "0 1px 3px rgba(239,68,68,0.2)"
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.background = "#fee2e2";
+               e.currentTarget.style.borderColor = "#fca5a5";
+               e.currentTarget.style.color = "#dc2626";
+               e.currentTarget.style.transform = "translateY(-1px)";
+               e.currentTarget.style.boxShadow = "0 4px 12px rgba(239,68,68,0.3)";
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.background = "#fef2f2";
+               e.currentTarget.style.borderColor = "#fecaca";
+               e.currentTarget.style.color = "#ef4444";
+               e.currentTarget.style.transform = "translateY(0)";
+               e.currentTarget.style.boxShadow = "0 1px 3px rgba(239,68,68,0.2)";
+             }}
+           >
+             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
            </button>
         </div>
       </td>
@@ -471,14 +632,154 @@ function DetailDrawer({ rx, onClose, onEdit, onStatusUpdate }: { rx: Prescriptio
         </div>
 
         {/* Footer actions */}
-        <div style={{ padding: "16px 24px", borderTop: "1px solid #f1f5f9", display: "flex", gap: "10px" }}>
-           <button onClick={() => handlePrint(rx)} style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid #cbd5e1", background: "#fff", color: "#475569", fontWeight: 700, fontSize: "13px", cursor: "pointer", display: "flex", justifyContent: "center", gap: "8px" }}>🖨️ Print</button>
-           <button onClick={() => handleDownload(rx)} style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid #cbd5e1", background: "#fff", color: "#475569", fontWeight: 700, fontSize: "13px", cursor: "pointer", display: "flex", justifyContent: "center", gap: "8px" }}>📥 Download PDF</button>
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #e2e8f0", display: "flex", gap: "8px", background: "#f8fafc" }}>
+           <button 
+             onClick={() => handlePrint(rx)} 
+             style={{ 
+               flex: 1, 
+               padding: "8px 12px", 
+               borderRadius: "8px", 
+               border: "2px solid #e2e8f0", 
+               background: "#fff", 
+               color: "#475569", 
+               fontWeight: 600, 
+               fontSize: "12px", 
+               cursor: "pointer", 
+               display: "flex", 
+               justifyContent: "center", 
+               gap: "6px",
+               transition: "all 0.2s ease",
+               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+               whiteSpace: "nowrap"
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.background = "#f8fafc";
+               e.currentTarget.style.borderColor = "#cbd5e1";
+               e.currentTarget.style.color = "#334155";
+               e.currentTarget.style.transform = "translateY(-1px)";
+               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.background = "#fff";
+               e.currentTarget.style.borderColor = "#e2e8f0";
+               e.currentTarget.style.color = "#475569";
+               e.currentTarget.style.transform = "translateY(0)";
+               e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+             }}
+           >
+             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+             Print
+           </button>
+           <button 
+             onClick={() => handleDownload(rx)} 
+             style={{ 
+               flex: 1, 
+               padding: "8px 12px", 
+               borderRadius: "8px", 
+               border: "2px solid #e2e8f0", 
+               background: "#fff", 
+               color: "#475569", 
+               fontWeight: 600, 
+               fontSize: "12px", 
+               cursor: "pointer", 
+               display: "flex", 
+               justifyContent: "center", 
+               gap: "6px",
+               transition: "all 0.2s ease",
+               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+               whiteSpace: "nowrap"
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.background = "#f8fafc";
+               e.currentTarget.style.borderColor = "#cbd5e1";
+               e.currentTarget.style.color = "#334155";
+               e.currentTarget.style.transform = "translateY(-1px)";
+               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.background = "#fff";
+               e.currentTarget.style.borderColor = "#e2e8f0";
+               e.currentTarget.style.color = "#475569";
+               e.currentTarget.style.transform = "translateY(0)";
+               e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+             }}
+           >
+             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+             PDF
+           </button>
            {rx.status !== "CANCELLED" && (
-             <button onClick={onStatusUpdate} style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#06b6d4,#0891b2)", color: "#fff", fontWeight: 700, fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 14px rgba(6,182,212,0.35)" }}>Update Status</button>
+             <button 
+               onClick={onStatusUpdate} 
+               style={{ 
+                 flex: 1, 
+                 padding: "8px 12px", 
+                 borderRadius: "8px", 
+                 border: "none", 
+                 background: "linear-gradient(135deg,#06b6d4,#0891b2)", 
+                 color: "#fff", 
+                 fontWeight: 600, 
+                 fontSize: "12px", 
+                 cursor: "pointer", 
+                 boxShadow: "0 4px 14px rgba(6,182,212,0.35)",
+                 transition: "all 0.2s ease",
+                 display: "flex",
+                 justifyContent: "center",
+                 gap: "6px",
+                 whiteSpace: "nowrap"
+               }}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.background = "linear-gradient(135deg,#0891b2,#0e7490)";
+                 e.currentTarget.style.transform = "translateY(-1px)";
+                 e.currentTarget.style.boxShadow = "0 6px 20px rgba(6,182,212,0.45)";
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.background = "linear-gradient(135deg,#06b6d4,#0891b2)";
+                 e.currentTarget.style.transform = "translateY(0)";
+                 e.currentTarget.style.boxShadow = "0 4px 14px rgba(6,182,212,0.35)";
+               }}
+             >
+               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+               Status
+             </button>
            )}
            {rx.status === "DRAFT" && (
-             <button onClick={onEdit} style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#f8fafc", color: "#06b6d4", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>Edit Draft</button>
+             <button 
+               onClick={onEdit} 
+               style={{ 
+                 flex: 1, 
+                 padding: "8px 12px", 
+                 borderRadius: "8px", 
+                 border: "2px solid #06b6d4", 
+                 background: "#fff", 
+                 color: "#06b6d4", 
+                 fontWeight: 600, 
+                 fontSize: "12px", 
+                 cursor: "pointer",
+                 transition: "all 0.2s ease",
+                 boxShadow: "0 1px 3px rgba(6,182,212,0.2)",
+                 display: "flex",
+                 justifyContent: "center",
+                 gap: "6px",
+                 whiteSpace: "nowrap"
+               }}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.background = "#f0f9ff";
+                 e.currentTarget.style.borderColor = "#0891b2";
+                 e.currentTarget.style.color = "#0891b2";
+                 e.currentTarget.style.transform = "translateY(-1px)";
+                 e.currentTarget.style.boxShadow = "0 4px 12px rgba(6,182,212,0.3)";
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.background = "#fff";
+                 e.currentTarget.style.borderColor = "#06b6d4";
+                 e.currentTarget.style.color = "#06b6d4";
+                 e.currentTarget.style.transform = "translateY(0)";
+                 e.currentTarget.style.boxShadow = "0 1px 3px rgba(6,182,212,0.2)";
+               }}
+             >
+               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+               Edit
+             </button>
            )}
         </div>
       </div>
@@ -507,7 +808,8 @@ function StatusModal({ rx, onClose, onSave }: { rx: Prescription; onClose: () =>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string|null>(null);
 
-  const allowed: PrescriptionStatus[] = rx.status === "CANCELLED" ? [] : ["DRAFT", "ISSUED", "CANCELLED"];
+  const allowed: PrescriptionStatus[] = rx.status === "CANCELLED" ? [] : 
+    rx.status === "ISSUED" ? ["ISSUED", "CANCELLED"] : ["DRAFT", "ISSUED", "CANCELLED"];
 
   const handleSave = async () => {
     setSaving(true);
@@ -532,14 +834,58 @@ function StatusModal({ rx, onClose, onSave }: { rx: Prescription; onClose: () =>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "#94a3b8", cursor: "pointer", width: "32px", height: "32px", borderRadius: "8px" }}>✕</button>
         </div>
         <div style={{ padding: "24px" }}>
+          {rx.status === "ISSUED" && (
+            <div style={{ 
+              background: "#fef3c7", 
+              border: "1px solid #f59e0b", 
+              borderRadius: "8px", 
+              padding: "12px", 
+              marginBottom: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}>
+              <svg width="16" height="16" fill="none" stroke="#f59e0b" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <div>
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#92400e" }}>Status Locked</p>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#b45309" }}>Once issued, prescriptions cannot be changed back to draft status</p>
+              </div>
+            </div>
+          )}
           <div style={{ display: "grid", gap: "10px" }}>
              {allowed.map((s) => {
                const m = STATUS_META[s];
                const active = status === s;
+               const isLocked = rx.status === "ISSUED" && s === "DRAFT";
                return (
-                 <button key={s} onClick={() => setStatus(s)} style={{ padding: "12px 14px", borderRadius: "10px", border: active ? `2px solid ${m.dot}` : "2px solid #e2e8f0", background: active ? m.bg : "#f8fafc", color: active ? m.color : "#64748b", fontWeight: active ? 700 : 500, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}>
-                   <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: active ? m.dot : "#cbd5e1" }} />
+                 <button 
+                   key={s} 
+                   onClick={() => !isLocked && setStatus(s)} 
+                   style={{ 
+                     padding: "12px 14px", 
+                     borderRadius: "10px", 
+                     border: active ? `2px solid ${m.dot}` : "2px solid #e2e8f0", 
+                     background: isLocked ? "#f1f5f9" : (active ? m.bg : "#f8fafc"), 
+                     color: isLocked ? "#94a3b8" : (active ? m.color : "#64748b"), 
+                     fontWeight: active ? 700 : 500, 
+                     fontSize: "14px", 
+                     cursor: isLocked ? "not-allowed" : "pointer", 
+                     display: "flex", 
+                     alignItems: "center", 
+                     gap: "10px",
+                     opacity: isLocked ? 0.6 : 1,
+                     position: "relative"
+                   }}
+                 >
+                   <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: isLocked ? "#cbd5e1" : (active ? m.dot : "#cbd5e1") }} />
                    {m.label}
+                   {isLocked && (
+                     <svg width="14" height="14" fill="none" stroke="#94a3b8" viewBox="0 0 24 24" style={{ marginLeft: "4px" }}>
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                     </svg>
+                   )}
                  </button>
                );
              })}
@@ -596,6 +942,17 @@ function PrescriptionBuilder({
     if (!apptId || !patId) return setError("Appointment ID and Patient ID are required.");
     if (items.length === 0) return setError("At least one medicine item is required.");
     
+    // Validate all required item fields
+    const invalidItem = items.find(item => 
+      !item.medicineName?.trim() || 
+      !item.dosage?.trim() || 
+      !item.frequency?.trim() || 
+      !item.duration?.trim()
+    );
+    if (invalidItem) {
+      return setError("All medicine fields (Name, Dosage, Frequency, Duration) are required for each item.");
+    }
+    
     setSaving(true);
     try {
       // Use provided doctor ID
@@ -604,7 +961,7 @@ function PrescriptionBuilder({
         throw new Error("Doctor ID is required.");
       }
 
-      await onSave({
+      const payload = {
         appointmentId: apptId,
         patientId: patId,
         doctorId: dId || "",
@@ -614,9 +971,25 @@ function PrescriptionBuilder({
         followUpDate: followUpRequired ? followUpDate : null,
         digitalSignature,
         items
-      }, initialRx?.id);
+      };
+
+      await onSave(payload, initialRx?.id);
+      setSaving(false);
     } catch(e:any) {
-      setError(e.message || "An error occurred");
+      // Enhanced error handling with detailed message
+      let errorMessage = "An error occurred";
+      if (e.message) {
+        errorMessage = e.message;
+      }
+      
+      // Check for specific validation errors
+      if (errorMessage.includes("required")) {
+        errorMessage = "Please fill in all required fields: Appointment ID, Patient ID, and all medicine fields (Name, Dosage, Frequency, Duration)";
+      } else if (errorMessage.includes("400") || errorMessage.includes("Bad Request")) {
+        errorMessage = "Invalid prescription data. Please check all fields and try again.";
+      }
+      
+      setError(errorMessage);
       setSaving(false);
     }
   };
@@ -625,71 +998,381 @@ function PrescriptionBuilder({
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
       <div style={{ background: "#fff", width: "100%", maxWidth: "800px", borderRadius: "20px", maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", animation: "slideUp 0.3s ease" }}>
         
-        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "linear-gradient(135deg, #0f172a, #1e293b)", padding: "24px", borderBottom: "1px solid #334155", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>{initialRx ? "Edit Draft Prescription" : "Issue Prescription"}</h2>
-            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>Build and digitally sign a prescription</p>
+            <h2 style={{ margin: 0, fontSize: "22px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "24px" }}>{
+                initialRx ? "·" : "Rx"
+              }</span>
+              {initialRx ? "Edit Prescription" : "Issue New Prescription"}
+            </h2>
+            <p style={{ margin: "6px 0 0", color: "#94a3b8", fontSize: "14px", fontWeight: 500 }}>
+              {initialRx ? "Update and save prescription draft" : "Create a new medical prescription"}
+            </p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(15,23,42,0.05)", border: "none", width: "32px", height: "32px", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#475569" }}>✕</button>
+          <button 
+            onClick={onClose} 
+            style={{ 
+              background: "rgba(255,255,255,0.1)", 
+              border: "1px solid rgba(255,255,255,0.2)", 
+              width: "36px", 
+              height: "36px", 
+              borderRadius: "50%", 
+              cursor: "pointer", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              color: "#cbd5e1",
+              fontSize: "18px",
+              fontWeight: "bold",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.2)";
+              e.currentTarget.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+              e.currentTarget.style.color = "#cbd5e1";
+            }}
+          >
+            ×
+          </button>
         </div>
 
         <div style={{ padding: "24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "24px" }}>
           {error && <div style={{ background: "#fef2f2", color: "#ef4444", padding: "12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, border: "1px solid #fca5a5" }}>{error}</div>}
 
           {(!apptId || !patId || !initialRx) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>APPOINTMENT ID</label>
-                <input value={apptId} onChange={e => setApptId(e.target.value)} disabled={!!initialRx} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: initialRx ? "#f8fafc" : "#fff" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>PATIENT ID</label>
-                <input value={patId} onChange={e => setPatId(e.target.value)} disabled={!!initialRx} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", background: initialRx ? "#f8fafc" : "#fff" }} />
+            <div style={{ background: "#f8fafc", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+              <h3 style={{ margin: "0 0 16px", fontSize: "14px", fontWeight: 600, color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px" }}>Patient Information</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>Appointment ID</label>
+                  <input 
+                    value={apptId} 
+                    onChange={e => setApptId(e.target.value)} 
+                    disabled={!!initialRx} 
+                    style={{ 
+                      width: "100%", 
+                      padding: "12px", 
+                      borderRadius: "8px", 
+                      border: "1px solid #cbd5e1", 
+                      background: initialRx ? "#f1f5f9" : "#fff",
+                      fontSize: "14px",
+                      fontWeight: 500
+                    }} 
+                    placeholder="AP-XXXXXXX" 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>Patient ID</label>
+                  <input 
+                    value={patId} 
+                    onChange={e => setPatId(e.target.value)} 
+                    disabled={!!initialRx} 
+                    style={{ 
+                      width: "100%", 
+                      padding: "12px", 
+                      borderRadius: "8px", 
+                      border: "1px solid #cbd5e1", 
+                      background: initialRx ? "#f1f5f9" : "#fff",
+                      fontSize: "14px",
+                      fontWeight: 500
+                    }} 
+                    placeholder="PT-XXXXXXX" 
+                  />
+                </div>
               </div>
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>DIAGNOSIS</label>
-              <input value={diagnosis} onChange={e => setDiagnosis(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }} placeholder="Medical diagnosis..." />
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>Diagnosis</label>
+              <input 
+                value={diagnosis} 
+                onChange={e => setDiagnosis(e.target.value)} 
+                style={{ 
+                  width: "100%", 
+                  padding: "12px", 
+                  borderRadius: "8px", 
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  transition: "border-color 0.2s ease"
+                }} 
+                placeholder="Enter medical diagnosis..." 
+                onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+              />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>CLINICAL NOTES</label>
-              <textarea value={clinicalNotes} onChange={e => setClinicalNotes(e.target.value)} rows={3} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", resize: "vertical" }} placeholder="Observations, next steps..." />
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "6px" }}>Clinical Notes</label>
+              <textarea 
+                value={clinicalNotes} 
+                onChange={e => setClinicalNotes(e.target.value)} 
+                rows={4} 
+                style={{ 
+                  width: "100%", 
+                  padding: "12px", 
+                  borderRadius: "8px", 
+                  border: "1px solid #cbd5e1", 
+                  resize: "vertical",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  lineHeight: "1.5",
+                  transition: "border-color 0.2s ease"
+                }} 
+                placeholder="Clinical observations, symptoms, treatment plan..." 
+                onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+              />
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-             <div>
-               <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: "#334155" }}>
-                  <input type="checkbox" checked={followUpRequired} onChange={e => setFollowUpRequired(e.target.checked)} />
-                  Require Follow-Up
+          <div style={{ background: "#f1f8ff", padding: "20px", borderRadius: "12px", border: "1px solid #bfdbfe" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14px", fontWeight: 600, color: "#1e40af", cursor: "pointer" }}>
+                 <input 
+                   type="checkbox" 
+                   checked={followUpRequired} 
+                   onChange={e => setFollowUpRequired(e.target.checked)} 
+                   style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                 />
+                 <span>Require Follow-up Appointment</span>
                </label>
+               {followUpRequired && (
+                 <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#3b82f6", fontWeight: 500 }}>
+                   <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                   </svg>
+                   Schedule follow-up
+                 </div>
+               )}
+            </div>
+            {followUpRequired && (
+              <div style={{ marginTop: "16px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#1e40af", marginBottom: "8px" }}>Follow-up Date</label>
+                <input 
+                  type="date" 
+                  value={followUpDate} 
+                  onChange={e => setFollowUpDate(e.target.value)} 
+                  style={{ 
+                    width: "100%", 
+                    padding: "12px", 
+                    borderRadius: "8px", 
+                    border: "1px solid #3b82f6",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    background: "#fff"
+                  }} 
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: "#fefefe", padding: "24px", borderRadius: "12px", border: "2px solid #e2e8f0" }}>
+             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "20px" }}>Rx</span>
+                    Medications
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#64748b" }}>Add prescribed medicines and dosage instructions</p>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={addItem} 
+                  style={{ 
+                    padding: "10px 16px", 
+                    fontSize: "13px", 
+                    fontWeight: 600, 
+                    background: "linear-gradient(135deg, #10b981, #059669)", 
+                    color: "#fff", 
+                    border: "none", 
+                    borderRadius: "8px", 
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 8px rgba(16,185,129,0.3)",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(16,185,129,0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(16,185,129,0.3)";
+                  }}
+                >
+                  <span style={{ fontSize: "16px" }}>+</span>
+                  Add Medicine
+                </button>
              </div>
-             {followUpRequired && (
-               <div>
-                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>FOLLOW UP DATE</label>
-                 <input type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+             
+             {items.length === 0 && (
+               <div style={{ 
+                 textAlign: "center", 
+                 padding: "32px", 
+                 background: "#f8fafc", 
+                 borderRadius: "8px", 
+                 border: "1px dashed #cbd5e1"
+               }}>
+                 <div style={{ fontSize: "32px", color: "#cbd5e1", marginBottom: "8px" }}>+</div>
+                 <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>No medications added yet</p>
+                 <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#cbd5e1" }}>Click "Add Medicine" to start prescribing</p>
                </div>
              )}
-          </div>
-
-          <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569" }}>MEDICATIONS</label>
-                <button type="button" onClick={addItem} style={{ padding: "6px 12px", fontSize: "11px", fontWeight: 700, background: "#0ea5e9", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>+ Add Medicine</button>
-             </div>
-             {items.length === 0 && <p style={{ fontSize: "13px", color: "#94a3b8", fontStyle: "italic", margin: 0 }}>No medications added.</p>}
+             
              {items.map((it, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr auto", gap: "8px", marginBottom: "12px", alignItems: "start" }}>
-                   <input placeholder="Name" value={it.medicineName} onChange={e => updateItem(i, "medicineName", e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize:"13px" }} />
-                   <input placeholder="Dosage" value={it.dosage} onChange={e => updateItem(i, "dosage", e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize:"13px" }} />
-                   <input placeholder="Freq" value={it.frequency} onChange={e => updateItem(i, "frequency", e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize:"13px" }} />
-                   <input placeholder="Duration" value={it.duration} onChange={e => updateItem(i, "duration", e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize:"13px" }} />
-                   <input placeholder="Qty" value={it.quantity} onChange={e => updateItem(i, "quantity", e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize:"13px" }} />
-                   <button type="button" onClick={() => removeItem(i)} style={{ background: "rgba(239,68,68,0.1)", border: "none", padding: "8px", borderRadius: "6px", cursor: "pointer", color: "#dc2626" }}>✕</button>
-                   <input placeholder="Instructions..." value={it.instructions} onChange={e => updateItem(i, "instructions", e.target.value)} style={{ gridColumn: "1 / -1", width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize:"12px", background:"#fff" }} />
+                <div key={i} style={{ 
+                  background: "#fff", 
+                  border: "1px solid #e2e8f0", 
+                  borderRadius: "8px", 
+                  padding: "16px", 
+                  marginBottom: "12px",
+                  position: "relative"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Medicine #{i + 1}
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => removeItem(i)} 
+                      style={{ 
+                        background: "rgba(239,68,68,0.1)", 
+                        border: "1px solid rgba(239,68,68,0.2)", 
+                        padding: "6px", 
+                        borderRadius: "6px", 
+                        cursor: "pointer", 
+                        color: "#dc2626",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        width: "28px",
+                        height: "28px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(239,68,68,0.2)";
+                        e.currentTarget.style.color = "#b91c1c";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+                        e.currentTarget.style.color = "#dc2626";
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                     <input 
+                       placeholder="Medicine Name*" 
+                       value={it.medicineName} 
+                       onChange={e => updateItem(i, "medicineName", e.target.value)} 
+                       style={{ 
+                         width: "100%", 
+                         padding: "10px", 
+                         borderRadius: "6px", 
+                         border: "1px solid #cbd5e1", 
+                         fontSize:"13px",
+                         fontWeight: 500,
+                         transition: "border-color 0.2s ease"
+                       }}
+                       onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                       onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+                     />
+                     <input 
+                       placeholder="Dosage*" 
+                       value={it.dosage} 
+                       onChange={e => updateItem(i, "dosage", e.target.value)} 
+                       style={{ 
+                         width: "100%", 
+                         padding: "10px", 
+                         borderRadius: "6px", 
+                         border: "1px solid #cbd5e1", 
+                         fontSize:"13px",
+                         fontWeight: 500,
+                         transition: "border-color 0.2s ease"
+                       }}
+                       onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                       onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+                     />
+                     <input 
+                       placeholder="Frequency*" 
+                       value={it.frequency} 
+                       onChange={e => updateItem(i, "frequency", e.target.value)} 
+                       style={{ 
+                         width: "100%", 
+                         padding: "10px", 
+                         borderRadius: "6px", 
+                         border: "1px solid #cbd5e1", 
+                         fontSize:"13px",
+                         fontWeight: 500,
+                         transition: "border-color 0.2s ease"
+                       }}
+                       onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                       onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+                     />
+                     <input 
+                       placeholder="Duration*" 
+                       value={it.duration} 
+                       onChange={e => updateItem(i, "duration", e.target.value)} 
+                       style={{ 
+                         width: "100%", 
+                         padding: "10px", 
+                         borderRadius: "6px", 
+                         border: "1px solid #cbd5e1", 
+                         fontSize:"13px",
+                         fontWeight: 500,
+                         transition: "border-color 0.2s ease"
+                       }}
+                       onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                       onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+                     />
+                     <input 
+                       placeholder="Quantity" 
+                       value={it.quantity} 
+                       onChange={e => updateItem(i, "quantity", e.target.value)} 
+                       style={{ 
+                         width: "100%", 
+                         padding: "10px", 
+                         borderRadius: "6px", 
+                         border: "1px solid #cbd5e1", 
+                         fontSize:"13px",
+                         fontWeight: 500,
+                         transition: "border-color 0.2s ease"
+                       }}
+                       onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                       onBlur={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
+                     />
+                   </div>
+                   <input 
+                     placeholder="Special instructions (e.g., Take with food, Before meals...)" 
+                     value={it.instructions} 
+                     onChange={e => updateItem(i, "instructions", e.target.value)} 
+                     style={{ 
+                       width: "100%", 
+                       padding: "10px", 
+                       borderRadius: "6px", 
+                       border: "1px solid #e2e8f0", 
+                       fontSize:"12px", 
+                       background:"#f8fafc",
+                       fontWeight: 500,
+                       transition: "border-color 0.2s ease"
+                     }}
+                     onFocus={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                     onBlur={(e) => e.currentTarget.style.borderColor = "#e2e8f0"}
+                   />
                 </div>
              ))}
           </div>
@@ -697,11 +1380,86 @@ function PrescriptionBuilder({
           <DigitalSignature onSave={setDigitalSignature} initialSignature={digitalSignature} />
         </div>
 
-        <div style={{ padding: "20px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "12px", background: "#f8fafc", borderRadius: "0 0 20px 20px" }}>
-           <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "10px", border: "1px solid #cbd5e1", background: "#fff", color: "#64748b", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-           <button onClick={handleSave} disabled={saving} style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, #0ea5e9, #0284c7)", color: "#fff", fontWeight: 700, cursor: saving ? "wait" : "pointer", boxShadow: "0 4px 12px rgba(2,132,199,0.3)" }}>
-             {saving ? "Saving..." : (initialRx ? "Update Draft" : "Save Prescription")}
-           </button>
+        <div style={{ padding: "24px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", borderRadius: "0 0 20px 20px" }}>
+           <div style={{ fontSize: "12px", color: "#64748b" }}>
+             <span style={{ fontWeight: 600 }}>Note:</span> All required fields must be completed before saving
+           </div>
+           <div style={{ display: "flex", gap: "12px" }}>
+             <button 
+               onClick={onClose} 
+               style={{ 
+                 padding: "12px 24px", 
+                 borderRadius: "10px", 
+                 border: "2px solid #e2e8f0", 
+                 background: "#fff", 
+                 color: "#64748b", 
+                 fontWeight: 600, 
+                 cursor: "pointer",
+                 fontSize: "14px",
+                 transition: "all 0.2s ease"
+               }}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.background = "#f8fafc";
+                 e.currentTarget.style.borderColor = "#cbd5e1";
+                 e.currentTarget.style.color = "#475569";
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.background = "#fff";
+                 e.currentTarget.style.borderColor = "#e2e8f0";
+                 e.currentTarget.style.color = "#64748b";
+               }}
+             >
+               Cancel
+             </button>
+             <button 
+               onClick={handleSave} 
+               disabled={saving} 
+               style={{ 
+                 padding: "12px 28px", 
+                 borderRadius: "10px", 
+                 border: "none", 
+                 background: saving 
+                   ? "#94a3b8" 
+                   : "linear-gradient(135deg, #0ea5e9, #0284c7)", 
+                 color: "#fff", 
+                 fontWeight: 700, 
+                 cursor: saving ? "not-allowed" : "pointer", 
+                 boxShadow: saving 
+                   ? "none" 
+                   : "0 4px 12px rgba(2,132,199,0.3)",
+                 fontSize: "14px",
+                 transition: "all 0.2s ease",
+                 opacity: saving ? 0.7 : 1,
+                 display: "flex",
+                 alignItems: "center",
+                 gap: "8px"
+               }}
+               onMouseEnter={(e) => {
+                 if (!saving) {
+                   e.currentTarget.style.transform = "translateY(-1px)";
+                   e.currentTarget.style.boxShadow = "0 6px 16px rgba(2,132,199,0.4)";
+                 }
+               }}
+               onMouseLeave={(e) => {
+                 if (!saving) {
+                   e.currentTarget.style.transform = "translateY(0)";
+                   e.currentTarget.style.boxShadow = "0 4px 12px rgba(2,132,199,0.3)";
+                 }
+               }}
+             >
+               {saving && (
+                 <div style={{ 
+                   width: "16px", 
+                   height: "16px", 
+                   border: "2px solid #fff", 
+                   borderTop: "2px solid transparent", 
+                   borderRadius: "50%", 
+                   animation: "spin 1s linear infinite" 
+                 }}></div>
+               )}
+               {saving ? "Saving..." : (initialRx ? "Update Draft" : "Save Prescription")}
+             </button>
+           </div>
         </div>
       </div>
     </div>
@@ -787,7 +1545,9 @@ export function DoctorPrescriptionsContent() {
     setBuilderOpen(true);
   };
 
-  useEffect(() => { fetchDoctorPrescriptions(); }, [fetchDoctorPrescriptions]);
+  useEffect(() => { 
+  fetchDoctorPrescriptions(); 
+}, [fetchDoctorPrescriptions]);
 
   useEffect(() => {
     if (prescriptionDraftAppointment) {
@@ -840,16 +1600,85 @@ export function DoctorPrescriptionsContent() {
         </div>
         <button
           onClick={() => { setEditingRx(null); setSelectApptOpen(true); }}
-          style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, #06b6d4, #0891b2)", color: "#fff", fontWeight: 700, fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 14px rgba(6,182,212,0.3)", display: "flex", gap: "8px", alignItems: "center" }}
+          style={{ 
+            padding: "12px 24px", 
+            borderRadius: "12px", 
+            border: "none", 
+            background: "linear-gradient(135deg, #06b6d4, #0891b2)", 
+            color: "#fff", 
+            fontWeight: 700, 
+            fontSize: "15px", 
+            cursor: "pointer", 
+            boxShadow: "0 4px 14px rgba(6,182,212,0.3)", 
+            display: "flex", 
+            gap: "10px", 
+            alignItems: "center",
+            transition: "all 0.2s ease"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "linear-gradient(135deg, #0891b2, #0e7490)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(6,182,212,0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "linear-gradient(135deg, #06b6d4, #0891b2)";
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(6,182,212,0.3)";
+          }}
         >
-          <span style={{ fontSize: "18px" }}>+</span> New Prescription
+          <span style={{ fontSize: "20px", fontWeight: "bold" }}>+</span> New Prescription
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+      <div style={{ display: "flex", gap: "6px", marginBottom: "20px", padding: "4px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
         {["ALL", "DRAFT", "ISSUED", "CANCELLED"].map(f => (
-          <button key={f} onClick={() => setFilter(f as any)} style={{ padding: "6px 14px", borderRadius: "8px", border: filter === f ? "1px solid #06b6d4" : "1px solid #e2e8f0", background: filter === f ? "rgba(6,182,212,0.1)" : "#fff", color: filter === f ? "#0891b2" : "#64748b", fontWeight: filter === f ? 700 : 500, fontSize: "12px", cursor: "pointer", transition: "all 0.2s" }}>
+          <button 
+            key={f} 
+            onClick={() => setFilter(f as any)} 
+            style={{ 
+              padding: "8px 16px", 
+              borderRadius: "8px", 
+              border: filter === f ? "2px solid #06b6d4" : "2px solid transparent", 
+              background: filter === f ? "linear-gradient(135deg, #06b6d4, #0891b2)" : "#fff", 
+              color: filter === f ? "#fff" : "#64748b", 
+              fontWeight: filter === f ? 600 : 500, 
+              fontSize: "13px", 
+              cursor: "pointer", 
+              transition: "all 0.2s ease",
+              boxShadow: filter === f ? "0 2px 8px rgba(6,182,212,0.3)" : "0 1px 3px rgba(0,0,0,0.1)",
+              position: "relative",
+              overflow: "hidden"
+            }}
+            onMouseEnter={(e) => {
+              if (filter !== f) {
+                e.currentTarget.style.background = "#f8fafc";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+                e.currentTarget.style.color = "#475569";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (filter !== f) {
+                e.currentTarget.style.background = "#fff";
+                e.currentTarget.style.borderColor = "transparent";
+                e.currentTarget.style.color = "#64748b";
+                e.currentTarget.style.transform = "translateY(0)";
+              }
+            }}
+          >
             {f}
+            {filter === f && (
+              <div style={{
+                position: "absolute",
+                top: "2px",
+                right: "2px",
+                width: "6px",
+                height: "6px",
+                background: "#fff",
+                borderRadius: "50%",
+                opacity: 0.8
+              }} />
+            )}
           </button>
         ))}
       </div>
@@ -914,8 +1743,13 @@ export function DoctorPrescriptionsContent() {
           rx={statusRx}
           onClose={() => setStatusRx(null)}
           onSave={async (status) => {
-            await updatePrescriptionStatus(statusRx.id, status);
-            fetchDoctorPrescriptions();
+            try {
+              await updatePrescriptionStatus(statusRx.id, status);
+              setToast({ message: `Prescription status updated to ${status}`, type: "success" });
+              fetchDoctorPrescriptions();
+            } catch (error: any) {
+              setToast({ message: error.message || "Failed to update status", type: "error" });
+            }
           }}
         />
       )}
@@ -926,16 +1760,28 @@ export function DoctorPrescriptionsContent() {
           patientId={builderPatientId}
           doctorId={doctor?.id || ""}
           initialRx={editingRx}
-          onClose={() => { setBuilderOpen(false); setBuilderAppointmentId(""); setBuilderPatientId(""); setEditingRx(null); fetchDoctorPrescriptions(); }}
+          onClose={() => { 
+            setBuilderOpen(false); 
+            setBuilderAppointmentId(""); 
+            setBuilderPatientId(""); 
+            setEditingRx(null); 
+            fetchDoctorPrescriptions(); 
+          }}
           onSave={async (payload, id) => {
-             if (id) {
-                await updatePrescription(id, payload);
-             } else {
-                await createPrescription(payload);
+             try {
+               if (id) {
+                  await updatePrescription(id, payload);
+                  setToast({ message: "Prescription updated successfully", type: "success" });
+               } else {
+                  await createPrescription(payload);
+                  setToast({ message: "Prescription created successfully", type: "success" });
+               }
+               setBuilderOpen(false);
+               setEditingRx(null);
+               fetchDoctorPrescriptions();
+             } catch (error: any) {
+               setToast({ message: error.message || "Failed to save prescription", type: "error" });
              }
-             setBuilderOpen(false);
-             setEditingRx(null);
-             fetchDoctorPrescriptions();
           }}
         />
       )}
@@ -1068,8 +1914,8 @@ export function DoctorPrescriptionsContent() {
               justifyContent: "center",
               flexShrink: 0
             }}>
-              <span style={{ fontSize: "14px" }}>
-                {toast.type === "success" ? "check" : "close"}
+              <span style={{ fontSize: "18px", fontWeight: "bold", lineHeight: "1" }}>
+                {toast.type === "success" ? "✓" : "✗"}
               </span>
             </div>
             <div style={{ flex: 1 }}>

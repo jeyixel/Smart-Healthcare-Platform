@@ -109,7 +109,32 @@ export function usePrescriptions() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to create prescription");
+        console.log("Backend error response:", errorData); // Keep this for debugging
+        
+        // Parse Spring Boot ProblemDetail format
+        let errorMessage = "Failed to create prescription";
+        let errorTitle = "";
+        
+        if (errorData.detail) {
+          // Spring Boot ProblemDetail format
+          errorMessage = errorData.detail;
+          errorTitle = errorData.title || "";
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.errors) {
+          // Handle validation errors
+          const validationErrors = Object.values(errorData.errors).flat().join(', ');
+          errorMessage = `Validation failed: ${validationErrors}`;
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        }
+        
+        // Include error title if available
+        if (errorTitle) {
+          errorMessage = `${errorTitle}: ${errorMessage}`;
+        }
+        
+        throw new Error(errorMessage);
       }
       const newPrx = await res.json();
       setPrescriptions((prev) => [newPrx, ...prev]);
@@ -132,7 +157,18 @@ export function usePrescriptions() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update status");
+        
+        // Parse Spring Boot ProblemDetail format
+        let errorMessage = "Failed to update status";
+        if (err.detail) {
+          errorMessage = err.detail;
+          if (err.title) {
+            errorMessage = `${err.title}: ${errorMessage}`;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        throw new Error(errorMessage);
       }
       const updated = await res.json();
       setPrescriptions((prev) =>
@@ -157,7 +193,18 @@ export function usePrescriptions() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update prescription");
+        
+        // Parse Spring Boot ProblemDetail format
+        let errorMessage = "Failed to update prescription";
+        if (err.detail) {
+          errorMessage = err.detail;
+          if (err.title) {
+            errorMessage = `${err.title}: ${errorMessage}`;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        throw new Error(errorMessage);
       }
       const updated = await res.json();
       setPrescriptions((prev) =>
@@ -180,7 +227,18 @@ export function usePrescriptions() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to delete prescription");
+        
+        // Parse Spring Boot ProblemDetail format
+        let errorMessage = "Failed to delete prescription";
+        if (err.detail) {
+          errorMessage = err.detail;
+          if (err.title) {
+            errorMessage = `${err.title}: ${errorMessage}`;
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        throw new Error(errorMessage);
       }
       setPrescriptions((prev) => prev.filter((p) => p.id !== id));
     },
