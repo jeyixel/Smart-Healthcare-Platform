@@ -8,10 +8,12 @@ import {
   Patient,
   PatientEvent,
   RegisterInput,
+  NotificationLog,
 } from "@/types/api";
 
 const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API_BASE ?? "http://localhost:8087";
 const PATIENT_API = process.env.NEXT_PUBLIC_PATIENT_API_BASE ?? "http://localhost:8081";
+const NOTIFICATION_API = process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE ?? "http://localhost:8086";
 
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -150,6 +152,24 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
+export async function fetchPatientByEmail(email: string): Promise<Patient> {
+  const response = await fetch(`${PATIENT_API}/api/v1/patients/email/${email}`, {
+    cache: "no-store",
+  });
+
+  return safeJson<Patient>(response);
+}
+
+export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
+  const response = await fetch(`${PATIENT_API}/api/v1/patients/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<Patient>(response);
+}
+
 export async function fetchCurrentUser(token: string): Promise<CurrentUserProfile> {
   const response = await fetch(`${ADMIN_API}/api/v1/auth/me`, {
     headers: {
@@ -159,4 +179,12 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
   });
 
   return safeJson<CurrentUserProfile>(response);
+}
+
+export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${NOTIFICATION_API}/api/notifications/logs/${recipient}`, {
+    cache: "no-store",
+  });
+
+  return safeJson<NotificationLog[]>(response);
 }

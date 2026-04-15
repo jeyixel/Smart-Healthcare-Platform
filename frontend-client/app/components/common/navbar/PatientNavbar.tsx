@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styles from "./PatientNavbar.module.css";
+import { fetchNotifications } from "@/lib/api";
+import { NotificationLog } from "@/types/api";
 
 const NAV_LINKS = [
   { label: "Home",       href: "#home" },
@@ -10,41 +12,6 @@ const NAV_LINKS = [
   { label: "About Us",   href: "#about" },
   { label: "Blog",       href: "#blog" },
   { label: "Contact Us", href: "#contact" },
-];
-
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: "appointment",
-    title: "Appointment Confirmed",
-    message: "Your appointment with Dr. Sarah Lee is confirmed for Apr 18 at 10:00 AM.",
-    time: "2 min ago",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "lab",
-    title: "Lab Results Ready",
-    message: "Your blood panel results are ready. Tap to view full report.",
-    time: "1 hr ago",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "reminder",
-    title: "Medication Reminder",
-    message: "Don't forget to take Metformin 500mg with dinner tonight.",
-    time: "3 hrs ago",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "message",
-    title: "Message from Dr. Kumar",
-    message: "Please avoid strenuous exercise for the next 48 hours and drink plenty of fluids.",
-    time: "Yesterday",
-    read: true,
-  },
 ];
 
 function NotificationIcon({ type }: { type: string }) {
@@ -77,12 +44,29 @@ function NotificationIcon({ type }: { type: string }) {
   );
 }
 
+function timeAgo(dateStr: string) {
+  try {
+    const now = new Date();
+    const sent = new Date(dateStr);
+    const diffInMs = now.getTime() - sent.getTime();
+    const diffInMins = Math.floor(diffInMs / (1000 * 60));
+    
+    if (diffInMins < 1) return "Just now";
+    if (diffInMins < 60) return `${diffInMins} min ago`;
+    const diffInHrs = Math.floor(diffInMins / 60);
+    if (diffInHrs < 24) return `${diffInHrs} hr${diffInHrs > 1 ? "s" : ""} ago`;
+    return sent.toLocaleDateString();
+  } catch {
+    return "Recently";
+  }
+}
+
 export default function PatientNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<any[]>([]);
   // Defer localStorage reads to after hydration to prevent SSR mismatch
   const [patientEmail, setPatientEmail] = useState("");
 
@@ -97,8 +81,36 @@ export default function PatientNavbar() {
 
   // Read from localStorage only on the client after mount
   useEffect(() => {
-    setPatientEmail(localStorage.getItem("smart_admin_email") ?? "patient@smarthealth.com");
+    const email = localStorage.getItem("smart_admin_email") || "patient@smarthealth.com";
+    setPatientEmail(email);
   }, []);
+
+  // Fetch real notifications
+  useEffect(() => {
+    if (!patientEmail) return;
+
+    async function loadNotifications() {
+      try {
+        const logs: NotificationLog[] = await fetchNotifications(patientEmail);
+        const mapped = logs.map(log => ({
+          id: log.id,
+          title: log.subject,
+          message: log.message,
+          time: timeAgo(log.sentAt),
+          read: true, // Auto-read for now as backend doesn't track read status
+          type: log.subject.toLowerCase().includes("appointment") ? "appointment" : 
+                log.subject.toLowerCase().includes("lab") ? "lab" : "reminder"
+        }));
+        setNotifications(mapped);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    }
+
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000); // Polling every 30s
+    return () => clearInterval(interval);
+  }, [patientEmail]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -263,13 +275,13 @@ export default function PatientNavbar() {
 
                   <ul className={styles.profileMenuList} role="list">
                     <li>
-                      <a href="#" className={styles.profileMenuItem} id="profile-view-link">
+                      <Link href="/patient/profile" className={styles.profileMenuItem} id="profile-view-link">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                           <circle cx="12" cy="7" r="4" />
                         </svg>
                         View Profile
-                      </a>
+                      </Link>
                     </li>
                     <li>
                       <a href="#" className={styles.profileMenuItem} id="profile-appointments-link">
