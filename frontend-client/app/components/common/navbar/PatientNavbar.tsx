@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./PatientNavbar.module.css";
 
 const NAV_LINKS = [
@@ -12,9 +12,93 @@ const NAV_LINKS = [
   { label: "Contact Us", href: "#contact" },
 ];
 
+const MOCK_NOTIFICATIONS = [
+  {
+    id: 1,
+    type: "appointment",
+    title: "Appointment Confirmed",
+    message: "Your appointment with Dr. Sarah Lee is confirmed for Apr 18 at 10:00 AM.",
+    time: "2 min ago",
+    read: false,
+  },
+  {
+    id: 2,
+    type: "lab",
+    title: "Lab Results Ready",
+    message: "Your blood panel results are ready. Tap to view full report.",
+    time: "1 hr ago",
+    read: false,
+  },
+  {
+    id: 3,
+    type: "reminder",
+    title: "Medication Reminder",
+    message: "Don't forget to take Metformin 500mg with dinner tonight.",
+    time: "3 hrs ago",
+    read: true,
+  },
+  {
+    id: 4,
+    type: "message",
+    title: "Message from Dr. Kumar",
+    message: "Please avoid strenuous exercise for the next 48 hours and drink plenty of fluids.",
+    time: "Yesterday",
+    read: true,
+  },
+];
+
+function NotificationIcon({ type }: { type: string }) {
+  if (type === "appointment")
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    );
+  if (type === "lab")
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0a5 5 0 0010 0V9M9 14a5 5 0 01-4-4.9V5" />
+      </svg>
+    );
+  if (type === "reminder")
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 01-3.46 0" />
+      </svg>
+    );
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+    </svg>
+  );
+}
+
 export default function PatientNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  // Defer localStorage reads to after hydration to prevent SSR mismatch
+  const [patientEmail, setPatientEmail] = useState("");
+
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  const patientName = patientEmail
+    ? patientEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "";
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Read from localStorage only on the client after mount
+  useEffect(() => {
+    setPatientEmail(localStorage.getItem("smart_admin_email") ?? "patient@smarthealth.com");
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -26,6 +110,31 @@ export default function PatientNavbar() {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  function markAllRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("smart_admin_token");
+    localStorage.removeItem("smart_admin_role");
+    localStorage.removeItem("smart_admin_email");
+    window.location.href = "/login";
+  }
 
   return (
     <>
@@ -62,11 +171,153 @@ export default function PatientNavbar() {
             ))}
           </ul>
 
-          {/* CTA */}
+          {/* Right-side actions */}
           <div className={styles.navActions}>
             <Link href="/register" className={styles.btnBook} id="nav-book-btn">
               Book Appointment
             </Link>
+
+            {/* ── Notification Bell ── */}
+            <div className={styles.iconGroup} ref={notifRef}>
+              <button
+                id="nav-notification-btn"
+                className={`${styles.iconBtn} ${notifOpen ? styles.iconBtnActive : ""}`}
+                aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+                onClick={() => { setNotifOpen((p) => !p); setProfileOpen(false); }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {notifOpen && (
+                <div className={styles.dropdown} role="dialog" aria-label="Notifications">
+                  <div className={styles.dropdownHeader}>
+                    <span className={styles.dropdownTitle}>Notifications</span>
+                    {unreadCount > 0 && (
+                      <button className={styles.markReadBtn} onClick={markAllRead}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <ul className={styles.notifList} role="list">
+                    {notifications.map((n) => (
+                      <li
+                        key={n.id}
+                        className={`${styles.notifItem} ${!n.read ? styles.notifItemUnread : ""}`}
+                      >
+                        <span
+                          className={`${styles.notifIcon} ${styles[`notifIcon_${n.type}`]}`}
+                          aria-hidden="true"
+                        >
+                          <NotificationIcon type={n.type} />
+                        </span>
+                        <div className={styles.notifBody}>
+                          <p className={styles.notifTitle}>{n.title}</p>
+                          <p className={styles.notifMsg}>{n.message}</p>
+                          <span className={styles.notifTime}>{n.time}</span>
+                        </div>
+                        {!n.read && <span className={styles.unreadDot} aria-label="Unread" />}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className={styles.dropdownFooter}>
+                    <a href="#" className={styles.viewAllLink}>View all notifications</a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Profile Avatar ── */}
+            <div className={styles.iconGroup} ref={profileRef}>
+              <button
+                id="nav-profile-btn"
+                className={`${styles.avatarBtn} ${profileOpen ? styles.avatarBtnActive : ""}`}
+                aria-label="Profile menu"
+                onClick={() => { setProfileOpen((p) => !p); setNotifOpen(false); }}
+              >
+                <span className={styles.avatarInitial}>
+                  {patientName.charAt(0).toUpperCase()}
+                </span>
+              </button>
+
+              {/* Profile Dropdown */}
+              {profileOpen && (
+                <div className={`${styles.dropdown} ${styles.dropdownProfile}`} role="dialog" aria-label="Profile menu">
+                  <div className={styles.profileHeader}>
+                    <div className={styles.profileAvatarLg}>
+                      {patientName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className={styles.profileName}>{patientName}</p>
+                      <p className={styles.profileEmail}>{patientEmail}</p>
+                    </div>
+                  </div>
+
+                  <ul className={styles.profileMenuList} role="list">
+                    <li>
+                      <a href="#" className={styles.profileMenuItem} id="profile-view-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        View Profile
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className={styles.profileMenuItem} id="profile-appointments-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="4" width="18" height="18" rx="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        My Appointments
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className={styles.profileMenuItem} id="profile-health-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                        Health Records
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className={styles.profileMenuItem} id="profile-settings-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                        </svg>
+                        Settings
+                      </a>
+                    </li>
+                  </ul>
+
+                  <div className={styles.profileMenuDivider} />
+
+                  <button
+                    className={styles.logoutBtn}
+                    id="profile-logout-btn"
+                    onClick={handleLogout}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Hamburger */}
@@ -90,6 +341,15 @@ export default function PatientNavbar() {
         aria-hidden={!menuOpen}
       >
         <div className={styles.mobileMenuInner}>
+          {/* Mobile profile strip */}
+          <div className={styles.mobileProfile}>
+            <div className={styles.mobileProfileAvatar}>{patientName.charAt(0).toUpperCase()}</div>
+            <div>
+              <p className={styles.mobileProfileName}>{patientName}</p>
+              <p className={styles.mobileProfileEmail}>{patientEmail}</p>
+            </div>
+          </div>
+
           <ul className={styles.mobileNavLinks} role="list">
             {NAV_LINKS.map(link => (
               <li key={link.label}>
@@ -105,6 +365,14 @@ export default function PatientNavbar() {
                   id="mob-book-btn" onClick={() => setMenuOpen(false)}>
               Book Appointment
             </Link>
+            <button className={styles.mobileLogoutBtn} onClick={handleLogout}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
