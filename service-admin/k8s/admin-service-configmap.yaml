@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-service-config
+  namespace: smart-healthcare
+  labels:
+    app: admin-service
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  ADMIN_DB_DDL_AUTO: "update"
+  ADMIN_DB_SHOW_SQL: "false"
+  ADMIN_DB_SCHEMA: "admin_schema"
+  PATIENT_SERVICE_BASE_URL: "http://patient-service:8081"
+  PATIENT_SERVICE_SET_STATUS_ENDPOINT: "/api/v1/internal/patients/{patientId}/status"
+  PATIENT_SERVICE_UPSERT_PRESCRIPTION_ENDPOINT: "/api/v1/internal/prescription-snapshots"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  KAFKA_CONSUMER_GROUP: "service-admin-group"
+  PATIENT_EVENTS_TOPIC: "patient-events"
+  OTP_EXPIRATION_MINUTES: "10"
+  MAIL_FROM: "no-reply@smarthealth.local"
+  MAIL_HOST: "smtp.gmail.com"
+  MAIL_PORT: "587"
+  MAIL_SMTP_AUTH: "true"
+  MAIL_SMTP_STARTTLS: "true"

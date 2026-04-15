@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-payment
+  labels:
+    app: service-payment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-payment
+  template:
+    metadata:
+      labels:
+        app: service-payment
+    spec:
+      containers:
+        - name: service-payment
+          image: smart-healthcare/service-payment:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: payment-secrets
+                  key: db-url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: payment-secrets
+                  key: db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: payment-secrets
+                  key: db-password
+            - name: PAYHERE_MERCHANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: payment-secrets
+                  key: payhere-merchant-id
+            - name: PAYHERE_MERCHANT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: payment-secrets
+                  key: payhere-merchant-secret
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-payment
+spec:
+  selector:
+    app: service-payment
+  ports:
+    - protocol: TCP
+      port: 8084
+      targetPort: 8084
+  type: ClusterIP

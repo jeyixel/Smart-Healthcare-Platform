@@ -27,6 +27,15 @@ public class PatientServiceProperties {
     public static class Endpoints {
         private String setStatus;
         private String upsertPrescription;
+        private String base;
+
+        public String getBase() {
+            return base;
+        }
+
+        public void setBase(String base) {
+            this.base = base;
+        }
 
         public String getSetStatus() {
             return setStatus;
