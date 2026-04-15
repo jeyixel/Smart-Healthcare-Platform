@@ -24,6 +24,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final PatientAdminService patientAdminService;
+    private final NotificationAdminService notificationAdminService;
 
     public AuthResponse register(RegisterRequest request) {
         String normalizedEmail = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
@@ -60,9 +61,12 @@ public class AuthenticationService {
                         .authUserId(user.getId().toString())
                         .phoneNumber("NONE") // Default placeholder as it's required by Patient service
                         .build());
+                
+                // Trigger welcome notification
+                notificationAdminService.sendWelcomeEmail(user.getEmail(), user.getFirstName());
             } catch (Exception e) {
                 // Log error but continue for now, or handle as needed
-                System.err.println("Failed to sync patient record: " + e.getMessage());
+                System.err.println("Failed to sync records or send notification: " + e.getMessage());
             }
         }
 

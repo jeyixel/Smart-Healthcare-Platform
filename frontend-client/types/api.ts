@@ -70,3 +70,14 @@ export interface CurrentUserProfile {
   role: UserRole;
   approved: boolean;
 }
+
+export interface NotificationLog {
+  id: number;
+  recipient: string;
+  subject: string;
+  message: string;
+  type: "EMAIL" | "SMS" | "PUSH" | "IN_APP";
+  status: "SENT" | "FAILED" | "PENDING";
+  errorMessage: string | null;
+  sentAt: string;
+}
