@@ -26,7 +26,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -47,9 +46,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         userEmail = jwtService.extractUsername(jwt);
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            String role = jwtService.extractRole(jwt);
+            UserDetails userDetails = org.springframework.security.core.userdetails.User
+                    .withUsername(userEmail)
+                    .password("")
+                    .authorities("ROLE_" + role)
+                    .build();
+
             if (jwtService.isTokenValid(jwt, userDetails)) {
-                String role = jwtService.extractRole(jwt);
                 Collection<GrantedAuthority> authorities = List.of(
                         new SimpleGrantedAuthority("ROLE_" + role)
                 );

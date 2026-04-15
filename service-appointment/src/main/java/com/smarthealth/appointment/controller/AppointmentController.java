@@ -26,7 +26,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @appointmentService.isAppointmentOwner(#id, authentication.principal.userId)")
+    @PreAuthorize("isAuthenticated()")
     public AppointmentResponse getById(@PathVariable UUID id) {
         return appointmentService.getById(id);
     }

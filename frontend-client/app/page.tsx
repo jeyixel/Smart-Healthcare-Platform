@@ -1,65 +1,178 @@
-import Image from "next/image";
+"use client";
+
+import { EventFeed } from "@/app/components/patient-management/EventFeed";
+import { PatientTable } from "@/app/components/patient-management/PatientTable";
+import {
+  fetchPatientEvents,
+  fetchPatients,
+  updatePatientStatus,
+} from "@/lib/api";
+import Link from "next/link";
+import { Patient, PatientEvent } from "@/types/api";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Home() {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [events, setEvents] = useState<PatientEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [adminEmail, setAdminEmail] = useState<string>("admin@example.com");
+  const [token, setToken] = useState<string | null>(null);
+  const [authRole, setAuthRole] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string>("");
+
+  const canMutate = useMemo(() => Boolean(token), [token]);
+
+  async function refreshAll() {
+    setLoading(true);
+    setNotice("");
+    try {
+      const [patientsResponse, eventsResponse] = await Promise.all([
+        fetchPatients(),
+        fetchPatientEvents(),
+      ]);
+      setPatients(patientsResponse);
+      setEvents(eventsResponse);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Failed to refresh data");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("smart_admin_token");
+    const savedRole = localStorage.getItem("smart_admin_role");
+    const savedEmail = localStorage.getItem("smart_admin_email");
+
+    if (savedToken) {
+      setToken(savedToken);
+    }
+
+    // Redirect to appropriate dashboard based on role
+    if (savedRole === "DOCTOR") {
+      window.location.href = "/doctor";
+      return;
+    }
+    if (savedRole === "PATIENT") {
+      window.location.href = "/patient";
+      return;
+    }
+    if (savedRole === "ADMIN") {
+      window.location.href = "/admin";
+      return;
+    }
+
+    if (savedRole) {
+      setAuthRole(savedRole);
+    }
+
+    if (savedEmail) {
+      setAdminEmail(savedEmail);
+    }
+
+    refreshAll();
+  }, []);
+
+  function logout() {
+    localStorage.removeItem("smart_admin_token");
+    localStorage.removeItem("smart_admin_role");
+    localStorage.removeItem("smart_admin_email");
+    setToken(null);
+    setAuthRole(null);
+    setNotice("Signed out.");
+  }
+
+  async function onToggleStatus(patient: Patient, active: boolean) {
+    if (!token) {
+      setNotice("Login first to perform admin actions.");
+      return;
+    }
+
+    setLoading(true);
+    setNotice("");
+    try {
+      await updatePatientStatus(token, patient.id, active, adminEmail);
+      await refreshAll();
+      setNotice(`Patient ${patient.firstName} status updated to ${active ? "ACTIVE" : "INACTIVE"}.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Status update failed");
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="console-page">
+      <section className="hero hero-split">
+        <div className="hero-copy">
+          <div className="hero-badge">Smart Healthcare Platform</div>
+          <h1>Modern admin access for patient operations</h1>
+          <p>
+            Sign in to manage patients, trigger status changes, and watch the
+            event stream update in real time.
           </p>
+
+          <div className="hero-highlights" aria-label="Platform highlights">
+            <span>Secure JWT login</span>
+            <span>Patient management</span>
+            <span>Live event visibility</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="hero-metrics" aria-label="Service status">
+          <div className="metric-card">
+            <span>Admin API</span>
+            <strong>Online</strong>
+            <small>Port 8087</small>
+          </div>
+          <div className="metric-card">
+            <span>Patient API</span>
+            <strong>Online</strong>
+            <small>Port 8081</small>
+          </div>
+          <div className="metric-card metric-card-accent">
+            <span>Session</span>
+            <strong>{token ? "Authenticated" : "Ready to login"}</strong>
+            <small>{authRole ?? "ADMIN access"}</small>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {!token ? (
+        <section className="panel auth-gate">
+          <p className="eyebrow">Authentication required</p>
+          <h2>Login or create an admin account to continue</h2>
+          <p className="panel-subtitle">
+            Access control is now handled on dedicated pages for a cleaner workflow.
+          </p>
+          <div className="actions-row">
+            <Link className="btn" href="/login">Go to login</Link>
+            <Link className="btn btn-ghost" href="/register">Go to register</Link>
+          </div>
+        </section>
+      ) : (
+        <section className="panel auth-gate">
+          <p className="eyebrow">Authenticated session</p>
+          <h2>Signed in as {adminEmail}</h2>
+          <p className="panel-subtitle">Role: {authRole ?? "ADMIN"}</p>
+          <div className="actions-row">
+            <button type="button" className="btn btn-ghost" onClick={logout}>Sign out</button>
+          </div>
+        </section>
+      )}
+
+      {notice && <p className="notice">{notice}</p>}
+
+      <div className="content-grid">
+        <PatientTable
+          patients={patients}
+          loading={loading}
+          canMutate={canMutate}
+          onRefresh={refreshAll}
+          onToggleStatus={onToggleStatus}
+        />
+        <EventFeed events={events} loading={loading} onRefresh={refreshAll} />
+      </div>
+    </main>
   );
 }
