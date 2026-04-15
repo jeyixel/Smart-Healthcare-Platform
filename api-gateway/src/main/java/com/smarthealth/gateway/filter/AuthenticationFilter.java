@@ -3,6 +3,7 @@ package com.smarthealth.gateway.filter;
 import com.smarthealth.gateway.util.JwtUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
@@ -56,13 +57,15 @@ public class AuthenticationFilter implements Filter {
                 if (userEmail == null) {
                     userEmail = userName;
                 }
+                
+                final String finalUserEmail = userEmail;
 
                 // Create a mutable request wrapper to inject headers  
                 HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {  
                     @Override  
                     public String getHeader(String name) {  
                         if ("X-User-Name".equalsIgnoreCase(name)) return userName;  
-                        if ("X-User-Email".equalsIgnoreCase(name)) return userEmail;  
+                        if ("X-User-Email".equalsIgnoreCase(name)) return finalUserEmail;  
                         return super.getHeader(name);  
                     }  
                 };  
