@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record CreateDoctorRequest(
         @NotNull
-        UUID userId,
+        Long userId,
         @NotBlank
         @Size(max = 150)
         String fullName,

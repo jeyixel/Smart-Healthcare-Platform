@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { registerAdmin } from "@/lib/api";
 import { PublicRegisterRole } from "@/types/api";
@@ -37,7 +37,8 @@ export default function RegisterPage() {
         localStorage.removeItem("smart_admin_role");
         localStorage.removeItem("smart_admin_email");
         setNoticeType("success");
-        setNotice("Doctor registration submitted successfully. Please wait for admin verification before login.");
+        setNotice("Doctor registration submitted! Awaiting admin verification. Redirecting to login...");
+        setTimeout(() => router.push("/login"), 3000);
         return;
       }
 
@@ -47,8 +48,9 @@ export default function RegisterPage() {
         localStorage.setItem("smart_admin_email", email);
       }
 
-      router.push("/patient");
-      router.refresh();
+      setNoticeType("success");
+      setNotice("Account created successfully! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 1500);
     } catch (error) {
       setNoticeType("error");
       setNotice(error instanceof Error ? error.message : "Registration failed");
