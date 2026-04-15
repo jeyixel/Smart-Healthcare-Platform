@@ -39,6 +39,11 @@ public class PatientController {
         return patientService.getById(id);
     }
 
+    @GetMapping("/email/{email}")
+    public PatientResponse getByEmail(@PathVariable String email) {
+        return patientService.getByEmail(email);
+    }
+
     @GetMapping
     public List<PatientResponse> getAll() {
         return patientService.getAll();

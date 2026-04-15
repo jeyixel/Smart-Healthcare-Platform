@@ -66,10 +66,17 @@ public class NotificationController {
     }
 
     // Get logs by recipient
-    @GetMapping("/logs/{recipient}")
-    public ResponseEntity<List<NotificationLog>> getLogsByRecipient(
-            @PathVariable String recipient) {
-        return ResponseEntity.ok(notificationService.getLogsByRecipient(recipient));
+    @GetMapping("/logs/{recipient:.+}")
+    public ResponseEntity<?> getLogsByRecipient(
+            @PathVariable("recipient") String recipient) {
+        try {
+            List<NotificationLog> logs = notificationService.getLogsByRecipient(recipient);
+            return ResponseEntity.ok(logs);
+        } catch (Exception e) {
+            System.err.println("ERROR Fetching logs for " + recipient + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Backend Error: " + e.getMessage());
+        }
     }
 
     // Get failed notifications
