@@ -33,11 +33,18 @@ public class User implements UserDetails {
     private String firstName;
     private String lastName;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean approved = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null) {
+            return List.of();
+        }
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
@@ -63,6 +70,9 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
+        if (role == Role.DOCTOR) {
+            return Boolean.TRUE.equals(approved);
+        }
         return true;
     }
 }

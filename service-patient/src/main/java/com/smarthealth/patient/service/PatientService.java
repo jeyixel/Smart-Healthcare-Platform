@@ -15,9 +15,12 @@ import java.util.UUID;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
-    public PatientService(PatientRepository patientRepository) {
+    public PatientService(PatientRepository patientRepository,
+                          NotificationEventPublisher notificationEventPublisher) {
         this.patientRepository = patientRepository;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     public PatientResponse create(PatientUpsertRequest request) {
@@ -31,12 +34,19 @@ public class PatientService {
         Patient patient = new Patient();
         apply(patient, request);
         Patient saved = patientRepository.save(patient);
+        notificationEventPublisher.publishPatientCreated(saved);
         return map(saved);
     }
 
     public PatientResponse getById(UUID id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found for id " + id));
+        return map(patient);
+    }
+
+    public PatientResponse getByEmail(String email) {
+        Patient patient = patientRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found for email " + email));
         return map(patient);
     }
 
@@ -58,6 +68,15 @@ public class PatientService {
 
         apply(patient, request);
         Patient saved = patientRepository.save(patient);
+        return map(saved);
+    }
+
+    public PatientResponse setActiveStatus(UUID id, boolean active) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found for id " + id));
+        patient.setActive(active);
+        Patient saved = patientRepository.save(patient);
+        notificationEventPublisher.publishPatientStatusChanged(saved);
         return map(saved);
     }
 

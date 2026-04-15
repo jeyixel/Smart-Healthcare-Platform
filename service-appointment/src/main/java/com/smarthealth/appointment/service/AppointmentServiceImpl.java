@@ -1,5 +1,8 @@
 package com.smarthealth.appointment.service;
+import com.smarthealth.appointment.client.ServiceClient;
 import com.smarthealth.appointment.dto.*;
+import com.smarthealth.appointment.dto.external.DoctorResponse;
+import com.smarthealth.appointment.dto.external.PatientResponse;
 import com.smarthealth.appointment.entity.Appointment;
 import com.smarthealth.appointment.entity.AppointmentStatus;
 import com.smarthealth.appointment.exception.BusinessException;
@@ -7,8 +10,11 @@ import com.smarthealth.appointment.exception.ResourceNotFoundException;
 import com.smarthealth.appointment.mapper.AppointmentMapper;
 import com.smarthealth.appointment.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,9 +25,38 @@ import java.util.UUID;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final ServiceClient serviceClient;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
+
+
+        try {
+            PatientResponse patient = serviceClient.getPatient(request.patientId());
+            if (patient == null) {
+                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
+            }
+            if (!patient.active()) {
+                throw new BusinessException("Patient is not active: " + request.patientId());
+            }
+
+            DoctorResponse doctor = serviceClient.getDoctor(request.doctorId());
+            if (doctor == null) {
+                throw new ResourceNotFoundException("Doctor not found: " + request.doctorId());
+            }
+            if (!doctor.active()) {
+                throw new BusinessException("Doctor is not active: " + request.doctorId());
+            }
+            if (!doctor.verified()) {
+                throw new BusinessException("Doctor is not verified: " + request.doctorId());
+            }
+        } catch (ResourceNotFoundException | BusinessException e) {
+            // Re-throw our own exceptions
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Appointment creation failed: " + e.getMessage());
+        }
+
         boolean doctorAlreadyBooked = appointmentRepository
                 .existsByDoctorIdAndAppointmentDateAndAppointmentTimeAndStatusIn(
                         request.doctorId(),

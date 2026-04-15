@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PatientEventDto {
-    private Long patientId;
+    private String patientId;
     private Long adminId;
     private String eventType;
     private String description;

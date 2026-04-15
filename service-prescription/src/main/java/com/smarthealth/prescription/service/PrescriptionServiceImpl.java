@@ -1,5 +1,8 @@
 package com.smarthealth.prescription.service;
 
+import com.smarthealth.prescription.client.ServiceClient;
+import com.smarthealth.prescription.dto.external.AppointmentResponse;
+import com.smarthealth.prescription.dto.external.DoctorResponse;
 import com.smarthealth.prescription.exception.BusinessException;
 import com.smarthealth.prescription.exception.ResourceNotFoundException;
 import com.smarthealth.prescription.entity.Prescription;
@@ -16,15 +19,50 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static com.smarthealth.prescription.entity.AppointmentStatus.*;
+
+
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class PrescriptionServiceImpl implements PrescriptionService {
 
     private final PrescriptionRepository prescriptionRepository;
+    private final ServiceClient serviceClient;
 
     @Override
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
+
+        try{
+            DoctorResponse doctor = serviceClient.getDoctor(request.doctorId());
+            if (doctor == null) {
+                throw new ResourceNotFoundException("Doctor not found: " + request.doctorId());
+            }
+            if (!doctor.active()) {
+                throw new BusinessException("Doctor is not active: " + request.doctorId());
+            }
+            if (!doctor.verified()) {
+                throw new BusinessException("Doctor is not verified: " + request.doctorId());
+            }
+
+            AppointmentResponse appointment  = serviceClient.getAppointment(request.appointmentId());
+            if(appointment == null){
+                throw new ResourceNotFoundException("Appointment not found: " + request.appointmentId());
+            }
+            if(appointment.status() == COMPLETED ){
+                throw new BusinessException("Appointment is Completed, can not generate prescription for : " + request.appointmentId());
+            }
+            if(appointment.status() == PENDING){
+                throw new BusinessException("Appointment is Pending, can not generate prescription for : " + request.appointmentId());
+            }
+
+        } catch (ResourceNotFoundException | BusinessException e) {
+            // Re-throw our own exceptions
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException("Appointment creation failed: " + e.getMessage());
+        }
+
         if (prescriptionRepository.existsByAppointmentId(request.appointmentId())) {
             throw new BusinessException("Prescription already exists for this appointment");
         }
