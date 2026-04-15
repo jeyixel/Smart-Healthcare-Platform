@@ -31,14 +31,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     public AppointmentResponse create(CreateAppointmentRequest request) {
 
 
-        try{
-//           PatientResponse patient = serviceClient.getPatient(request.patientId());
-//            if (patient == null) {
-//                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
-//            }
-//            if (!patient.active()) {
-//                throw new BusinessException("Patient is not active: " + request.patientId());
-//            }
+        try {
+            PatientResponse patient = serviceClient.getPatient(request.patientId());
+            if (patient == null) {
+                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
+            }
+            if (!patient.active()) {
+                throw new BusinessException("Patient is not active: " + request.patientId());
+            }
 
             DoctorResponse doctor = serviceClient.getDoctor(request.doctorId());
             if (doctor == null) {
