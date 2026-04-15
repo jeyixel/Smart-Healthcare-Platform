@@ -68,7 +68,7 @@ public class DoctorServiceImpl implements DoctorService{
 
     @Override
     @Transactional(readOnly = true)
-    public DoctorResponse getDoctorByUserId(UUID userId) {
+    public DoctorResponse getDoctorByUserId(Long userId) {
         Doctor doctor = doctorRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor profile not found for user: " + userId));
         return DoctorMapper.toResponse(doctor);
@@ -206,7 +206,7 @@ public class DoctorServiceImpl implements DoctorService{
     }
 
     @Override
-    public boolean isDoctorOwner(UUID doctorId, UUID userId) {
+    public boolean isDoctorOwner(UUID doctorId, Long userId) {
         return doctorRepository.findById(doctorId)
                 .map(doctor -> doctor.getUserId().equals(userId))
                 .orElse(false);

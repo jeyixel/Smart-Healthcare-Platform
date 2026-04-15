@@ -8,18 +8,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -44,18 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         userEmail = jwtService.extractUsername(jwt);
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String role = jwtService.extractRole(jwt);
+            Long userId = jwtService.extractUserId(jwt);
             
-            // Build UserDetails from JWT claims instead of loading from database
-            UserDetails userDetails = User.withUsername(userEmail)
-                    .password("") // Password is not needed for JWT auth
-                    .authorities(new SimpleGrantedAuthority("ROLE_" + role))
-                    .build();
+            UserPrincipal userPrincipal = new UserPrincipal(userEmail, userId, role);
 
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (jwtService.isTokenValid(jwt, userPrincipal)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        jwt,
-                        userDetails.getAuthorities()
+                        userPrincipal,
+                        jwt, // Store JWT token in credentials
+                        userPrincipal.getAuthorities()
                 );
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
