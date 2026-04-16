@@ -31,15 +31,20 @@ public class NotificationLog {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationType type;
+    @Column(nullable = true)
+    private NotificationType channel; // Renamed from type (EMAIL, SMS)
+
+    @Column(nullable = true)
+    private String eventType;   // e.g. appointment-created, prescription-updated
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStatus status;
 
+    @Column(columnDefinition = "TEXT")
     private String errorMessage;
 
     @CreationTimestamp
+    @Column(name = "sent_at")
     private LocalDateTime sentAt;
 }

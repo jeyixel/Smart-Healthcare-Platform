@@ -1,19 +1,25 @@
 package com.smarthealth.notification.controller;
 
-import com.smarthealth.notification.dto.*;
+import com.smarthealth.notification.dto.AppointmentNotificationRequest;
+import com.smarthealth.notification.dto.EmailRequest;
+import com.smarthealth.notification.dto.SmsRequest;
 import com.smarthealth.notification.entity.NotificationLog;
 import com.smarthealth.notification.service.EmailService;
 import com.smarthealth.notification.service.NotificationService;
 import com.smarthealth.notification.service.SmsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
@@ -23,16 +29,16 @@ public class NotificationController {
 
     // Send a raw email
     @PostMapping("/email")
-    public ResponseEntity<NotificationLog> sendEmail(@Valid @RequestBody EmailRequest request) {
-        NotificationLog log = emailService.sendEmail(request);
-        return ResponseEntity.ok(log);
+    public ResponseEntity<Void> sendEmail(@Valid @RequestBody EmailRequest request) {
+        emailService.sendEmail(request, "manual-email");
+        return ResponseEntity.ok().build();
     }
 
     // Send a raw SMS
     @PostMapping("/sms")
-    public ResponseEntity<NotificationLog> sendSms(@Valid @RequestBody SmsRequest request) {
-        NotificationLog log = smsService.sendSms(request);
-        return ResponseEntity.ok(log);
+    public ResponseEntity<Void> sendSms(@Valid @RequestBody SmsRequest request) {
+        smsService.sendSms(request, "manual-sms");
+        return ResponseEntity.ok().build();
     }
 
     // Appointment confirmation (called by appointment service)
@@ -59,21 +65,25 @@ public class NotificationController {
         return ResponseEntity.ok("Consultation completion notification sent");
     }
 
-    // Get all logs (admin use)
+    // Get all logs (admin use) - Paginated & Secured
     @GetMapping("/logs")
-    public ResponseEntity<List<NotificationLog>> getAllLogs() {
-        return ResponseEntity.ok(notificationService.getAllLogs());
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<NotificationLog>> getAllLogs(
+            @PageableDefault(size = 20, sort = "sentAt") Pageable pageable) {
+        return ResponseEntity.ok(notificationService.getAllLogsPaginated(pageable));
     }
 
     // Get logs by recipient
-    @GetMapping("/logs/{recipient}")
+    @GetMapping("/logs/{recipient:.+}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<NotificationLog>> getLogsByRecipient(
-            @PathVariable String recipient) {
+            @PathVariable("recipient") String recipient) {
         return ResponseEntity.ok(notificationService.getLogsByRecipient(recipient));
     }
 
     // Get failed notifications
     @GetMapping("/logs/failed")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<NotificationLog>> getFailedLogs() {
         return ResponseEntity.ok(notificationService.getFailedNotifications());
     }

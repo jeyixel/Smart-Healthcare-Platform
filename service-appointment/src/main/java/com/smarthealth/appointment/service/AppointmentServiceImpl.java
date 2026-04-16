@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,19 +27,20 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final ServiceClient serviceClient;
+    private final AppointmentEventPublisher appointmentEventPublisher;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
 
 
-        try{
-//           PatientResponse patient = serviceClient.getPatient(request.patientId());
-//            if (patient == null) {
-//                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
-//            }
-//            if (!patient.active()) {
-//                throw new BusinessException("Patient is not active: " + request.patientId());
-//            }
+        try {
+            PatientResponse patient = serviceClient.getPatient(request.patientId());
+            if (patient == null) {
+                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
+            }
+            if (!patient.active()) {
+                throw new BusinessException("Patient is not active: " + request.patientId());
+            }
 
             DoctorResponse doctor = serviceClient.getDoctor(request.doctorId());
             if (doctor == null) {
@@ -62,7 +64,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         request.doctorId(),
                         request.appointmentDate(),
                         request.appointmentTime(),
-                        List.of(AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED)
+                        List.of(AppointmentStatus.CONFIRMED)
                 );
 
         if (doctorAlreadyBooked) {
@@ -77,9 +79,15 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .consultationType(request.consultationType())
                 .reason(request.reason())
                 .status(AppointmentStatus.PENDING)
+                .paymentStatus(com.smarthealth.appointment.entity.PaymentStatus.PENDING_PAYMENT)
+                .paymentDeadline(LocalDateTime.now().plusMinutes(15))
+                .paymentReference(UUID.randomUUID().toString())
                 .build();
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-created", "APPOINTMENT_CREATED", appointment);
+        
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -124,7 +132,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setStatus(request.status());
         appointment.setNotes(request.notes());
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-status-changed", "APPOINTMENT_STATUS_CHANGED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -142,7 +153,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         appointment.getDoctorId(),
                         request.appointmentDate(),
                         request.appointmentTime(),
-                        List.of(AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED)
+                        List.of(AppointmentStatus.CONFIRMED)
                 );
 
         if (doctorAlreadyBooked &&
@@ -154,8 +165,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentDate(request.appointmentDate());
         appointment.setAppointmentTime(request.appointmentTime());
         appointment.setStatus(AppointmentStatus.PENDING);
+        appointment.setPaymentStatus(com.smarthealth.appointment.entity.PaymentStatus.PENDING_PAYMENT);
+        appointment.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
+        appointment.setPaymentReference(UUID.randomUUID().toString());
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-rescheduled", "APPOINTMENT_RESCHEDULED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override

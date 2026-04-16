@@ -70,3 +70,58 @@ export interface CurrentUserProfile {
   role: UserRole;
   approved: boolean;
 }
+
+export interface NotificationLog {
+  id: number;
+  recipient: string;
+  subject: string;
+  message: string;
+  type: "EMAIL" | "SMS" | "PUSH" | "IN_APP";
+  status: "SENT" | "FAILED" | "PENDING";
+  errorMessage: string | null;
+  sentAt: string;
+}
+
+export interface AdminAppointment {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  patientName: string;
+  doctorName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  consultationType: "VIRTUAL" | "PHYSICAL";
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  reason: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DashboardSummary {
+  totalPatients: number;
+  activeDoctors: number;
+  totalAppointments: number;
+  totalSystemUsers: number;
+}
+
+export interface SystemEvent {
+  id: string;
+  actionType: string;
+  requestedBy: string;
+  description: string;
+  timestamp: string;
+}
+
+export interface DailyRevenue {
+  date: string;
+  revenue: number;
+}
+
+export interface PaymentAnalysis {
+  totalRevenue: number;
+  totalTransactions: number;
+  successRate: number;
+  statusBreakdown: Record<string, number>;
+  trends: DailyRevenue[];
+}

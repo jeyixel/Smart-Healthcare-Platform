@@ -1,7 +1,13 @@
 "use client";
 
 import { useDoctorContext } from "@/app/context/DoctorContext";
+import { useAppointments, Appointment, AppointmentStatus } from "@/app/hooks/useAppointments";
+import { usePrescriptions, PrescriptionStatus } from "@/app/hooks/usePrescriptions";
+import { DoctorPatientsContent } from "@/app/components/doctor-management/DoctorPatientsContent";
 
+import { usePatients } from "@/app/hooks/usePatients";
+import { useMemo, useEffect } from "react";
+import { getDoctorName } from "@/app/utils/tokenUtils";
 /* ─── Mock data ─────────────────────────────────────────────────── */
 
 const kpiCards = [
@@ -48,31 +54,23 @@ const kpiCards = [
     border: "rgba(139,92,246,0.25)",
   },
   {
-    label: "Patient Rating",
-    value: "4.9",
-    delta: "Top 5% of doctors",
+    label: "Telemedicine Sessions",
+    value: "0",
+    delta: "Online appointments",
     positive: true,
     icon: (
-      <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
     ),
-    color: "#f59e0b",
-    bg: "linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.08))",
-    border: "rgba(245,158,11,0.25)",
+    color: "#06b6d4",
+    bg: "linear-gradient(135deg,rgba(6,182,212,0.15),rgba(8,145,178,0.08))",
+    border: "rgba(6,182,212,0.25)",
   },
 ];
 
-const todayAppointments = [
-  { id: "APT-001", name: "Amal Perera",      time: "09:00 AM", type: "Consultation",    status: "COMPLETED",  avatar: "A" },
-  { id: "APT-002", name: "Nimal Silva",       time: "10:30 AM", type: "Follow-up",       status: "COMPLETED",  avatar: "N" },
-  { id: "APT-003", name: "Sumudu Fernando",   time: "11:00 AM", type: "Check-up",        status: "IN_PROGRESS", avatar: "S" },
-  { id: "APT-004", name: "Kasun Rajapaksha",  time: "12:30 PM", type: "Consultation",    status: "SCHEDULED",  avatar: "K" },
-  { id: "APT-005", name: "Dilini Bandara",    time: "02:00 PM", type: "Follow-up",       status: "SCHEDULED",  avatar: "D" },
-  { id: "APT-006", name: "Ruwan Gunasekara",  time: "03:30 PM", type: "Telemedicine",    status: "SCHEDULED",  avatar: "R" },
-  { id: "APT-007", name: "Chamari Wickrama",  time: "04:00 PM", type: "Prescription",    status: "PENDING",    avatar: "C" },
-  { id: "APT-008", name: "Pradeep Jayaweera", time: "04:45 PM", type: "Lab Review",      status: "PENDING",    avatar: "P" },
-];
+// NOTE: todayAppointments are now fetched from API using useAppointments hook
+// Previous mock data removed - see useAppointments hook for data fetching
 
 const recentPatients = [
   { name: "Amal Perera",     age: 34, condition: "Hypertension",    lastVisit: "Today",       avatar: "A", risk: "medium" },
@@ -83,18 +81,14 @@ const recentPatients = [
 ];
 
 const activityFeed = [
-  { action: "Prescription written",  patient: "Amal Perera",      time: "09:45 AM", icon: "💊" },
-  { action: "Appointment completed", patient: "Nimal Silva",       time: "10:58 AM", icon: "✅" },
-  { action: "Lab result reviewed",   patient: "Kasun Rajapaksha",  time: "11:20 AM", icon: "🔬" },
-  { action: "Note added",            patient: "Dilini Bandara",    time: "12:05 PM", icon: "📝" },
-  { action: "Telemedicine scheduled",patient: "Ruwan Gunasekara",  time: "12:30 PM", icon: "📹" },
+  // NOTE: activityFeed now populated with real prescription data from usePrescriptions hook
 ];
 
 const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
   COMPLETED:   { bg: "rgba(16,185,129,0.12)", color: "#059669", label: "Completed" },
-  IN_PROGRESS: { bg: "rgba(6,182,212,0.12)",  color: "#0891b2", label: "In Progress" },
-  SCHEDULED:   { bg: "rgba(99,102,241,0.12)", color: "#4f46e5", label: "Scheduled" },
+  CONFIRMED:   { bg: "rgba(6,182,212,0.12)",  color: "#0891b2", label: "Confirmed" },
   PENDING:     { bg: "rgba(245,158,11,0.12)", color: "#d97706", label: "Pending" },
+  CANCELLED:   { bg: "rgba(239,68,68,0.12)",  color: "#dc2626", label: "Cancelled" },
 };
 
 const riskStyle: Record<string, { color: string; label: string }> = {
@@ -183,11 +177,417 @@ function WeeklyBar({ day, pct, active }: { day: string; pct: number; active?: bo
 /* ─── Main dashboard ─────────────────────────────────────────── */
 
 export function DoctorDashboardContent() {
-  const { session } = useDoctorContext();
+  const { session, setActiveSection } = useDoctorContext();
+  const { appointments, loading, error } = useAppointments();
+  const { prescriptions, loading: prescLoading, fetchDoctorPrescriptions } = usePrescriptions();
+  const doctorName = getDoctorName();
 
-  const completed = todayAppointments.filter(a => a.status === "COMPLETED").length;
+  // Helper function for date formatting
+  function getLocalDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const today = getLocalDateKey(new Date());
+
+  // Get unique patient IDs from all appointments
+  const allPatientIds = useMemo(() => {
+    const ids = appointments.map(appt => appt.patientId);
+    return [...new Set(ids)]; // Remove duplicates
+  }, [appointments]);
+
+  // Get recent patient IDs (from most recent appointments)
+  const recentPatientIds = useMemo(() => {
+    const sortedAppointments = appointments
+      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+    const recentIds = sortedAppointments.map(appt => appt.patientId);
+    return [...new Set(recentIds)].slice(0, 10); // Take first 10 unique patient IDs
+  }, [appointments]);
+
+  const { patients: recentPatientsData, loading: patientsLoading } = usePatients(recentPatientIds);
+
+  // Prepare recent patients data with stats
+  const recentPatientsWithStats = useMemo(() => {
+    return recentPatientsData.map(patient => {
+      const patientAppointments = appointments.filter(appt => appt.patientId === patient.id);
+      const lastAppointment = patientAppointments
+        .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())[0];
+
+      const age = calculateAge(patient.dateOfBirth);
+      const lastVisit = lastAppointment ? 
+        (lastAppointment.appointmentDate === today ? "Today" : 
+         new Date(lastAppointment.appointmentDate).toLocaleDateString()) : 
+        "No visits";
+
+      return {
+        name: `${patient.firstName} ${patient.lastName}`,
+        age: age || 0,
+        condition: "Patient", // Placeholder since we don't have medical conditions
+        lastVisit,
+        avatar: patient.firstName.charAt(0).toUpperCase(),
+        risk: "low" as const, // Default risk level
+      };
+    });
+  }, [recentPatientsData, appointments, today]);
+
+  // Fetch prescriptions on component mount
+  useEffect(() => {
+    void fetchDoctorPrescriptions();
+  }, [fetchDoctorPrescriptions]);
+
+  // Handler for "Start Next Appointment" button
+  const handleStartNextAppointment = () => {
+    // Find the next pending or confirmed appointment
+    const nextAppt = appointments.find(
+      (appt) => appt.status === "CONFIRMED" || appt.status === "PENDING"
+    );
+
+    if (nextAppt) {
+      // Store the appointment ID to be used in the appointments page
+      sessionStorage.setItem("scrollToAppointmentId", nextAppt.id);
+    }
+
+    // Navigate to appointments section
+    setActiveSection("appointments");
+  };
+
+  // Handler for "View Full Schedule" button
+  const handleViewFullSchedule = () => {
+    setActiveSection("schedule");
+  };
+
+  // Format time helper - define before use
+  function formatTime(timeStr: string): string {
+    const [h, m] = timeStr.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+  }
+
+// Format timestamp to time string
+  function formatTimestamp(timestamp: string | null): string {
+    if (!timestamp) return "Recently";
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const h = date.getHours();
+    const min = date.getMinutes();
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hour = h % 12 || 12;
+    return `${hour}:${String(min).padStart(2, "0")} ${ampm}`;
+  }
+
+  // Calculate age from date of birth
+  function calculateAge(dob: string | null): number | null {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  // Filter appointments for today
+  const todayAppointments = useMemo(() => {
+    return appointments
+      .filter((appt) => appt.appointmentDate === today)
+      .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime))
+      .map((appt) => ({
+        ...appt,
+        name: appt.patientId || "Unknown Patient", // Using patientId as name since we don't have patient names
+        time: formatTime(appt.appointmentTime),
+        type: appt.consultationType === "ONLINE" ? "Telemedicine" : "Consultation",
+        status: appt.status as AppointmentStatus,
+        avatar: (appt.patientId?.charAt(0) || "P").toUpperCase(),
+      }));
+  }, [appointments]);
+
+  // Transform prescriptions to activity feed format
+  const prescriptionActivities = useMemo(() => {
+    return prescriptions.map((prx) => {
+      let action = "";
+      let icon = "";
+      
+      switch (prx.status) {
+        case "ISSUED":
+          action = "Prescription issued";
+          icon = "💊";
+          break;
+        case "DRAFT":
+          action = "Prescription created";
+          icon = "📝";
+          break;
+        case "CANCELLED":
+          action = "Prescription cancelled";
+          icon = "❌";
+          break;
+        default:
+          action = `Prescription ${(prx.status as string).toLowerCase()}`;
+          icon = "????";
+      }
+      
+      return {
+        action,
+        patient: prx.patientId || "Unknown Patient",
+        time: formatTimestamp(prx.issuedAt || prx.createdAt),
+        icon,
+        timestamp: new Date(prx.issuedAt || prx.createdAt).getTime(),
+      };
+    });
+  }, [prescriptions]);
+
+  // Transform appointments to activity feed format
+  const appointmentActivities = useMemo(() => {
+    return appointments
+      .map((appt) => {
+        let action = "";
+        let icon = "";
+        
+        switch (appt.status) {
+          case "COMPLETED":
+            action = "Appointment completed";
+            icon = "✅";
+            break;
+          case "CONFIRMED":
+            action = "Appointment confirmed";
+            icon = "📝";
+            break;
+          case "PENDING":
+            action = "Appointment scheduled";
+            icon = "🕒";
+            break;
+          case "CANCELLED":
+            action = "Appointment cancelled";
+            icon = "❌";
+            break;
+          default:
+            action = "Appointment updated";
+            icon = "🔄";
+        }
+        
+        return {
+          action,
+          patient: appt.patientId || "Unknown Patient",
+          time: formatTimestamp(appt.updatedAt),
+          icon,
+          timestamp: new Date(appt.updatedAt).getTime(),
+        };
+      });
+  }, [appointments]);
+
+  // Merge and sort all activities by timestamp
+  const activityFeedFromPrescriptions = useMemo(() => {
+    const allActivities = [...prescriptionActivities, ...appointmentActivities];
+    return allActivities
+      .sort((a, b) => b.timestamp - a.timestamp) // Most recent first
+      .slice(0, 10) // Show only 10 most recent
+      .map(({ timestamp, ...rest }) => rest); // Remove timestamp from final result
+  }, [prescriptionActivities, appointmentActivities]);
+
+  const weeklyAppointments = useMemo(() => {
+    const todayDate = new Date();
+    const weekdayIndex = (todayDate.getDay() + 6) % 7; // Monday = 0
+    const monday = new Date(todayDate);
+    monday.setDate(todayDate.getDate() - weekdayIndex);
+    monday.setHours(0, 0, 0, 0);
+
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const week = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      const dateKey = getLocalDateKey(date);
+      return {
+        day: labels[index],
+        count: appointments.filter((appt) => appt.appointmentDate === dateKey).length,
+        active: dateKey === getLocalDateKey(todayDate),
+      };
+    });
+
+    const maxCount = Math.max(...week.map((item) => item.count), 1);
+    return week.map((item) => ({
+      ...item,
+      pct: item.count > 0 ? Math.round((item.count / maxCount) * 100) : 10,
+    }));
+  }, [appointments]);
+
+  const weeklyTotal = weeklyAppointments.reduce((sum, day) => sum + day.count, 0);
+  const completed = todayAppointments.filter((a) => a.status === "COMPLETED").length;
   const total = todayAppointments.length;
-  const progressPct = Math.round((completed / total) * 100);
+  const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  // Show error state
+  if (error) {
+    return (
+      <div style={{ padding: "20px", color: "#dc2626", background: "rgba(239,68,68,0.1)", borderRadius: "8px" }}>
+        Error loading appointments: {error}
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "60vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "24px",
+        padding: "40px 20px",
+      }}>
+        {/* Loading Animation */}
+        <div style={{
+          width: "80px",
+          height: "80px",
+          borderRadius: "20px",
+          background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 0 40px rgba(6,182,212,0.3)",
+          animation: "pulse 2s infinite",
+        }}>
+          <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/>
+          </svg>
+        </div>
+
+        {/* Loading Text */}
+        <div style={{ textAlign: "center" }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 700, color: "#0f172a" }}>
+            Loading Dashboard
+          </h3>
+          <p style={{ margin: 0, fontSize: "14px", color: "#64748b", lineHeight: 1.5 }}>
+            Fetching your appointments, prescriptions, and analytics...
+          </p>
+        </div>
+
+        {/* Progress Indicators */}
+        <div style={{
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+        }}>
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0s",
+          }} />
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0.16s",
+          }} />
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0.32s",
+          }} />
+        </div>
+
+        {/* Loading Details */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          alignItems: "center",
+          marginTop: "16px",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #06b6d4",
+              animation: "spin 1s linear infinite",
+            }} />
+            <span>Connecting to services...</span>
+          </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #10b981",
+              animation: "spin 1s linear infinite",
+              animationDelay: "0.2s",
+            }} />
+            <span>Loading appointments...</span>
+          </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #8b5cf6",
+              animation: "spin 1s linear infinite",
+              animationDelay: "0.4s",
+            }} />
+            <span>Preparing analytics...</span>
+          </div>
+        </div>
+
+        {/* Add CSS Animations */}
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(6,182,212,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(6,182,212,0.5); }
+          }
+          @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -220,28 +620,36 @@ export function DoctorDashboardContent() {
           </span>
           <h2 style={{ margin: "12px 0 6px", fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
             Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"},{" "}
-            <span style={{ color: "#06b6d4" }}>{session?.displayName ?? "Doctor"}</span>
+            <span style={{ color: "#06b6d4" }}>{doctorName}</span>
           </h2>
           <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px", maxWidth: "460px", lineHeight: 1.6 }}>
-            You have <strong style={{ color: "#06b6d4" }}>{todayAppointments.filter(a => a.status === "SCHEDULED" || a.status === "IN_PROGRESS" || a.status === "PENDING").length} appointments</strong> remaining today and{" "}
-            <strong style={{ color: "#10b981" }}>2 pending prescription</strong> reviews.
+            You have <strong style={{ color: "#06b6d4" }}>{todayAppointments.filter(a => a.status === "CONFIRMED" || a.status === "PENDING").length} appointments</strong> remaining today and{" "}
+            <strong style={{ color: "#10b981" }}>{prescriptions.filter(p => p.status === "DRAFT").length} pending prescription</strong> reviews.
           </p>
           <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
-            <button style={{
+            <button 
+              onClick={handleStartNextAppointment}
+              style={{
               background: "linear-gradient(135deg,#06b6d4,#0891b2)",
               border: "none", color: "#fff", padding: "10px 22px",
               borderRadius: "10px", fontWeight: 600, fontSize: "13px", cursor: "pointer",
               boxShadow: "0 4px 16px rgba(6,182,212,0.4)",
               transition: "transform 0.2s",
-            }}>
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
               Start Next Appointment
             </button>
-            <button style={{
+            <button 
+              onClick={handleViewFullSchedule}
+              style={{
               background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
               color: "#e2e8f0", padding: "10px 20px",
               borderRadius: "10px", fontWeight: 500, fontSize: "13px", cursor: "pointer",
               transition: "background 0.2s",
-            }}>
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)"; }}>
               View Full Schedule
             </button>
           </div>
@@ -280,7 +688,30 @@ export function DoctorDashboardContent() {
 
       {/* ── KPI Row ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }}>
-        {kpiCards.map((c) => <KpiCard key={c.label} card={c} />)}
+        {/* First card with real appointment data */}
+        <KpiCard key="today-appointments" card={{
+          ...kpiCards[0],
+          value: todayAppointments.length.toString(),
+          delta: `${todayAppointments.filter(a => a.status === "COMPLETED").length} completed`,
+        }} />
+        {/* Second card - total patients */}
+        <KpiCard key={kpiCards[1].label} card={{
+          ...kpiCards[1],
+          value: allPatientIds.length.toString(),
+          delta: "Unique patients",
+        }} />
+        {/* Third card with real prescription data */}
+        <KpiCard key="prescriptions-written" card={{
+          ...kpiCards[2],
+          value: prescriptions.length.toString(),
+          delta: `${prescriptions.filter(p => p.status === "ISSUED").length} issued today`,
+        }} />
+        {/* Fourth card with telemedicine sessions data */}
+        <KpiCard key="telemedicine-sessions" card={{
+          ...kpiCards[3],
+          value: appointments.filter(a => a.consultationType === "ONLINE" && a.status !== "COMPLETED" && a.status !== "CANCELLED").length.toString(),
+          delta: `${todayAppointments.filter(a => a.type === "Telemedicine" && a.status !== "COMPLETED" && a.status !== "CANCELLED").length} active today`,
+        }} />
       </div>
 
       {/* ── Main Grid: Schedule + Patients + Mini-chart ── */}
@@ -300,17 +731,17 @@ export function DoctorDashboardContent() {
 
           <div style={{ maxHeight: "380px", overflowY: "auto" }}>
             {todayAppointments.map((appt, i) => {
-              const st = statusStyle[appt.status];
+              const st = statusStyle[appt.status] || statusStyle["PENDING"];
               return (
                 <div key={appt.id} style={{
                   display: "flex", alignItems: "center", gap: "14px",
                   padding: "14px 22px",
                   borderBottom: i < todayAppointments.length - 1 ? "1px solid #f8fafc" : "none",
-                  background: appt.status === "IN_PROGRESS" ? "rgba(6,182,212,0.03)" : "#fff",
+                  background: appt.status === "CONFIRMED" ? "rgba(6,182,212,0.03)" : "#fff",
                   transition: "background 0.2s",
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = appt.status === "IN_PROGRESS" ? "rgba(6,182,212,0.03)" : "#fff"; }}>
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = appt.status === "CONFIRMED" ? "rgba(6,182,212,0.03)" : "#fff"; }}>
                   <div style={{
                     width: "38px", height: "38px", borderRadius: "50%", flexShrink: 0,
                     background: `linear-gradient(135deg,hsl(${i * 45},70%,55%),hsl(${i * 45 + 30},60%,45%))`,
@@ -348,37 +779,74 @@ export function DoctorDashboardContent() {
             <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid #f1f5f9" }}>
               <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Recent Patients</h3>
             </div>
-            {recentPatients.map((p, i) => {
-              const risk = riskStyle[p.risk];
-              return (
+            {patientsLoading ? (
+              // Loading skeleton
+              Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} style={{
                   display: "flex", alignItems: "center", gap: "12px", padding: "12px 22px",
-                  borderBottom: i < recentPatients.length - 1 ? "1px solid #f8fafc" : "none",
-                  cursor: "pointer", transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#fff"; }}>
+                  borderBottom: i < 4 ? "1px solid #f8fafc" : "none",
+                }}>
                   <div style={{
                     width: "34px", height: "34px", borderRadius: "50%", flexShrink: 0,
-                    background: `linear-gradient(135deg,hsl(${i * 60 + 180},60%,55%),hsl(${i * 60 + 210},55%,45%))`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#fff", fontWeight: 700, fontSize: "13px",
-                  }}>
-                    {p.avatar}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: "13px", color: "#0f172a" }}>{p.name}</p>
-                    <p style={{ margin: "1px 0 0", fontSize: "11px", color: "#64748b" }}>{p.condition} · Age {p.age}</p>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <span style={{ fontSize: "10px", fontWeight: 700, color: risk.color, background: `${risk.color}18`, padding: "2px 8px", borderRadius: "999px" }}>
-                      {risk.label}
-                    </span>
-                    <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#94a3b8" }}>{p.lastVisit}</p>
+                    background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 1.5s infinite",
+                  }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      height: "13px", width: "120px",
+                      background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 1.5s infinite",
+                      borderRadius: "4px", marginBottom: "4px",
+                    }} />
+                    <div style={{
+                      height: "11px", width: "80px",
+                      background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 1.5s infinite",
+                      borderRadius: "4px",
+                    }} />
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : recentPatientsWithStats.length > 0 ? (
+              recentPatientsWithStats.map((p, i) => {
+                const risk = riskStyle[p.risk];
+                return (
+                  <div key={p.name} style={{
+                    display: "flex", alignItems: "center", gap: "12px", padding: "12px 22px",
+                    borderBottom: i < recentPatientsWithStats.length - 1 ? "1px solid #f8fafc" : "none",
+                    cursor: "pointer", transition: "background 0.2s",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#fff"; }}>
+                    <div style={{
+                      width: "34px", height: "34px", borderRadius: "50%", flexShrink: 0,
+                      background: `linear-gradient(135deg,hsl(${i * 60 + 180},60%,55%),hsl(${i * 60 + 210},55%,45%))`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: 700, fontSize: "13px",
+                    }}>
+                      {p.avatar}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: "13px", color: "#0f172a" }}>{p.name}</p>
+                      <p style={{ margin: "1px 0 0", fontSize: "11px", color: "#64748b" }}>{p.condition} · Age {p.age}</p>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <span style={{ fontSize: "10px", fontWeight: 700, color: risk.color, background: `${risk.color}18`, padding: "2px 8px", borderRadius: "999px" }}>
+                        {risk.label}
+                      </span>
+                      <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#94a3b8" }}>{p.lastVisit}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
+                No recent patients
+              </div>
+            )}
           </div>
 
           {/* Weekly volume mini-chart */}
@@ -388,18 +856,10 @@ export function DoctorDashboardContent() {
                 <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Weekly Appointments</h3>
                 <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>This week vs avg</p>
               </div>
-              <span style={{ fontSize: "22px", fontWeight: 800, color: "#06b6d4" }}>42</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: "#06b6d4" }}>{weeklyTotal}</span>
             </div>
             <div style={{ display: "flex", gap: "6px", alignItems: "flex-end" }}>
-              {[
-                { day: "Mon", pct: 75 },
-                { day: "Tue", pct: 55 },
-                { day: "Wed", pct: 90 },
-                { day: "Thu", pct: 65 },
-                { day: "Fri", pct: 100, active: true },
-                { day: "Sat", pct: 40 },
-                { day: "Sun", pct: 20 },
-              ].map((b) => <WeeklyBar key={b.day} {...b} />)}
+              {weeklyAppointments.map((b) => <WeeklyBar key={b.day} {...b} />)}
             </div>
           </div>
         </div>
@@ -409,28 +869,102 @@ export function DoctorDashboardContent() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "20px" }}>
 
         {/* Quick Actions */}
-        <div style={{ background: "#fff", borderRadius: "18px", border: "1px solid #e8f0fe", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "20px 22px" }}>
-          <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Quick Actions</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            {[
-              { label: "New Prescription", icon: "💊", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)" },
-              { label: "Start Telemedicine", icon: "📹", color: "#06b6d4", bg: "rgba(6,182,212,0.08)" },
-              { label: "Add Patient Note", icon: "📝", color: "#10b981", bg: "rgba(16,185,129,0.08)" },
-              { label: "View Lab Results", icon: "🔬", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
-              { label: "Request Consult", icon: "🩺", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
-              { label: "Generate Report", icon: "📊", color: "#0284c7", bg: "rgba(2,132,199,0.08)" },
+        <div style={{ background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)", borderRadius: "20px", border: "1px solid #e2e8f0", boxShadow: "0 8px 32px rgba(0,0,0,0.08)", padding: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+            <div style={{ width: "4px", height: "20px", background: "linear-gradient(180deg, #06b6d4, #0891b2)", borderRadius: "2px" }} />
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>Quick Actions</h3>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+            {[/* eslint-disable @typescript-eslint/no-unused-vars */
+              { 
+                label: "Find Appointment", 
+                icon: (
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                ), 
+                color: "#06b6d4", 
+                bg: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(6,182,212,0.05))", 
+                bgHover: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(6,182,212,0.08))",
+                action: () => setActiveSection("appointments") 
+              },
+              { 
+                label: "New Prescription", 
+                icon: (
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                ), 
+                color: "#8b5cf6", 
+                bg: "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))",
+                bgHover: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.08))",
+                action: () => setActiveSection("prescriptions") 
+              },
+              { 
+                label: "Start Telemedicine", 
+                icon: (
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                ), 
+                color: "#10b981", 
+                bg: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05))",
+                bgHover: "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08))",
+                action: () => setActiveSection("appointments") 
+              },
+              { 
+                label: "Schedule Availability", 
+                icon: (
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ), 
+                color: "#f59e0b", 
+                bg: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05))",
+                bgHover: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08))",
+                action: () => {
+                  setActiveSection("schedule");
+                  sessionStorage.setItem("openAvailabilityModal", "true");
+                }
+              },
             ].map((a) => (
-              <button key={a.label} style={{
-                display: "flex", alignItems: "center", gap: "10px",
-                padding: "12px 14px", borderRadius: "12px",
-                background: a.bg, border: `1px solid ${a.color}22`,
-                cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
-                textAlign: "left",
+              <button key={a.label} onClick={a.action} style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
+                padding: "20px 16px", borderRadius: "16px",
+                background: a.bg, border: `1px solid ${a.color}20`,
+                cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                textAlign: "center", position: "relative", overflow: "hidden",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 20px ${a.color}22`; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
-                <span style={{ fontSize: "20px" }}>{a.icon}</span>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: "#334155", lineHeight: 1.3 }}>{a.label}</span>
+              onMouseEnter={(e) => {
+                const btn = e.currentTarget as HTMLElement;
+                btn.style.background = a.bgHover;
+                btn.style.transform = "translateY(-4px) scale(1.02)";
+                btn.style.boxShadow = `0 12px 32px ${a.color}25`;
+                btn.style.borderColor = `${a.color}40`;
+              }}
+              onMouseLeave={(e) => {
+                const btn = e.currentTarget as HTMLElement;
+                btn.style.background = a.bg;
+                btn.style.transform = "translateY(0) scale(1)";
+                btn.style.boxShadow = "none";
+                btn.style.borderColor = `${a.color}20`;
+              }}>
+                <div style={{
+                  width: "48px", height: "48px", borderRadius: "12px",
+                  background: `linear-gradient(135deg, ${a.color}20, ${a.color}10)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: a.color, transition: "all 0.3s ease",
+                }}>
+                  {a.icon}
+                </div>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#1e293b", lineHeight: 1.3 }}>
+                  {a.label}
+                </span>
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  background: `linear-gradient(135deg, ${a.color}08, transparent)`,
+                  opacity: 0, transition: "opacity 0.3s ease",
+                }} />
               </button>
             ))}
           </div>
@@ -438,14 +972,13 @@ export function DoctorDashboardContent() {
 
         {/* Activity Feed */}
         <div style={{ background: "#fff", borderRadius: "18px", border: "1px solid #e8f0fe", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", padding: "20px 22px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div style={{ marginBottom: "16px" }}>
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Today&apos;s Activity</h3>
-            <button style={{ background: "none", border: "none", color: "#06b6d4", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>View all</button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-            {activityFeed.map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: "14px", paddingBottom: i < activityFeed.length - 1 ? "16px" : "0", position: "relative" }}>
-                {i < activityFeed.length - 1 && (
+            {activityFeedFromPrescriptions.map((item, i) => (
+              <div key={i} style={{ display: "flex", gap: "14px", paddingBottom: i < activityFeedFromPrescriptions.length - 1 ? "16px" : "0", position: "relative" }}>
+                {i < activityFeedFromPrescriptions.length - 1 && (
                   <div style={{ position: "absolute", left: "17px", top: "34px", bottom: 0, width: "2px", background: "linear-gradient(180deg,#e2e8f0,transparent)" }} />
                 )}
                 <div style={{
