@@ -82,8 +82,8 @@ export default function AppointmentsManagementPage() {
             <thead className="bg-slate-50 font-bold text-slate-600">
               <tr>
                 <th className="px-6 py-4">Ref ID</th>
-                <th className="px-6 py-4">Patient ID</th>
-                <th className="px-6 py-4">Doctor ID</th>
+                <th className="px-6 py-4">Patient Name</th>
+                <th className="px-6 py-4">Doctor Name</th>
                 <th className="px-6 py-4">Schedule</th>
                 <th className="px-6 py-4">Type</th>
                 <th className="px-6 py-4">Status</th>
@@ -94,8 +94,8 @@ export default function AppointmentsManagementPage() {
               {appointments.map((apt) => (
                 <tr key={apt.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 font-mono text-xs font-bold text-slate-400">{apt.id.substring(0, 8)}...</td>
-                  <td className="px-6 py-4 font-bold text-slate-700">{apt.patientId.substring(0, 8)}...</td>
-                  <td className="px-6 py-4 text-slate-600">{apt.doctorId.substring(0, 8)}...</td>
+                  <td className="px-6 py-4 font-bold text-slate-900">{apt.patientName || "Unknown Patient"}</td>
+                  <td className="px-6 py-4 font-bold text-indigo-600">{apt.doctorName || "Unknown Doctor"}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="font-medium text-slate-900">{apt.appointmentDate}</span>

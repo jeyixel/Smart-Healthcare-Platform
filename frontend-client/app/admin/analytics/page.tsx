@@ -12,7 +12,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const loadAnalysis = async () => {
       try {
-        const token = localStorage.getItem("adminToken");
+        const token = localStorage.getItem("smart_admin_token");
         if (!token) {
           setError("No authentication token found");
           setLoading(false);
