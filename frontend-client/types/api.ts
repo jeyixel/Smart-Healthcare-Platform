@@ -110,3 +110,16 @@ export interface SystemEvent {
   description: string;
   timestamp: string;
 }
+
+export interface DailyRevenue {
+  date: string;
+  revenue: number;
+}
+
+export interface PaymentAnalysis {
+  totalRevenue: number;
+  totalTransactions: number;
+  successRate: number;
+  statusBreakdown: Record<string, number>;
+  trends: DailyRevenue[];
+}

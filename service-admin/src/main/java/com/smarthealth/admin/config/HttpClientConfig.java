@@ -6,7 +6,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties({PatientServiceProperties.class, NotificationServiceProperties.class, AppointmentServiceProperties.class})
+@EnableConfigurationProperties({
+    PatientServiceProperties.class, 
+    NotificationServiceProperties.class, 
+    AppointmentServiceProperties.class,
+    PaymentServiceProperties.class
+})
 public class HttpClientConfig {
 
     @Bean
@@ -25,6 +30,13 @@ public class HttpClientConfig {
 
     @Bean
     RestClient appointmentRestClient(AppointmentServiceProperties properties) {
+        return RestClient.builder()
+                .baseUrl(properties.getBaseUrl())
+                .build();
+    }
+
+    @Bean
+    RestClient paymentRestClient(PaymentServiceProperties properties) {
         return RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .build();
