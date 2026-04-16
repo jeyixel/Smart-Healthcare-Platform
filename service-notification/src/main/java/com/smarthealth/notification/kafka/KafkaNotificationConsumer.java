@@ -1,9 +1,11 @@
-package com.smarthealth.notification.kafka;
+package com.smarthealth.notification.kafka;
 
 import com.smarthealth.notification.dto.EmailRequest;
 import com.smarthealth.notification.dto.PaymentEventDto;
 import com.smarthealth.notification.dto.SmsRequest;
+import com.smarthealth.notification.kafka.DLQPublisher;
 import com.smarthealth.notification.service.EmailService;
+import com.smarthealth.notification.service.NotificationTemplateService;
 import com.smarthealth.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,89 +19,69 @@ public class KafkaNotificationConsumer {
 
     private final EmailService emailService;
     private final SmsService smsService;
+    private final NotificationTemplateService templateService;
+    private final DLQPublisher dlqPublisher;
 
     @KafkaListener(topics = "payment-success", groupId = "notification-service")
     public void handlePaymentSuccess(PaymentEventDto event) {
-        log.info("Received payment-success event for order: {}", event.getOrderId());
+        String topic = "payment-success";
+        log.info("Received {} event for order: {}", topic, event.getOrderId());
 
-        // 1. Send Booking Confirmation Email
-        EmailRequest confirmEmail = new EmailRequest();
-        confirmEmail.setTo(event.getPatientEmail());
-        confirmEmail.setSubject("Booking Confirmed - Smart Healthcare Platform");
-        confirmEmail.setBody(String.format(
-            "Dear %s,\n\n" +
-            "Your appointment with Dr. %s on %s has been successfully confirmed.\n" +
-            "Payment of %s %s was received successfully.\n\n" +
-            "Transaction ID: %s\n" +
-            "Description: %s\n\n" +
-            "Thank you for choosing Smart Healthcare Platform.\n" +
-            "Stay Healthy!",
-            event.getPatientName(), event.getDoctorName(), event.getAppointmentDate(),
-            event.getAmount(), event.getCurrency(), event.getTransactionId(), event.getItemDescription()
-        ));
-        emailService.sendEmail(confirmEmail);
+        try {
+            // 1. Send Booking Confirmation Email
+            EmailRequest confirmEmail = new EmailRequest();
+            confirmEmail.setTo(event.getPatientEmail());
+            confirmEmail.setSubject(templateService.buildPaymentSubject(topic));
+            confirmEmail.setBody(templateService.buildPaymentEmailBody(event));
+            emailService.sendEmail(confirmEmail, topic);
 
-        // 2. Send Receipt-style Email
-        EmailRequest receiptEmail = new EmailRequest();
-        receiptEmail.setTo(event.getPatientEmail());
-        receiptEmail.setSubject("Payment Receipt - " + event.getTransactionId());
-        receiptEmail.setBody(String.format(
-            "--- PAYMENT RECEIPT ---\n\n" +
-            "Order ID: %s\n" +
-            "Transaction ID: %s\n" +
-            "Patient Name: %s\n" +
-            "Doctor: Dr. %s\n" +
-            "Date: %s\n" +
-            "Amount Paid: %s %s\n" +
-            "Status: COMPLETED\n\n" +
-            "Thank you for your payment.",
-            event.getOrderId(), event.getTransactionId(), event.getPatientName(),
-            event.getDoctorName(), event.getAppointmentDate(), event.getAmount(), event.getCurrency()
-        ));
-        emailService.sendEmail(receiptEmail);
+            // 2. Send Receipt Email
+            EmailRequest receiptEmail = new EmailRequest();
+            receiptEmail.setTo(event.getPatientEmail());
+            receiptEmail.setSubject("Payment Receipt - " + event.getTransactionId());
+            receiptEmail.setBody(templateService.buildPaymentReceiptBody(event));
+            emailService.sendEmail(receiptEmail, topic);
 
-        // 3. Send SMS
-        if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
-            SmsRequest smsReq = new SmsRequest();
-            smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format(
-                "Confirmed! Payment of %s %s successful for Dr. %s on %s. TransID: %s.",
-                event.getAmount(), event.getCurrency(), event.getDoctorName(), 
-                event.getAppointmentDate(), event.getTransactionId()
-            ));
-            smsService.sendSms(smsReq);
+            // 3. Send SMS
+            if (isValidPhone(event.getPatientPhone())) {
+                SmsRequest smsReq = new SmsRequest();
+                smsReq.setTo(event.getPatientPhone());
+                smsReq.setMessage(templateService.buildPaymentSmsBody(event));
+                smsService.sendSms(smsReq, topic);
+            }
+        } catch (Exception e) {
+            log.error("Exhausted retries for {}: {}. Sending to DLQ.", topic, event.getOrderId());
+            dlqPublisher.publishToDLQ(event, topic, e.getMessage());
         }
     }
 
     @KafkaListener(topics = "payment-failed", groupId = "notification-service")
     public void handlePaymentFailed(PaymentEventDto event) {
-        log.info("Received payment-failed event for order: {}", event.getOrderId());
+        String topic = "payment-failed";
+        log.info("Received {} event for order: {}", topic, event.getOrderId());
 
-        // 1. Send Payment Failed Email
-        EmailRequest failEmail = new EmailRequest();
-        failEmail.setTo(event.getPatientEmail());
-        failEmail.setSubject("Action Required: Payment Failed");
-        failEmail.setBody(String.format(
-            "Dear %s,\n\n" +
-            "Unfortunately, your payment of %s %s for your appointment with Dr. %s on %s was unsuccessful.\n\n" +
-            "To confirm your booking, please try the payment again through the patient portal.\n\n" +
-            "Order Reference: %s\n" +
-            "Item: %s\n\n" +
-            "Thank you,\nSmart Healthcare Team",
-            event.getPatientName(), event.getAmount(), event.getCurrency(), 
-            event.getDoctorName(), event.getAppointmentDate(), event.getOrderId(), event.getItemDescription()
-        ));
-        emailService.sendEmail(failEmail);
+        try {
+            // 1. Send Payment Failed Email
+            EmailRequest failEmail = new EmailRequest();
+            failEmail.setTo(event.getPatientEmail());
+            failEmail.setSubject(templateService.buildPaymentSubject(topic));
+            failEmail.setBody(templateService.buildPaymentEmailBody(event));
+            emailService.sendEmail(failEmail, topic);
 
-        // 2. Send SMS
-        if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
-            SmsRequest smsReq = new SmsRequest();
-            smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format(
-                "Payment failed: Your payment of %s %s for Dr. %s on %s was not successful. Please retry.",
-                event.getAmount(), event.getCurrency(), event.getDoctorName(), event.getAppointmentDate()
-            ));
-            smsService.sendSms(smsReq);
+            // 2. Send SMS
+            if (isValidPhone(event.getPatientPhone())) {
+                SmsRequest smsReq = new SmsRequest();
+                smsReq.setTo(event.getPatientPhone());
+                smsReq.setMessage(templateService.buildPaymentSmsBody(event));
+                smsService.sendSms(smsReq, topic);
+            }
+        } catch (Exception e) {
+            log.error("Exhausted retries for {}: {}. Sending to DLQ.", topic, event.getOrderId());
+            dlqPublisher.publishToDLQ(event, topic, e.getMessage());
         }
+    }
+
+    private boolean isValidPhone(String phone) {
+        return phone != null && !phone.isBlank();
     }
 }
