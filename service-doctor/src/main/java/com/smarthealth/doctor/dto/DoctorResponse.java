@@ -23,8 +23,8 @@ public record DoctorResponse(
         String bio,
         String profileImageUrl,
         String licenseNumber,
-        Boolean verified,
-        Boolean active,
+        boolean verified,
+        boolean active,
         List<DoctorAvailabilityResponse> availabilities,
         Instant createdAt,
         Instant updatedAt

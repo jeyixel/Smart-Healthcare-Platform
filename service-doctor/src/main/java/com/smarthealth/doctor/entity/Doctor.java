@@ -73,10 +73,10 @@ public class Doctor extends AuditableEntity{
     private String licenseNumber;
 
     @Column(nullable = false)
-    private Boolean verified;
+    private boolean verified;
 
     @Column(nullable = false)
-    private Boolean active;
+    private boolean active;
 
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

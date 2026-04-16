@@ -116,7 +116,7 @@ export function AdminAuthPanel({
             <ul>
               <li>Register and authenticate administrators</li>
               <li>Update patient activation state</li>
-              <li>View the async event trail when Kafka is online</li>
+              <li>View the async event trail when system is online</li>
             </ul>
           </div>
 

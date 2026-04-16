@@ -12,6 +12,8 @@ import {
   AdminAppointment,
   DashboardSummary,
   SystemEvent,
+  PaymentAnalysis,
+  DailyRevenue,
 } from "@/types/api";
 
 const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API_BASE ?? "http://localhost:8087";
@@ -234,4 +236,13 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
   });
 
   return safeJson<SystemEvent[]>(response);
+}
+
+export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalysis> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/payment-analysis`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<PaymentAnalysis>(response);
 }

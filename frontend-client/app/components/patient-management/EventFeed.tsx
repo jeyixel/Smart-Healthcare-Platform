@@ -14,7 +14,7 @@ export function EventFeed({ events, loading, onRefresh }: EventFeedProps) {
       <div className="panel-header-row">
         <div>
           <h2>Recent Async Events</h2>
-          <p className="panel-subtitle">Kafka consumer events from service-patient</p>
+          <p className="panel-subtitle">Async consumer events from service-patient</p>
         </div>
         <button disabled={loading} onClick={onRefresh} className="btn btn-ghost" type="button">
           Refresh

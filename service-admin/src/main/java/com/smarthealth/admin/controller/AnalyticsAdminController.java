@@ -27,4 +27,9 @@ public class AnalyticsAdminController {
     public List<SystemEventResponse> getRecentEvents() {
         return analyticsService.getRecentEvents();
     }
+
+    @GetMapping("/payment-analysis")
+    public com.smarthealth.admin.dto.PaymentAnalysisResponse getPaymentAnalysis() {
+        return analyticsService.getPaymentAnalysis();
+    }
 }
