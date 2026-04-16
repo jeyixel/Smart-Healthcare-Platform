@@ -4,9 +4,11 @@ import com.smarthealth.admin.config.PatientServiceProperties;
 import com.smarthealth.admin.dto.PatientResponse;
 import com.smarthealth.admin.dto.PrescriptionSnapshotResponse;
 import com.smarthealth.admin.dto.PrescriptionSnapshotUpsertRequest;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -53,5 +55,12 @@ public class PatientAdminService {
                 .body(PrescriptionSnapshotResponse.class);
         adminAuditService.logPrescriptionUpsert(request, requestedBy);
         return response;
+    }
+
+    public List<PatientResponse> getAllPatients() {
+        return patientRestClient.get()
+                .uri(properties.getEndpoints().getBase())
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<PatientResponse>>() {});
     }
 }
