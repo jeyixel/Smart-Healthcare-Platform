@@ -1,6 +1,12 @@
+package com.smarthealth.admin.service;
+
+import com.smarthealth.admin.config.AppointmentServiceProperties;
+import com.smarthealth.admin.config.PatientServiceProperties;
 import com.smarthealth.admin.config.PaymentServiceProperties;
-import com.smarthealth.admin.dto.ExternalPaymentResponse;
-import com.smarthealth.admin.dto.PaymentAnalysisResponse;
+import com.smarthealth.admin.dto.*;
+import com.smarthealth.admin.model.Role;
+import com.smarthealth.admin.repository.AdminActionLogRepository;
+import com.smarthealth.admin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;

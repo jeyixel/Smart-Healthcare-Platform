@@ -86,6 +86,8 @@ export interface AdminAppointment {
   id: string;
   patientId: string;
   doctorId: string;
+  patientName: string;
+  doctorName: string;
   appointmentDate: string;
   appointmentTime: string;
   consultationType: "VIRTUAL" | "PHYSICAL";

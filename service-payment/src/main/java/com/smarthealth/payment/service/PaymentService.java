@@ -9,6 +9,7 @@ import com.smarthealth.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -173,22 +174,26 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
+    @Transactional(readOnly = true)
     public PaymentResponse getPaymentByOrderId(String orderId) {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Payment not found: " + orderId));
         return mapToResponse(payment);
     }
 
+    @Transactional(readOnly = true)
     public List<PaymentResponse> getPaymentsByPatient(String patientId) {
         return paymentRepository.findByPatientId(patientId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
-    public List<PaymentResponse> getPaymentsByAppointment(java.util.UUID appointmentId) {
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentsByAppointment(Long appointmentId) {
         return paymentRepository.findByAppointmentId(appointmentId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
                 .stream().map(this::mapToResponse).collect(Collectors.toList());

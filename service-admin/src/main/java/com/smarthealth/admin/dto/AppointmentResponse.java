@@ -11,6 +11,8 @@ public record AppointmentResponse(
     UUID doctorId,
     LocalDate appointmentDate,
     LocalTime appointmentTime,
+    String patientName,
+    String doctorName,
     String consultationType,
     String status,
     String reason,

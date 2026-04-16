@@ -10,7 +10,8 @@ import org.springframework.web.client.RestClient;
     PatientServiceProperties.class, 
     NotificationServiceProperties.class, 
     AppointmentServiceProperties.class,
-    PaymentServiceProperties.class
+    PaymentServiceProperties.class,
+    DoctorServiceProperties.class
 })
 public class HttpClientConfig {
 
@@ -37,6 +38,13 @@ public class HttpClientConfig {
 
     @Bean
     RestClient paymentRestClient(PaymentServiceProperties properties) {
+        return RestClient.builder()
+                .baseUrl(properties.getBaseUrl())
+                .build();
+    }
+
+    @Bean
+    RestClient doctorRestClient(DoctorServiceProperties properties) {
         return RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .build();
