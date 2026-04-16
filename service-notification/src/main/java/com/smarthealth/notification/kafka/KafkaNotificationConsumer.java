@@ -22,20 +22,51 @@ public class KafkaNotificationConsumer {
     public void handlePaymentSuccess(PaymentEventDto event) {
         log.info("Received payment-success event for order: {}", event.getOrderId());
 
-        // Send Email
-        EmailRequest emailReq = new EmailRequest();
-        emailReq.setTo(event.getPatientEmail());
-        emailReq.setSubject("Payment Successful - " + event.getItemDescription());
-        emailReq.setBody(String.format("Dear %s %s,\n\nYour payment of %s %s for %s has been successfully processed.\n\nThank you,\nSmart Healthcare Team",
-                event.getPatientFirstName(), event.getPatientLastName(), event.getAmount(), event.getCurrency(), event.getItemDescription()));
-        emailService.sendEmail(emailReq);
+        // 1. Send Booking Confirmation Email
+        EmailRequest confirmEmail = new EmailRequest();
+        confirmEmail.setTo(event.getPatientEmail());
+        confirmEmail.setSubject("Booking Confirmed - Smart Healthcare Platform");
+        confirmEmail.setBody(String.format(
+            "Dear %s,\n\n" +
+            "Your appointment with Dr. %s on %s has been successfully confirmed.\n" +
+            "Payment of %s %s was received successfully.\n\n" +
+            "Transaction ID: %s\n" +
+            "Description: %s\n\n" +
+            "Thank you for choosing Smart Healthcare Platform.\n" +
+            "Stay Healthy!",
+            event.getPatientName(), event.getDoctorName(), event.getAppointmentDate(),
+            event.getAmount(), event.getCurrency(), event.getTransactionId(), event.getItemDescription()
+        ));
+        emailService.sendEmail(confirmEmail);
 
-        // Send SMS
+        // 2. Send Receipt-style Email
+        EmailRequest receiptEmail = new EmailRequest();
+        receiptEmail.setTo(event.getPatientEmail());
+        receiptEmail.setSubject("Payment Receipt - " + event.getTransactionId());
+        receiptEmail.setBody(String.format(
+            "--- PAYMENT RECEIPT ---\n\n" +
+            "Order ID: %s\n" +
+            "Transaction ID: %s\n" +
+            "Patient Name: %s\n" +
+            "Doctor: Dr. %s\n" +
+            "Date: %s\n" +
+            "Amount Paid: %s %s\n" +
+            "Status: COMPLETED\n\n" +
+            "Thank you for your payment.",
+            event.getOrderId(), event.getTransactionId(), event.getPatientName(),
+            event.getDoctorName(), event.getAppointmentDate(), event.getAmount(), event.getCurrency()
+        ));
+        emailService.sendEmail(receiptEmail);
+
+        // 3. Send SMS
         if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
             SmsRequest smsReq = new SmsRequest();
             smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format("Payment of %s %s successful for %s. - Smart Healthcare",
-                    event.getAmount(), event.getCurrency(), event.getItemDescription()));
+            smsReq.setMessage(String.format(
+                "Confirmed! Payment of %s %s successful for Dr. %s on %s. TransID: %s.",
+                event.getAmount(), event.getCurrency(), event.getDoctorName(), 
+                event.getAppointmentDate(), event.getTransactionId()
+            ));
             smsService.sendSms(smsReq);
         }
     }
@@ -44,20 +75,30 @@ public class KafkaNotificationConsumer {
     public void handlePaymentFailed(PaymentEventDto event) {
         log.info("Received payment-failed event for order: {}", event.getOrderId());
 
-        // Send Email
-        EmailRequest emailReq = new EmailRequest();
-        emailReq.setTo(event.getPatientEmail());
-        emailReq.setSubject("Payment Failed - " + event.getItemDescription());
-        emailReq.setBody(String.format("Dear %s %s,\n\nUnfortunately, your payment of %s %s for %s has failed. Please try again.\n\nThank you,\nSmart Healthcare Team",
-                event.getPatientFirstName(), event.getPatientLastName(), event.getAmount(), event.getCurrency(), event.getItemDescription()));
-        emailService.sendEmail(emailReq);
+        // 1. Send Payment Failed Email
+        EmailRequest failEmail = new EmailRequest();
+        failEmail.setTo(event.getPatientEmail());
+        failEmail.setSubject("Action Required: Payment Failed");
+        failEmail.setBody(String.format(
+            "Dear %s,\n\n" +
+            "Unfortunately, your payment of %s %s for your appointment with Dr. %s on %s was unsuccessful.\n\n" +
+            "To confirm your booking, please try the payment again through the patient portal.\n\n" +
+            "Order Reference: %s\n" +
+            "Item: %s\n\n" +
+            "Thank you,\nSmart Healthcare Team",
+            event.getPatientName(), event.getAmount(), event.getCurrency(), 
+            event.getDoctorName(), event.getAppointmentDate(), event.getOrderId(), event.getItemDescription()
+        ));
+        emailService.sendEmail(failEmail);
 
-        // Send SMS
+        // 2. Send SMS
         if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
             SmsRequest smsReq = new SmsRequest();
             smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format("Payment of %s %s failed for %s. Please try again. - Smart Healthcare",
-                    event.getAmount(), event.getCurrency(), event.getItemDescription()));
+            smsReq.setMessage(String.format(
+                "Payment failed: Your payment of %s %s for Dr. %s on %s was not successful. Please retry.",
+                event.getAmount(), event.getCurrency(), event.getDoctorName(), event.getAppointmentDate()
+            ));
             smsService.sendSms(smsReq);
         }
     }
