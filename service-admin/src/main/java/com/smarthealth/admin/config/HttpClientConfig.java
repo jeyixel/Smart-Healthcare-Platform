@@ -6,13 +6,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties(PatientServiceProperties.class)
+@EnableConfigurationProperties({PatientServiceProperties.class, NotificationServiceProperties.class})
 public class HttpClientConfig {
 
     @Bean
     RestClient patientRestClient(PatientServiceProperties properties) {
         return RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
+                .build();
+    }
+
+    @Bean
+    RestClient notificationRestClient(NotificationServiceProperties properties) {
+        return RestClient.builder()
+                .baseUrl(properties.getUrl())
                 .build();
     }
 }
