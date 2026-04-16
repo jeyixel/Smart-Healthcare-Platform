@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useDoctorContext } from "@/app/context/DoctorContext";
+import { useAppointments } from "@/app/hooks/useAppointments";
+import { useRouter } from "next/navigation";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   dashboard:     { title: "Overview", subtitle: "Welcome back to your clinical workspace" },
@@ -11,15 +13,19 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   telemedicine:  { title: "Telemedicine", subtitle: "Start or join video consultations" },
   schedule:      { title: "My Schedule", subtitle: "Manage your availability and working hours" },
   reports:       { title: "Reports & Analytics", subtitle: "Insights into your clinical performance" },
-  settings:      { title: "Settings", subtitle: "Manage your profile and preferences" },
+  profile:      { title: "Profile", subtitle: "Manage your profile and preferences" },
 };
 
 export function DoctorTopBar() {
-  const { session, activeSection, sidebarCollapsed } = useDoctorContext();
+  const { session, activeSection, sidebarCollapsed, setActiveSection } = useDoctorContext();
+  const { doctor, refetch } = useAppointments();
+  const router = useRouter();
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const page = pageTitles[activeSection] ?? pageTitles.dashboard;
 
@@ -34,6 +40,21 @@ export function DoctorTopBar() {
     return () => clearInterval(id);
   }, []);
 
+  // Add pulse animation styles
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const sideWidth = sidebarCollapsed ? 72 : 260;
 
   const notifications = [
@@ -44,6 +65,40 @@ export function DoctorTopBar() {
   ];
 
   const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleStatusChange = async () => {
+    if (!doctor || updatingStatus) return;
+    
+    setUpdatingStatus(true);
+    try {
+      const DOCTOR_API = process.env.NEXT_PUBLIC_DOCTOR_API_BASE ?? "http://localhost:8082";
+      const token = localStorage.getItem("smart_admin_token");
+      
+      const response = await fetch(`${DOCTOR_API}/api/v1/doctors/${doctor.id}/active?active=${!doctor.active}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update active status");
+      }
+
+      // Show success feedback
+      const newStatus = !doctor.active;
+      console.log(`Doctor status updated to: ${newStatus ? "Active" : "Inactive"}`);
+      
+      // Refetch doctor data to get updated status
+      await refetch();
+    } catch (error) {
+      console.error("Error updating doctor status:", error);
+    } finally {
+      setUpdatingStatus(false);
+      setProfileOpen(false);
+    }
+  };
 
   return (
     <header style={{
@@ -178,14 +233,19 @@ export function DoctorTopBar() {
           )}
         </div>
 
-        {/* Profile avatar */}
-        {session && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            padding: "6px 12px 6px 6px",
-            background: "#f8fafc", border: "1px solid #e2e8f0",
-            borderRadius: "12px", cursor: "pointer",
-          }}>
+        {/* Profile avatar with dropdown */}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "6px 18px 6px 18px",
+              background: profileOpen ? "rgba(6,182,212,0.1)" : "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "12px", cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
             <div style={{
               width: "32px", height: "32px", borderRadius: "50%",
               background: "linear-gradient(135deg,#06b6d4,#0284c7)",
@@ -193,14 +253,149 @@ export function DoctorTopBar() {
               color: "#fff", fontWeight: 700, fontSize: "13px",
               boxShadow: "0 0 10px rgba(6,182,212,0.35)",
             }}>
-              {session.displayName.replace("Dr. ", "").charAt(0).toUpperCase()}
+              {session?.displayName?.replace("Dr. ", "").charAt(0).toUpperCase() || "D"}
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{session.displayName}</p>
-              <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>General Physician</p>
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{session?.displayName || "Doctor"}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                <span style={{ fontSize: "11px", color: "#64748b" }}></span>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "2px 6px", borderRadius: "999px",
+                  background: doctor?.active 
+                    ? "rgba(16,185,129,0.1)" 
+                    : "rgba(239,68,68,0.1)",
+                }}>
+                  <div style={{
+                    width: "6px", height: "6px", borderRadius: "50%",
+                    background: doctor?.active ? "#10b981" : "#ef4444",
+                    boxShadow: doctor?.active 
+                      ? "0 0 4px rgba(16,185,129,0.6)" 
+                      : "0 0 4px rgba(239,68,68,0.6)",
+                    animation: doctor?.active ? "pulse 2s infinite" : "none",
+                  }} />
+                  <span style={{
+                    fontSize: "10px", fontWeight: 500,
+                    color: doctor?.active ? "#10b981" : "#ef4444",
+                  }}>
+                    {doctor?.active ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          </button>
+
+          {profileOpen && (
+            <div style={{
+              position: "absolute", top: "calc(100% + 10px)", right: 0,
+              width: "280px", background: "#fff",
+              borderRadius: "16px", border: "1px solid #e2e8f0",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)", zIndex: 200,
+              overflow: "hidden",
+            }}>
+              {/* Profile Header */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "50%",
+                    background: "linear-gradient(135deg,#06b6d4,#0284c7)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontWeight: 700, fontSize: "15px",
+                    boxShadow: "0 0 12px rgba(6,182,212,0.4)",
+                  }}>
+                    {session?.displayName?.replace("Dr. ", "").charAt(0).toUpperCase() || "D"}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{session?.displayName || "Doctor"}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>General Physician</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Status Section */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>Active Status</span>
+                  <span style={{
+                    fontSize: "11px", fontWeight: 500,
+                    color: doctor?.active ? "#10b981" : "#ef4444",
+                    background: doctor?.active ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                    padding: "2px 8px", borderRadius: "999px",
+                  }}>
+                    {doctor?.active ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <p style={{ margin: "0 0 12px", fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+                  {doctor?.active 
+                    ? "You are currently accepting new appointments and patient requests."
+                    : "You are not accepting new appointments. Patients cannot book with you."
+                  }
+                </p>
+                <button
+                  onClick={handleStatusChange}
+                  disabled={updatingStatus}
+                  style={{
+                    width: "100%",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: doctor?.active 
+                      ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                      : "linear-gradient(135deg, #10b981, #059669)",
+                    color: "#fff",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: updatingStatus ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                    opacity: updatingStatus ? 0.7 : 1,
+                  }}
+                >
+                  {updatingStatus ? "Updating..." : doctor?.active ? "Set as Inactive" : "Set as Active"}
+                </button>
+              </div>
+
+              {/* Menu Items */}
+              <div style={{ padding: "8px 0" }}>
+                <button 
+                  onClick={() => {
+                    setActiveSection("profile");
+                    setProfileOpen(false);
+                    router.push("/doctor");
+                  }}
+                  style={{
+                    width: "100%", padding: "10px 20px",
+                    background: "none", border: "none",
+                    display: "flex", alignItems: "center", gap: "12px",
+                    cursor: "pointer", transition: "background 0.2s",
+                    fontSize: "13px", color: "#334155",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                >
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  View Profile
+                </button>
+                <div style={{ height: "1px", background: "#f1f5f9", margin: "8px 0" }} />
+                <button style={{
+                  width: "100%", padding: "10px 20px",
+                  background: "none", border: "none",
+                  display: "flex", alignItems: "center", gap: "12px",
+                  cursor: "pointer", transition: "background 0.2s",
+                  fontSize: "13px", color: "#ef4444",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#fef2f2"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
