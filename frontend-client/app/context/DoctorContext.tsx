@@ -17,7 +17,7 @@ export type DoctorNavSection =
   | "telemedicine"
   | "schedule"
   | "reports"
-  | "settings";
+  | "profile";
 
 interface DoctorContextValue {
   session: DoctorSession | null;
