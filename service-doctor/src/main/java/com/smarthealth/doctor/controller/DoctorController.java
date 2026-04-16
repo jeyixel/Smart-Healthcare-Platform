@@ -38,7 +38,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("(hasRole('DOCTOR') and @doctorService.isDoctorOwner(#id, authentication.principal.userId))")
+    @PreAuthorize("(hasRole('DOCTOR'))")
     public DoctorResponse updateDoctor(@PathVariable UUID id,
                                        @Valid @RequestBody UpdateDoctorRequest request) {
         return doctorService.updateDoctor(id, request);

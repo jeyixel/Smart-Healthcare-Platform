@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useDoctorContext } from "@/app/context/DoctorContext";
 import { useAppointments } from "@/app/hooks/useAppointments";
+import { useRouter } from "next/navigation";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   dashboard:     { title: "Overview", subtitle: "Welcome back to your clinical workspace" },
@@ -12,12 +13,13 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   telemedicine:  { title: "Telemedicine", subtitle: "Start or join video consultations" },
   schedule:      { title: "My Schedule", subtitle: "Manage your availability and working hours" },
   reports:       { title: "Reports & Analytics", subtitle: "Insights into your clinical performance" },
-  settings:      { title: "Settings", subtitle: "Manage your profile and preferences" },
+  profile:      { title: "Profile", subtitle: "Manage your profile and preferences" },
 };
 
 export function DoctorTopBar() {
-  const { session, activeSection, sidebarCollapsed } = useDoctorContext();
+  const { session, activeSection, sidebarCollapsed, setActiveSection } = useDoctorContext();
   const { doctor, refetch } = useAppointments();
+  const router = useRouter();
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [notifOpen, setNotifOpen] = useState(false);
@@ -237,7 +239,7 @@ export function DoctorTopBar() {
             onClick={() => setProfileOpen(!profileOpen)}
             style={{
               display: "flex", alignItems: "center", gap: "10px",
-              padding: "6px 12px 6px 6px",
+              padding: "6px 18px 6px 18px",
               background: profileOpen ? "rgba(6,182,212,0.1)" : "#f8fafc",
               border: "1px solid #e2e8f0",
               borderRadius: "12px", cursor: "pointer",
@@ -255,11 +257,32 @@ export function DoctorTopBar() {
             </div>
             <div>
               <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{session?.displayName || "Doctor"}</p>
-              <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>General Physician</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                <span style={{ fontSize: "11px", color: "#64748b" }}></span>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "2px 6px", borderRadius: "999px",
+                  background: doctor?.active 
+                    ? "rgba(16,185,129,0.1)" 
+                    : "rgba(239,68,68,0.1)",
+                }}>
+                  <div style={{
+                    width: "6px", height: "6px", borderRadius: "50%",
+                    background: doctor?.active ? "#10b981" : "#ef4444",
+                    boxShadow: doctor?.active 
+                      ? "0 0 4px rgba(16,185,129,0.6)" 
+                      : "0 0 4px rgba(239,68,68,0.6)",
+                    animation: doctor?.active ? "pulse 2s infinite" : "none",
+                  }} />
+                  <span style={{
+                    fontSize: "10px", fontWeight: 500,
+                    color: doctor?.active ? "#10b981" : "#ef4444",
+                  }}>
+                    {doctor?.active ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <svg width="16" height="16" fill="none" stroke="#64748b" viewBox="0 0 24 24" style={{ transition: "transform 0.2s", transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
           </button>
 
           {profileOpen && (
@@ -333,34 +356,26 @@ export function DoctorTopBar() {
 
               {/* Menu Items */}
               <div style={{ padding: "8px 0" }}>
-                <button style={{
-                  width: "100%", padding: "10px 20px",
-                  background: "none", border: "none",
-                  display: "flex", alignItems: "center", gap: "12px",
-                  cursor: "pointer", transition: "background 0.2s",
-                  fontSize: "13px", color: "#334155",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
+                <button 
+                  onClick={() => {
+                    setActiveSection("profile");
+                    setProfileOpen(false);
+                    router.push("/doctor");
+                  }}
+                  style={{
+                    width: "100%", padding: "10px 20px",
+                    background: "none", border: "none",
+                    display: "flex", alignItems: "center", gap: "12px",
+                    cursor: "pointer", transition: "background 0.2s",
+                    fontSize: "13px", color: "#334155",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                >
                   <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   View Profile
-                </button>
-                <button style={{
-                  width: "100%", padding: "10px 20px",
-                  background: "none", border: "none",
-                  display: "flex", alignItems: "center", gap: "12px",
-                  cursor: "pointer", transition: "background 0.2s",
-                  fontSize: "13px", color: "#334155",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Settings
                 </button>
                 <div style={{ height: "1px", background: "#f1f5f9", margin: "8px 0" }} />
                 <button style={{
@@ -380,31 +395,6 @@ export function DoctorTopBar() {
               </div>
             </div>
           )}
-        </div>
-
-        {/* Active Status Indicator */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          padding: "6px 12px", borderRadius: "999px",
-          background: doctor?.active 
-            ? "rgba(16,185,129,0.1)" 
-            : "rgba(239,68,68,0.1)",
-          border: `1px solid ${doctor?.active ? "#10b981" : "#ef4444"}30`,
-        }}>
-          <div style={{
-            width: "8px", height: "8px", borderRadius: "50%",
-            background: doctor?.active ? "#10b981" : "#ef4444",
-            boxShadow: doctor?.active 
-              ? "0 0 6px rgba(16,185,129,0.6)" 
-              : "0 0 6px rgba(239,68,68,0.6)",
-            animation: doctor?.active ? "pulse 2s infinite" : "none",
-          }} />
-          <span style={{
-            fontSize: "12px", fontWeight: 600,
-            color: doctor?.active ? "#10b981" : "#ef4444",
-          }}>
-            {doctor?.active ? "Active" : "Inactive"}
-          </span>
         </div>
       </div>
     </header>

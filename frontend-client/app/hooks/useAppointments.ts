@@ -170,31 +170,141 @@ export function useAppointments(): UseAppointmentsResult {
     return () => { cancelled = true; };
   }, [tick]);
 
-  // ── PATCH status ────────────────────────────────────────────────────────────
+  // ── Toast notifications ──────────────────────────────────────────────
+
+  const showToast = useCallback((message: string, type: "success" | "error") => {
+    // Remove any existing toast
+    const existingToast = document.getElementById("appointment-toast");
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Create toast element
+    const toast = document.createElement("div");
+    toast.id = "appointment-toast";
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "success" 
+        ? "linear-gradient(135deg, #10b981, #059669)" 
+        : "linear-gradient(135deg, #ef4444, #dc2626)"};
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px ${type === "success" 
+        ? "rgba(16,185,129,0.3)" 
+        : "rgba(239,68,68,0.3)"};
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      animation: slideIn 0.3s ease-out;
+      min-width: 280px;
+    `;
+
+    // Add icon
+    const icon = document.createElement("div");
+    icon.style.cssText = `
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    `;
+    icon.innerHTML = type === "success" 
+      ? `<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` 
+      : `<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>` ;
+
+    // Add content
+    const content = document.createElement("div");
+    content.innerHTML = `
+      <h4 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">
+        ${type === "success" ? "Success!" : "Error!"}
+      </h4>
+      <p style="margin: 0; font-size: 14px; opacity: 0.9;">
+        ${message}
+      </p>
+    `;
+
+    toast.appendChild(icon);
+    toast.appendChild(content);
+    document.body.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      toast.style.animation = "slideOut 0.3s ease-in";
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }, []);
+
+  // ── PATCH status ────────────────────────────────────────────────────
 
   const updateAppointmentStatus = useCallback(
     async (id: string, status: AppointmentStatus, notes?: string) => {
       const token = localStorage.getItem("smart_admin_token");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`${APPT_API}/api/v1/appointments/${id}/status`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status, notes: notes ?? null }),
-      });
+      try {
+        const res = await fetch(`${APPT_API}/api/v1/appointments/${id}/status`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status, notes: notes ?? null }),
+        });
 
-      await safeJson<Appointment>(res);
+        await safeJson<Appointment>(res);
 
-      // Optimistically update local state
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status, notes: notes ?? a.notes } : a))
-      );
+        // Optimistically update local state
+        setAppointments((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, status, notes: notes ?? a.notes } : a))
+        );
+
+        // Show success toast
+        showToast("Appointment status updated successfully!", "success");
+      } catch (error) {
+        console.error("Error updating appointment status:", error);
+        // Show error toast
+        showToast("Failed to update appointment status", "error");
+      }
     },
     []
   );
 
   return { appointments, doctor, loading, error, refetch, updateAppointmentStatus };
 }
+
+// Add CSS animations for toast
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    0% { 
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% { 
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slideOut {
+    0% { 
+      transform: translateX(0);
+      opacity: 1;
+    }
+    100% { 
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
