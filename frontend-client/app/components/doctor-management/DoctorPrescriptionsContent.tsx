@@ -1527,6 +1527,7 @@ export function DoctorPrescriptionsContent() {
   const { prescriptionDraftAppointment, setPrescriptionDraftAppointment } = useDoctorContext();
   
   const [filter, setFilter] = useState<PrescriptionStatus | "ALL">("ALL");
+  const [sortAsc, setSortAsc] = useState(false);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [builderAppointmentId, setBuilderAppointmentId] = useState<string>("");
   const [builderPatientId, setBuilderPatientId] = useState<string>("");
@@ -1560,10 +1561,18 @@ export function DoctorPrescriptionsContent() {
   }, [prescriptionDraftAppointment, setPrescriptionDraftAppointment]);
 
   const filtered = useMemo(() => {
-    let sorted = [...prescriptions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    let sorted = [...prescriptions].sort((a,b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortAsc ? dateA - dateB : dateB - dateA;
+    });
     if (filter === "ALL") return sorted;
     return sorted.filter(p => p.status === filter);
-  }, [prescriptions, filter]);
+  }, [prescriptions, filter, sortAsc]);
+
+  const handleSort = () => {
+    setSortAsc(!sortAsc);
+  };
 
   const handleDelete = (id: string, rx: Prescription, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1698,7 +1707,33 @@ export function DoctorPrescriptionsContent() {
                  <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
                    <th style={{ width: "48px", padding: "14px 16px 14px 20px", fontSize: "11px", fontWeight: 700, color: "#94a3b8" }}>#</th>
                    <th style={{ padding: "14px 16px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Associated Record</th>
-                   <th style={{ padding: "14px 16px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Date</th>
+                   <th 
+                   style={{ 
+                     padding: "14px 16px", 
+                     fontSize: "11px", 
+                     fontWeight: 700, 
+                     color: "#64748b", 
+                     textTransform: "uppercase", 
+                     letterSpacing: "0.05em",
+                     cursor: "pointer",
+                     userSelect: "none",
+                     transition: "all 0.2s ease"
+                   }}
+                   onClick={handleSort}
+                   onMouseEnter={(e) => {
+                     e.currentTarget.style.color = "#06b6d4";
+                     e.currentTarget.style.background = "rgba(6,182,212,0.05)";
+                   }}
+                   onMouseLeave={(e) => {
+                     e.currentTarget.style.color = "#64748b";
+                     e.currentTarget.style.background = "transparent";
+                   }}
+                 >
+                   Date
+                   <span style={{ fontSize: "10px", marginLeft: "3px" }}>
+                     {sortAsc ? "▲" : "▼"}
+                   </span>
+                 </th>
                    <th style={{ padding: "14px 16px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Diagnosis</th>
                    <th style={{ padding: "14px 16px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</th>
                    <th style={{ padding: "14px 16px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right" }}>Actions</th>
