@@ -39,6 +39,17 @@ public class Appointment {
     @Column(nullable = false, length = 20)
     private AppointmentStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING_PAYMENT;
+
+    @Column
+    private LocalDateTime paymentDeadline;
+
+    @Column(length = 100)
+    private String paymentReference;
+
     @Column(length = 500)
     private String reason;
 

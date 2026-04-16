@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "payments", schema = "payment_service")
@@ -27,7 +28,7 @@ public class Payment {
     private String orderId;           // unique order ID sent to PayHere
 
     @Column(nullable = false)
-    private Long appointmentId;
+    private UUID appointmentId;
 
     @Column(nullable = false)
     private String patientId;
@@ -58,6 +59,9 @@ public class Payment {
 
     @Column(nullable = false)
     private String itemDescription;   // e.g. "Consultation with Dr. Perera"
+
+    @Column(nullable = false)
+    private String paymentReference;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

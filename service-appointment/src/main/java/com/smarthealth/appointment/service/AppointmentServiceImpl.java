@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,7 +64,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         request.doctorId(),
                         request.appointmentDate(),
                         request.appointmentTime(),
-                        List.of(AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED)
+                        List.of(AppointmentStatus.CONFIRMED)
                 );
 
         if (doctorAlreadyBooked) {
@@ -78,6 +79,9 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .consultationType(request.consultationType())
                 .reason(request.reason())
                 .status(AppointmentStatus.PENDING)
+                .paymentStatus(com.smarthealth.appointment.entity.PaymentStatus.PENDING_PAYMENT)
+                .paymentDeadline(LocalDateTime.now().plusMinutes(15))
+                .paymentReference(UUID.randomUUID().toString())
                 .build();
 
         appointment = appointmentRepository.save(appointment);
@@ -149,7 +153,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         appointment.getDoctorId(),
                         request.appointmentDate(),
                         request.appointmentTime(),
-                        List.of(AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED)
+                        List.of(AppointmentStatus.CONFIRMED)
                 );
 
         if (doctorAlreadyBooked &&
@@ -161,6 +165,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentDate(request.appointmentDate());
         appointment.setAppointmentTime(request.appointmentTime());
         appointment.setStatus(AppointmentStatus.PENDING);
+        appointment.setPaymentStatus(com.smarthealth.appointment.entity.PaymentStatus.PENDING_PAYMENT);
+        appointment.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
+        appointment.setPaymentReference(UUID.randomUUID().toString());
 
         appointment = appointmentRepository.save(appointment);
         appointmentEventPublisher.publishAppointmentEvent("appointment-rescheduled", "APPOINTMENT_RESCHEDULED", appointment);
