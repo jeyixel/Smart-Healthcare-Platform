@@ -21,6 +21,14 @@ export interface Appointment {
   updatedAt: string;
 }
 
+export interface DoctorAvailability {
+  id: string;
+  dayOfWeek: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  status: "AVAILABLE" | "UNAVAILABLE";
+}
+
 export interface DoctorProfile {
   id: string;
   userId: number;
@@ -39,6 +47,7 @@ export interface DoctorProfile {
   licenseNumber: string;
   verified: boolean;
   active: boolean;
+  availabilities: DoctorAvailability[];
 }
 
 export interface UseAppointmentsResult {
