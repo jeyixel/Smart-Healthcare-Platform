@@ -3,12 +3,13 @@ package com.smarthealth.payment.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 public class PaymentInitiateRequest {
 
     @NotNull(message = "Appointment ID is required")
-    private Long appointmentId;
+    private UUID appointmentId;
 
     @NotBlank(message = "Patient ID is required")
     private String patientId;
@@ -38,4 +39,7 @@ public class PaymentInitiateRequest {
 
     @NotBlank(message = "Item description is required")
     private String itemDescription;
+
+    @NotBlank(message = "Payment reference is required")
+    private String paymentReference;
 }

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class PaymentEventProducer {
 
-    private final KafkaTemplate<String, PaymentEventDto> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendPaymentSuccess(PaymentEventDto event) {
         kafkaTemplate.send(KafkaConfig.PAYMENT_SUCCESS_TOPIC, event.getOrderId(), event);
@@ -22,5 +22,10 @@ public class PaymentEventProducer {
     public void sendPaymentFailed(PaymentEventDto event) {
         kafkaTemplate.send(KafkaConfig.PAYMENT_FAILED_TOPIC, event.getOrderId(), event);
         log.info("Payment failed event sent for order: {}", event.getOrderId());
+    }
+
+    public void sendPaymentCompleted(com.smarthealth.payment.dto.PaymentCompletedEventDto event) {
+        kafkaTemplate.send("payment-completed", event.getAppointmentId(), event);
+        log.info("Payment-completed event sent for appointment: {}", event.getAppointmentId());
     }
 }
