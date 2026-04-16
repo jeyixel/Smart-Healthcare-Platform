@@ -55,7 +55,7 @@ export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: Vide
 
     const fetchToken = async () => {
       try {
-        const userToken = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+        const userToken = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : "";
         // Send the raw room name (without appId prefix) to the backend token endpoint
         const rawRoom = appId ? roomName.replace(`${appId}/`, "") : roomName;
         const response = await fetch(`http://localhost:8080/api/v1/telemedicine/meet/token?room=${encodeURIComponent(rawRoom)}`, {

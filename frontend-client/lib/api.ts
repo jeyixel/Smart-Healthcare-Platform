@@ -185,7 +185,7 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
 }
 
 export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${NOTIFICATION_API}/api/notifications/logs/${recipient}`, {
+  const response = await fetch(`${NOTIFICATION_API}/api/v1/notifications/logs/${recipient}`, {
     cache: "no-store",
   });
 
