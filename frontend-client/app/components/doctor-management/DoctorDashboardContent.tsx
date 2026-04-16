@@ -3,7 +3,11 @@
 import { useDoctorContext } from "@/app/context/DoctorContext";
 import { useAppointments, Appointment, AppointmentStatus } from "@/app/hooks/useAppointments";
 import { usePrescriptions, PrescriptionStatus } from "@/app/hooks/usePrescriptions";
+import { DoctorPatientsContent } from "@/app/components/doctor-management/DoctorPatientsContent";
+
+import { usePatients } from "@/app/hooks/usePatients";
 import { useMemo, useEffect } from "react";
+import { getDoctorName } from "@/app/utils/tokenUtils";
 /* ─── Mock data ─────────────────────────────────────────────────── */
 
 const kpiCards = [
@@ -176,12 +180,9 @@ export function DoctorDashboardContent() {
   const { session, setActiveSection } = useDoctorContext();
   const { appointments, loading, error } = useAppointments();
   const { prescriptions, loading: prescLoading, fetchDoctorPrescriptions } = usePrescriptions();
+  const doctorName = getDoctorName();
 
-  // Fetch prescriptions on component mount
-  useEffect(() => {
-    void fetchDoctorPrescriptions();
-  }, [fetchDoctorPrescriptions]);
-
+  // Helper function for date formatting
   function getLocalDateKey(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -190,6 +191,51 @@ export function DoctorDashboardContent() {
   }
 
   const today = getLocalDateKey(new Date());
+
+  // Get unique patient IDs from all appointments
+  const allPatientIds = useMemo(() => {
+    const ids = appointments.map(appt => appt.patientId);
+    return [...new Set(ids)]; // Remove duplicates
+  }, [appointments]);
+
+  // Get recent patient IDs (from most recent appointments)
+  const recentPatientIds = useMemo(() => {
+    const sortedAppointments = appointments
+      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+    const recentIds = sortedAppointments.map(appt => appt.patientId);
+    return [...new Set(recentIds)].slice(0, 10); // Take first 10 unique patient IDs
+  }, [appointments]);
+
+  const { patients: recentPatientsData, loading: patientsLoading } = usePatients(recentPatientIds);
+
+  // Prepare recent patients data with stats
+  const recentPatientsWithStats = useMemo(() => {
+    return recentPatientsData.map(patient => {
+      const patientAppointments = appointments.filter(appt => appt.patientId === patient.id);
+      const lastAppointment = patientAppointments
+        .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())[0];
+
+      const age = calculateAge(patient.dateOfBirth);
+      const lastVisit = lastAppointment ? 
+        (lastAppointment.appointmentDate === today ? "Today" : 
+         new Date(lastAppointment.appointmentDate).toLocaleDateString()) : 
+        "No visits";
+
+      return {
+        name: `${patient.firstName} ${patient.lastName}`,
+        age: age || 0,
+        condition: "Patient", // Placeholder since we don't have medical conditions
+        lastVisit,
+        avatar: patient.firstName.charAt(0).toUpperCase(),
+        risk: "low" as const, // Default risk level
+      };
+    });
+  }, [recentPatientsData, appointments, today]);
+
+  // Fetch prescriptions on component mount
+  useEffect(() => {
+    void fetchDoctorPrescriptions();
+  }, [fetchDoctorPrescriptions]);
 
   // Handler for "Start Next Appointment" button
   const handleStartNextAppointment = () => {
@@ -220,7 +266,7 @@ export function DoctorDashboardContent() {
     return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
   }
 
-  // Format timestamp to time string
+// Format timestamp to time string
   function formatTimestamp(timestamp: string | null): string {
     if (!timestamp) return "Recently";
     const date = new Date(timestamp);
@@ -238,6 +284,19 @@ export function DoctorDashboardContent() {
     const ampm = h >= 12 ? "PM" : "AM";
     const hour = h % 12 || 12;
     return `${hour}:${String(min).padStart(2, "0")} ${ampm}`;
+  }
+
+  // Calculate age from date of birth
+  function calculateAge(dob: string | null): number | null {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   // Filter appointments for today
@@ -561,7 +620,7 @@ export function DoctorDashboardContent() {
           </span>
           <h2 style={{ margin: "12px 0 6px", fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
             Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"},{" "}
-            <span style={{ color: "#06b6d4" }}>{session?.displayName ?? "Doctor"}</span>
+            <span style={{ color: "#06b6d4" }}>{doctorName}</span>
           </h2>
           <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px", maxWidth: "460px", lineHeight: 1.6 }}>
             You have <strong style={{ color: "#06b6d4" }}>{todayAppointments.filter(a => a.status === "CONFIRMED" || a.status === "PENDING").length} appointments</strong> remaining today and{" "}
@@ -635,8 +694,12 @@ export function DoctorDashboardContent() {
           value: todayAppointments.length.toString(),
           delta: `${todayAppointments.filter(a => a.status === "COMPLETED").length} completed`,
         }} />
-        {/* Second card - mock data */}
-        <KpiCard key={kpiCards[1].label} card={kpiCards[1]} />
+        {/* Second card - total patients */}
+        <KpiCard key={kpiCards[1].label} card={{
+          ...kpiCards[1],
+          value: allPatientIds.length.toString(),
+          delta: "Unique patients",
+        }} />
         {/* Third card with real prescription data */}
         <KpiCard key="prescriptions-written" card={{
           ...kpiCards[2],
@@ -716,37 +779,74 @@ export function DoctorDashboardContent() {
             <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid #f1f5f9" }}>
               <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>Recent Patients</h3>
             </div>
-            {recentPatients.map((p, i) => {
-              const risk = riskStyle[p.risk];
-              return (
+            {patientsLoading ? (
+              // Loading skeleton
+              Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} style={{
                   display: "flex", alignItems: "center", gap: "12px", padding: "12px 22px",
-                  borderBottom: i < recentPatients.length - 1 ? "1px solid #f8fafc" : "none",
-                  cursor: "pointer", transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#fff"; }}>
+                  borderBottom: i < 4 ? "1px solid #f8fafc" : "none",
+                }}>
                   <div style={{
                     width: "34px", height: "34px", borderRadius: "50%", flexShrink: 0,
-                    background: `linear-gradient(135deg,hsl(${i * 60 + 180},60%,55%),hsl(${i * 60 + 210},55%,45%))`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#fff", fontWeight: 700, fontSize: "13px",
-                  }}>
-                    {p.avatar}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: "13px", color: "#0f172a" }}>{p.name}</p>
-                    <p style={{ margin: "1px 0 0", fontSize: "11px", color: "#64748b" }}>{p.condition} · Age {p.age}</p>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <span style={{ fontSize: "10px", fontWeight: 700, color: risk.color, background: `${risk.color}18`, padding: "2px 8px", borderRadius: "999px" }}>
-                      {risk.label}
-                    </span>
-                    <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#94a3b8" }}>{p.lastVisit}</p>
+                    background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 1.5s infinite",
+                  }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      height: "13px", width: "120px",
+                      background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 1.5s infinite",
+                      borderRadius: "4px", marginBottom: "4px",
+                    }} />
+                    <div style={{
+                      height: "11px", width: "80px",
+                      background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 1.5s infinite",
+                      borderRadius: "4px",
+                    }} />
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : recentPatientsWithStats.length > 0 ? (
+              recentPatientsWithStats.map((p, i) => {
+                const risk = riskStyle[p.risk];
+                return (
+                  <div key={p.name} style={{
+                    display: "flex", alignItems: "center", gap: "12px", padding: "12px 22px",
+                    borderBottom: i < recentPatientsWithStats.length - 1 ? "1px solid #f8fafc" : "none",
+                    cursor: "pointer", transition: "background 0.2s",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "#fff"; }}>
+                    <div style={{
+                      width: "34px", height: "34px", borderRadius: "50%", flexShrink: 0,
+                      background: `linear-gradient(135deg,hsl(${i * 60 + 180},60%,55%),hsl(${i * 60 + 210},55%,45%))`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: 700, fontSize: "13px",
+                    }}>
+                      {p.avatar}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: "13px", color: "#0f172a" }}>{p.name}</p>
+                      <p style={{ margin: "1px 0 0", fontSize: "11px", color: "#64748b" }}>{p.condition} · Age {p.age}</p>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <span style={{ fontSize: "10px", fontWeight: 700, color: risk.color, background: `${risk.color}18`, padding: "2px 8px", borderRadius: "999px" }}>
+                        {risk.label}
+                      </span>
+                      <p style={{ margin: "3px 0 0", fontSize: "10px", color: "#94a3b8" }}>{p.lastVisit}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
+                No recent patients
+              </div>
+            )}
           </div>
 
           {/* Weekly volume mini-chart */}

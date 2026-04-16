@@ -8,7 +8,7 @@ public class ApiGatewayApplication {
 
 	public static void main(String[] args) {
 		System.out.println("Starting API Gateway...");
-        SpringApplication.run(ApiGatewayApplication.class, args);
+		SpringApplication.run(ApiGatewayApplication.class, args);
 	}
 
 }

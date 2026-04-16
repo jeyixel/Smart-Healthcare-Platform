@@ -293,9 +293,11 @@ export function DoctorMyScheduleContent() {
       const dateStr = date.toISOString().split("T")[0];
       
       const dayAppts = appointments.filter(
-        (a) =>
-          a.appointmentDate === dateStr &&
-          a.status !== "CANCELLED"
+        (a) => {
+          // Use proper date comparison with timezone awareness
+          const appointmentDate = new Date(a.appointmentDate + "T00:00:00");
+          return appointmentDate.toDateString() === date.toDateString() && a.status !== "CANCELLED";
+        }
       ).sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
 
       days.push({
@@ -314,7 +316,11 @@ export function DoctorMyScheduleContent() {
   const daySchedule = useMemo(() => {
     const dateStr = selectedDate.toISOString().split("T")[0];
     const dayAppts = appointments
-      .filter((a) => a.appointmentDate === dateStr && a.status !== "CANCELLED")
+      .filter((a) => {
+        // Use proper date comparison with timezone awareness
+        const appointmentDate = new Date(a.appointmentDate + "T00:00:00");
+        return appointmentDate.toDateString() === selectedDate.toDateString() && a.status !== "CANCELLED";
+      })
       .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
 
     return {
@@ -340,7 +346,7 @@ export function DoctorMyScheduleContent() {
     if (!doctor) return;
 
     try {
-      const DOCTOR_API = process.env.NEXT_PUBLIC_DOCTOR_API_BASE ?? "http://localhost:8082";
+      const DOCTOR_API = process.env.NEXT_PUBLIC_API_GATEWAY ?? "http://localhost:8080";
       const token = localStorage.getItem("smart_admin_token");
 
       const availabilityRequests = availability
@@ -595,21 +601,21 @@ export function DoctorMyScheduleContent() {
                 borderRadius: "12px",
                 border: "1px solid rgba(6,182,212,0.2)",
                 background:
-                  day.dateStr === new Date().toISOString().split("T")[0]
+                  day.date.toDateString() === new Date().toDateString()
                     ? "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(8,145,178,0.08))"
                     : "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.9))",
                 cursor: "pointer",
                 transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                if (day.dateStr !== new Date().toISOString().split("T")[0]) {
+                if (day.date.toDateString() !== new Date().toDateString()) {
                   e.currentTarget.style.borderColor = "rgba(6,182,212,0.4)";
                   e.currentTarget.style.background =
                     "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.06))";
                 }
               }}
               onMouseLeave={(e) => {
-                if (day.dateStr !== new Date().toISOString().split("T")[0]) {
+                if (day.date.toDateString() !== new Date().toDateString()) {
                   e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)";
                   e.currentTarget.style.background =
                     "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.9))";

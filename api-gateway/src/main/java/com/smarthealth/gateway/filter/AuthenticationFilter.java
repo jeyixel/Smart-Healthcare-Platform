@@ -55,7 +55,7 @@ public class AuthenticationFilter implements Filter {
 
         String token = authHeader.substring(7);
         try {
-            // this part is important for the telemedicine service, extracts username and pw then 
+            // this part is important for the telemedicine service, extracts username and pw then
             // sends it to the telemedicine service via headers
             if (jwtUtil.validateToken(token)) {
                 // Extract claims
@@ -64,18 +64,18 @@ public class AuthenticationFilter implements Filter {
                 if (userEmail == null) {
                     userEmail = userName;
                 }
-                
+
                 final String finalUserEmail = userEmail;
 
-                // Create a mutable request wrapper to inject headers  
-                HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {  
-                    @Override  
-                    public String getHeader(String name) {  
-                        if ("X-User-Name".equalsIgnoreCase(name)) return userName;  
-                        if ("X-User-Email".equalsIgnoreCase(name)) return finalUserEmail;  
-                        return super.getHeader(name);  
-                    }  
-                };  
+                // Create a mutable request wrapper to inject headers
+                HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
+                    @Override
+                    public String getHeader(String name) {
+                        if ("X-User-Name".equalsIgnoreCase(name)) return userName;
+                        if ("X-User-Email".equalsIgnoreCase(name)) return finalUserEmail;
+                        return super.getHeader(name);
+                    }
+                };
 
                 // If valid, continue the filter chain
                 chain.doFilter(wrappedRequest, response);

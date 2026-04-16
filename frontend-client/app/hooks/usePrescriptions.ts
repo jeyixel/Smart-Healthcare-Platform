@@ -3,8 +3,11 @@ import { useDoctorContext } from "../context/DoctorContext";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DOCTOR_API = process.env.NEXT_PUBLIC_DOCTOR_API_BASE ?? "http://localhost:8082";
-const PRESCRIPTION_API = process.env.NEXT_PUBLIC_PRESCRIPTION_API_BASE ?? "http://localhost:8088";
+// API Gateway - Routes all requests through a single endpoint (port 8080)
+// The gateway automatically routes based on path patterns:
+// - /api/v1/doctors/** → Doctor Service (8082)
+// - /api/v1/prescriptions/** → Prescription Service (8088)
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
 // ─── JWT userId extractor ─────────────────────────────────────────────────────
 // The admin JwtService stores userId as a Number (Long) claim: extraClaims.put("userId", user.getId())
@@ -72,7 +75,7 @@ export function usePrescriptions() {
       if (!userId) throw new Error("Could not extract user ID from token.");
 
       // 2. Fetch doctor profile by userId
-      const docRes = await fetch(`${DOCTOR_API}/api/v1/doctors/user/${userId}`, {
+      const docRes = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
         headers: { Authorization: `Bearer ${session.token}` },
         cache: "no-store",
       });
@@ -80,7 +83,7 @@ export function usePrescriptions() {
       const docData = await docRes.json();
 
       // 3. Fetch prescriptions for THIS doctor only
-      const res = await fetch(`${PRESCRIPTION_API}/api/v1/prescriptions/doctor/${docData.id}`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/prescriptions/doctor/${docData.id}`, {
         headers: { Authorization: `Bearer ${session.token}` },
         cache: "no-store",
       });
@@ -98,7 +101,7 @@ export function usePrescriptions() {
   const createPrescription = useCallback(
     async (payload: any) => {
       if (!session?.token) throw new Error("No token");
-      const res = await fetch(`${PRESCRIPTION_API}/api/v1/prescriptions`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/prescriptions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -146,7 +149,7 @@ export function usePrescriptions() {
   const updatePrescriptionStatus = useCallback(
     async (id: string, status: PrescriptionStatus) => {
       if (!session?.token) throw new Error("No token");
-      const res = await fetch(`${PRESCRIPTION_API}/api/v1/prescriptions/${id}/status`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/prescriptions/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +185,7 @@ export function usePrescriptions() {
   const updatePrescription = useCallback(
     async (id: string, payload: any) => {
       if (!session?.token) throw new Error("No token");
-      const res = await fetch(`${PRESCRIPTION_API}/api/v1/prescriptions/${id}`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/prescriptions/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -218,7 +221,7 @@ export function usePrescriptions() {
   const deletePrescription = useCallback(
     async (id: string) => {
       if (!session?.token) throw new Error("No token");
-      const res = await fetch(`${PRESCRIPTION_API}/api/v1/prescriptions/${id}`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/prescriptions/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${session.token}`,
