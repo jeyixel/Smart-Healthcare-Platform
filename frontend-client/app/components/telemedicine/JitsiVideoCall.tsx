@@ -11,20 +11,44 @@ interface VideoCallProps {
   sessionId: string;
 }
 
-function extractRoomName(meetingUrl: string): string {
+/**
+ * Extracts the JaaS App ID and room name from a meeting URL.
+ * JaaS URLs follow the format: https://8x8.vc/{appId}/{roomName}
+ * The @jitsi/react-sdk requires roomName to include the appId prefix
+ * (e.g. "vpaas-magic-cookie-xxx/smarthealth-room") so the SDK loads
+ * the correct tenant-scoped external_api.js.
+ */
+function parseMeetingUrl(meetingUrl: string): { appId: string; roomName: string } {
   try {
     const parsedUrl = new URL(meetingUrl);
-    return decodeURIComponent(parsedUrl.pathname.replace(/^\/+/, ""));
+    const pathSegments = parsedUrl.pathname
+      .replace(/^\/+/, "")
+      .split("/")
+      .map(decodeURIComponent)
+      .filter(Boolean);
+
+    if (pathSegments.length >= 2) {
+      // JaaS URL: first segment is appId, rest is room name
+      const appId = pathSegments[0];
+      const room = pathSegments.slice(1).join("/");
+      return { appId, roomName: `${appId}/${room}` };
+    }
+    // Fallback: treat entire path as the room name (self-hosted Jitsi)
+    return { appId: "", roomName: pathSegments.join("/") };
   } catch {
-    return "";
+    return { appId: "", roomName: "" };
   }
 }
 
 export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: VideoCallProps) {
   const router = useRouter();
-  const roomName = extractRoomName(meetingUrl);
+  const { appId, roomName } = parseMeetingUrl(meetingUrl);
   const [jwt, setJwt] = useState<string>("");
   const [error, setError] = useState<string>("");
+
+  // The domain for JitsiMeeting must be "8x8.vc" for JaaS tenants.
+  // For self-hosted fallback (no appId), use the original URL hostname.
+  const jitsiDomain = appId ? "8x8.vc" : (() => { try { return new URL(meetingUrl).hostname; } catch { return "8x8.vc"; } })();
 
   useEffect(() => {
     if (!roomName) return;
@@ -32,7 +56,9 @@ export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: Vide
     const fetchToken = async () => {
       try {
         const userToken = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-        const response = await fetch(`http://localhost:8080/api/v1/telemedicine/meet/token?room=${encodeURIComponent(roomName)}`, {
+        // Send the raw room name (without appId prefix) to the backend token endpoint
+        const rawRoom = appId ? roomName.replace(`${appId}/`, "") : roomName;
+        const response = await fetch(`http://localhost:8080/api/v1/telemedicine/meet/token?room=${encodeURIComponent(rawRoom)}`, {
           headers: {
             Authorization: `Bearer ${userToken}`,
           },
@@ -48,7 +74,7 @@ export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: Vide
     };
 
     fetchToken();
-  }, [roomName]);
+  }, [roomName, appId]);
 
   if (!roomName) {
     return (
@@ -84,7 +110,7 @@ export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: Vide
   return (
     <div style={{ height: "100vh", width: "100%" }}>
       <JitsiMeeting
-        domain="8x8.vc"
+        domain={jitsiDomain}
         roomName={roomName}
         jwt={jwt}
         configOverwrite={{

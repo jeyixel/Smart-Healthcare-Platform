@@ -34,6 +34,13 @@ export default function ParticipantDetailsCard({
         <h3 className="text-lg font-semibold text-[#181c21]">{patient.fullName}</h3>
         <p className="mt-1 text-sm text-[#4f5c6a]">Patient ID: {patient.id}</p>
       </div>
+      {/* Patient context placeholder — future integration will fetch vitals, allergies, and recent encounters from the patient database via the telemedicine service. */}
+      <div className="mt-4 rounded-lg border border-dashed border-[#c7cad1] p-4 text-center">
+        <p className="text-xs font-medium uppercase tracking-wide text-[#8b93a1]">Patient Context</p>
+        <p className="mt-1 text-sm text-[#4f5c6a]">
+          Vitals, allergies, and recent encounters will appear here once patient data integration is enabled.
+        </p>
+      </div>
     </section>
   );
 }

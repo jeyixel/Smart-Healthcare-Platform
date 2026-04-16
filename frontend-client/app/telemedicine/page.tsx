@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppointmentSummaryCard from "@/app/components/telemedicine/AppointmentSummaryCard";
 import JitsiVideoCall from "@/app/components/telemedicine/JitsiVideoCall";
 import MedicalHistoryList from "@/app/components/telemedicine/MedicalHistoryList";
@@ -18,6 +18,13 @@ export default function TelemedicinePage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasToken, setHasToken] = useState<boolean>(true);
+
+  // Check for JWT token in local storage on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setHasToken(!!token);
+  }, []);
 
   const user = useMemo(() => getMockSessionUser(), []);
 
@@ -58,6 +65,13 @@ export default function TelemedicinePage() {
             Role is currently mocked from local session constant: <strong>{user.role}</strong>
           </p>
         </header>
+
+        {!hasToken && (
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+            <strong>Warning:</strong> No JWT token found in localStorage. You will not be able to join the meeting.
+            Please inject a token via the browser console: <code>localStorage.setItem("token", "YOUR_JWT")</code>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
           <AppointmentSummaryCard

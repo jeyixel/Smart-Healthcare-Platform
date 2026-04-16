@@ -22,7 +22,8 @@ import java.util.UUID;
 // either when an appointment is booked or confirmed.
 
 @RequestMapping("/api/v1/telemedicine/sessions")
-@CrossOrigin(origins = "*") // Allows your frontend to call this API later without CORS blocking
+// CORS is handled at the API Gateway level (CorsConfig.java) — do NOT add @CrossOrigin here
+// as it would cause duplicate Access-Control-Allow-Origin headers and break the browser.
 public class TelemedicineController {
 
     private static final Logger logger = LoggerFactory.getLogger(TelemedicineController.class);

@@ -32,6 +32,13 @@ public class AuthenticationFilter implements Filter {
 
         String path = httpRequest.getRequestURI();
 
+        // Allow CORS preflight (OPTIONS) requests through without authentication
+        // so that CorsConfig can add the proper Access-Control-Allow-* headers
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         // Check if path is whitelisted (auth endpoints)
         if (whiteListedEndpoints.stream().anyMatch(path::contains)) {
             chain.doFilter(request, response);

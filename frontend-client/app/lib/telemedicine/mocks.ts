@@ -6,24 +6,30 @@ import type {
   UserRole,
 } from "@/app/types/telemedicine";
 
+// ──────────────────────────────────────────────────────────────
+// Toggle this to switch between Doctor and Patient perspectives.
+// Change to "PATIENT" to see the patient-side UI.
+// ──────────────────────────────────────────────────────────────
 const MOCK_ROLE: UserRole = "DOCTOR";
 
+// Real appointment ID that has a telemedicine session in the database.
+// This must match a session created via POST /api/v1/telemedicine/sessions.
 export const MOCK_APPOINTMENT: TelemedicineAppointment = {
-  id: "mock-appt-123",
-  patientId: "pat-001",
-  doctorId: "doc-001",
-  appointmentDate: "2026-04-06",
-  appointmentTime: "09:30:00",
+  id: "apt0002",
+  patientId: "pt12",
+  doctorId: "d2",
+  appointmentDate: "2026-04-20",
+  appointmentTime: "10:30:00",
   status: "CONFIRMED",
-  reason: "Recurring migraine episodes over the past week",
-  notes: "Patient reports light sensitivity and intermittent nausea.",
-  createdAt: "2026-04-01T08:10:00Z",
-  updatedAt: "2026-04-02T12:25:00Z",
+  reason: "General Follow-up",
+  notes: "Online consultation scheduled via telemedicine.",
+  createdAt: "2026-04-16T14:58:02Z",
+  updatedAt: "2026-04-16T14:58:02Z",
 };
 
 export const MOCK_PATIENT: PatientProfile = {
-  id: "pat-001",
-  fullName: "Janith Fernando",
+  id: "pt12",
+  fullName: "Jigga Super",
   medicalHistory: [
     {
       id: "mh-001",
@@ -46,10 +52,10 @@ export const MOCK_PATIENT: PatientProfile = {
 
 export const MOCK_DOCTOR: DoctorProfile = {
   id: "doc-001",
-  fullName: "Dr. Nadeesha Perera",
-  specialty: "Neurology",
-  // Intentional missing local image path to validate fallback behavior.
-  profileImageUrl: "/images/doctor-profile-missing.png",
+  fullName: "Dr. John Doe",
+  specialty: "General Medicine",
+  profileImageUrl:
+    "https://png.pngtree.com/png-clipart/20230927/original/pngtree-photo-men-doctor-physician-chest-smiling-png-image_13143575.png",
 };
 
 export function getMockSessionUser(): SessionUser {
@@ -59,5 +65,3 @@ export function getMockSessionUser(): SessionUser {
     id,
   };
 }
-
-

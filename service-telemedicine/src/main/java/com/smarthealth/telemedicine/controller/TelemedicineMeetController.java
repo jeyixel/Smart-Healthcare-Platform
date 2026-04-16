@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/telemedicine/meet")
-@CrossOrigin(origins = "*")
+// CORS is handled by the API Gateway; removing @CrossOrigin to prevent duplicate headers
 public class TelemedicineMeetController {
 
     private static final Logger logger = LoggerFactory.getLogger(TelemedicineMeetController.class);
