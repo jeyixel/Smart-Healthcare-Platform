@@ -31,10 +31,10 @@ public class NotificationLog {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private NotificationType channel; // Renamed from type (EMAIL, SMS)
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String eventType;   // e.g. appointment-created, prescription-updated
 
     @Enumerated(EnumType.STRING)
