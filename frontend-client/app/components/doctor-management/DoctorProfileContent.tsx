@@ -171,7 +171,7 @@ export function DoctorProfileContent() {
     setIsSaving(true); // Start loading state
 
     try {
-      const DOCTOR_API = process.env.NEXT_PUBLIC_DOCTOR_API_BASE || "http://localhost:8082";
+      const DOCTOR_API = process.env.NEXT_PUBLIC_API_GATEWAY || "http://localhost:8080";
       const token = localStorage.getItem("smart_admin_token");
 
       if (!token) {

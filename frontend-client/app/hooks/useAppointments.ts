@@ -65,8 +65,11 @@ export interface UseAppointmentsResult {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DOCTOR_API  = process.env.NEXT_PUBLIC_DOCTOR_API_BASE      ?? "http://localhost:8082";
-const APPT_API    = process.env.NEXT_PUBLIC_APPOINTMENT_API_BASE  ?? "http://localhost:8083";
+// API Gateway - Routes all requests through a single endpoint (port 8080)
+// The gateway automatically routes based on path patterns:
+// - /api/v1/doctors/** → Doctor Service (8082)
+// - /api/v1/appointments/** → Appointment Service (8083)
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
 // ─── JWT userId extractor ─────────────────────────────────────────────────────
 // The admin JwtService stores userId as a Number (Long) claim: extraClaims.put("userId", user.getId())
@@ -136,7 +139,7 @@ export function useAppointments(): UseAppointmentsResult {
         if (!userId) throw new Error("Could not extract user ID from token.");
 
         // 3. Fetch doctor profile by userId
-        const doctorRes = await fetch(`${DOCTOR_API}/api/v1/doctors/user/${userId}`, {
+        const doctorRes = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
@@ -147,7 +150,7 @@ export function useAppointments(): UseAppointmentsResult {
 
         // 4. Fetch appointments for THIS doctor only
         const apptRes = await fetch(
-          `${APPT_API}/api/v1/appointments?doctorId=${doctorProfile.id}`,
+          `${API_GATEWAY}/api/v1/appointments?doctorId=${doctorProfile.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
             cache: "no-store",
@@ -173,6 +176,9 @@ export function useAppointments(): UseAppointmentsResult {
   // ── Toast notifications ──────────────────────────────────────────────
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
+    // Only run on client-side
+    if (typeof document === 'undefined') return;
+    
     // Remove any existing toast
     const existingToast = document.getElementById("appointment-toast");
     if (existingToast) {
@@ -253,7 +259,7 @@ export function useAppointments(): UseAppointmentsResult {
       if (!token) throw new Error("Not authenticated");
 
       try {
-        const res = await fetch(`${APPT_API}/api/v1/appointments/${id}/status`, {
+        const res = await fetch(`${API_GATEWAY}/api/v1/appointments/${id}/status`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -283,28 +289,42 @@ export function useAppointments(): UseAppointmentsResult {
   return { appointments, doctor, loading, error, refetch, updateAppointmentStatus };
 }
 
-// Add CSS animations for toast
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    0% { 
-      transform: translateX(100%);
-      opacity: 0;
+// Add CSS animations for toast (client-side only)
+export function useToastAnimations() {
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof document !== 'undefined') {
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          0% { 
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          100% { 
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes slideOut {
+          0% { 
+            transform: translateX(0);
+            opacity: 1;
+          }
+          100% { 
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Cleanup on unmount
+      return () => {
+        if (document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      };
     }
-    100% { 
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  @keyframes slideOut {
-    0% { 
-      transform: translateX(0);
-      opacity: 1;
-    }
-    100% { 
-      transform: translateX(100%);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(style);
+  }, []);
+}
