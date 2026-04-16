@@ -57,7 +57,7 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3 rounded-xl bg-white p-1.5 shadow-sm border border-slate-200">
           <span className={`flex h-2 w-2 rounded-full ${syncError ? 'bg-amber-500' : 'bg-emerald-500'} ml-2 animate-pulse`}></span>
           <span className="text-xs font-bold text-slate-600 pr-3 uppercase tracking-wider">
-            {syncError ? 'Network Congestion' : 'Kafka Network Live'}
+            {syncError ? 'Network Congestion' : 'System Network Live'}
           </span>
         </div>
       </header>
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
         <section className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
           <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
             <h3 className="font-bold text-slate-900">Live Health Event Stream</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Post-Kafka Trace</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Event Trace</span>
           </div>
           <div className="flex-1 min-h-[400px]">
             {loading ? (
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                       <p className="text-sm text-slate-900"><span className="font-bold">{event.requestedBy}</span> {event.description}</p>
                       <p className="text-xs text-slate-500">{new Date(event.timestamp).toLocaleString()}</p>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">KAFKA_PUB</span>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">EVENT_PUB</span>
                   </div>
                 ))}
               </div>
