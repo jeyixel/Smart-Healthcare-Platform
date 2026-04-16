@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RestClientException.class)
     public ResponseEntity<ApiError> handleUpstream(RestClientException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_GATEWAY, "Patient service is unavailable: " + ex.getMessage(), request.getRequestURI());
+        return build(HttpStatus.BAD_GATEWAY, "Upstream service error: " + ex.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(Exception.class)

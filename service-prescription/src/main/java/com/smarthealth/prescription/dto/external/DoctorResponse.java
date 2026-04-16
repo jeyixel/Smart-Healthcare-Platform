@@ -18,7 +18,7 @@ public record DoctorResponse(
         String hospitalOrClinic,
         String consultationMode,
         boolean verified,
-        boolean active,
+        Boolean active,
         Instant createdAt,
         Instant updatedAt
 ) {}
