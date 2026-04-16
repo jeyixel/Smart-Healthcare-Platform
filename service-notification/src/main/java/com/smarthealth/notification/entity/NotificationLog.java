@@ -32,12 +32,16 @@ public class NotificationLog {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType type;
+    private NotificationType channel; // Renamed from type (EMAIL, SMS)
+
+    @Column(nullable = false)
+    private String eventType;   // e.g. appointment-created, prescription-updated
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStatus status;
 
+    @Column(columnDefinition = "TEXT")
     private String errorMessage;
 
     @CreationTimestamp
