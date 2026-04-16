@@ -6,6 +6,7 @@ import { DoctorTopBar } from "@/app/components/doctor-management/DoctorTopBar";
 import { DoctorDashboardContent } from "@/app/components/doctor-management/DoctorDashboardContent";
 import { DoctorAppointmentsContent } from "@/app/components/doctor-management/DoctorAppointmentsContent";
 import { DoctorPrescriptionsContent } from "@/app/components/doctor-management/DoctorPrescriptionsContent";
+import { DoctorMyScheduleContent } from "@/app/components/doctor-management/DoctorMyScheduleContent";
 import { useDoctorAuth } from "@/app/hooks/useDoctorAuth";
 import { useDoctorContext } from "@/app/context/DoctorContext";
 
@@ -80,7 +81,9 @@ function DoctorShell() {
 
           {activeSection === "prescriptions" && <DoctorPrescriptionsContent />}
 
-          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && (
+          {activeSection === "schedule" && <DoctorMyScheduleContent />}
+
+          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "schedule" && (
             <ComingSoonSection section={activeSection} />
           )}
         </div>

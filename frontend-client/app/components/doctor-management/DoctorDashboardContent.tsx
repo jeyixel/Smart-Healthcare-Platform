@@ -380,8 +380,152 @@ export function DoctorDashboardContent() {
   // Show loading state
   if (loading) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
-        Loading appointments...
+      <div style={{
+        minHeight: "60vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "24px",
+        padding: "40px 20px",
+      }}>
+        {/* Loading Animation */}
+        <div style={{
+          width: "80px",
+          height: "80px",
+          borderRadius: "20px",
+          background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 0 40px rgba(6,182,212,0.3)",
+          animation: "pulse 2s infinite",
+        }}>
+          <svg width="40" height="40" fill="white" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/>
+          </svg>
+        </div>
+
+        {/* Loading Text */}
+        <div style={{ textAlign: "center" }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 700, color: "#0f172a" }}>
+            Loading Dashboard
+          </h3>
+          <p style={{ margin: 0, fontSize: "14px", color: "#64748b", lineHeight: 1.5 }}>
+            Fetching your appointments, prescriptions, and analytics...
+          </p>
+        </div>
+
+        {/* Progress Indicators */}
+        <div style={{
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+        }}>
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0s",
+          }} />
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0.16s",
+          }} />
+          <div style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#06b6d4",
+            animation: "bounce 1.4s infinite ease-in-out both",
+            animationDelay: "0.32s",
+          }} />
+        </div>
+
+        {/* Loading Details */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          alignItems: "center",
+          marginTop: "16px",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #06b6d4",
+              animation: "spin 1s linear infinite",
+            }} />
+            <span>Connecting to services...</span>
+          </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #10b981",
+              animation: "spin 1s linear infinite",
+              animationDelay: "0.2s",
+            }} />
+            <span>Loading appointments...</span>
+          </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "#64748b",
+          }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              border: "2px solid #e2e8f0",
+              borderTop: "2px solid #8b5cf6",
+              animation: "spin 1s linear infinite",
+              animationDelay: "0.4s",
+            }} />
+            <span>Preparing analytics...</span>
+          </div>
+        </div>
+
+        {/* Add CSS Animations */}
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(6,182,212,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(6,182,212,0.5); }
+          }
+          @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }

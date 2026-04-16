@@ -161,36 +161,6 @@ export function DoctorSidebar() {
         </button>
       </div>
 
-      {/* Doctor profile mini card */}
-      {!sidebarCollapsed && session && (
-        <div style={{
-          margin: "16px 12px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.06))",
-          border: "1px solid rgba(6,182,212,0.15)",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}>
-          <div style={{
-            width: "40px", height: "40px", borderRadius: "50%",
-            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 700, color: "#fff", fontSize: "15px", flexShrink: 0,
-            boxShadow: "0 0 12px rgba(6,182,212,0.4)",
-          }}>
-            {session.displayName.replace("Dr. ", "").charAt(0).toUpperCase()}
-          </div>
-          <div style={{ overflow: "hidden" }}>
-            <p style={{ margin: 0, color: "#e2e8f0", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {session.displayName}
-            </p>
-            <p style={{ margin: 0, color: "#06b6d4", fontSize: "11px", fontWeight: 600 }}>● Online</p>
-          </div>
-        </div>
-      )}
-
       {/* Nav label */}
       {!sidebarCollapsed && (
         <p style={{ margin: "8px 20px 6px", color: "#475569", fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>

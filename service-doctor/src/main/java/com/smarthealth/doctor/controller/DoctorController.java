@@ -59,7 +59,7 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}/availability")
-    @PreAuthorize("(hasRole('DOCTOR') and @doctorService.isDoctorOwner(#id, authentication.principal.userId))")
+    @PreAuthorize("(hasRole('DOCTOR'))")
     public DoctorResponse replaceAvailability(@PathVariable UUID id,
                                               @Valid @RequestBody List<DoctorAvailabilityRequest> requests) {
         return doctorService.replaceAvailability(id, requests);
