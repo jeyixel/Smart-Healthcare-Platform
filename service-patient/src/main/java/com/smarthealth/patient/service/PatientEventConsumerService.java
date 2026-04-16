@@ -18,7 +18,8 @@ public class PatientEventConsumerService {
 
     @KafkaListener(
             topics = "${smarthealth.kafka.topics.patient-events:patient-events}",
-            groupId = "${spring.kafka.consumer.group-id:service-patient-group}"
+            groupId = "${spring.kafka.consumer.group-id:service-patient-group}",
+            autoStartup = "${smarthealth.kafka.consumer.enabled:true}"
     )
     public void consumePatientEvent(PatientEventDto event) {
         receivedEvents.add(0, event);
