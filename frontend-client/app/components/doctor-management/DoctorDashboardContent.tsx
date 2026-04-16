@@ -4,6 +4,7 @@ import { useDoctorContext } from "@/app/context/DoctorContext";
 import { useAppointments, Appointment, AppointmentStatus } from "@/app/hooks/useAppointments";
 import { usePrescriptions, PrescriptionStatus } from "@/app/hooks/usePrescriptions";
 import { useMemo, useEffect } from "react";
+import { getDoctorName } from "@/app/utils/tokenUtils";
 /* ─── Mock data ─────────────────────────────────────────────────── */
 
 const kpiCards = [
@@ -176,6 +177,7 @@ export function DoctorDashboardContent() {
   const { session, setActiveSection } = useDoctorContext();
   const { appointments, loading, error } = useAppointments();
   const { prescriptions, loading: prescLoading, fetchDoctorPrescriptions } = usePrescriptions();
+  const doctorName = getDoctorName();
 
   // Fetch prescriptions on component mount
   useEffect(() => {
@@ -561,7 +563,7 @@ export function DoctorDashboardContent() {
           </span>
           <h2 style={{ margin: "12px 0 6px", fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
             Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"},{" "}
-            <span style={{ color: "#06b6d4" }}>{session?.displayName ?? "Doctor"}</span>
+            <span style={{ color: "#06b6d4" }}>{doctorName}</span>
           </h2>
           <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px", maxWidth: "460px", lineHeight: 1.6 }}>
             You have <strong style={{ color: "#06b6d4" }}>{todayAppointments.filter(a => a.status === "CONFIRMED" || a.status === "PENDING").length} appointments</strong> remaining today and{" "}

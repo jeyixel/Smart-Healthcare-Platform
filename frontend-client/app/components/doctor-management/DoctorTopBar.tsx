@@ -4,28 +4,34 @@ import { useState, useEffect } from "react";
 import { useDoctorContext } from "@/app/context/DoctorContext";
 import { useAppointments } from "@/app/hooks/useAppointments";
 import { useRouter } from "next/navigation";
-
-const pageTitles: Record<string, { title: string; subtitle: string }> = {
-  dashboard:     { title: "Overview", subtitle: "Welcome back to your clinical workspace" },
-  appointments:  { title: "Appointments", subtitle: "Manage and review your scheduled appointments" },
-  patients:      { title: "My Patients", subtitle: "View and manage your patient records" },
-  prescriptions: { title: "Prescriptions", subtitle: "Create and track medical prescriptions" },
-  telemedicine:  { title: "Telemedicine", subtitle: "Start or join video consultations" },
-  schedule:      { title: "My Schedule", subtitle: "Manage your availability and working hours" },
-  reports:       { title: "Reports & Analytics", subtitle: "Insights into your clinical performance" },
-  profile:      { title: "Profile", subtitle: "Manage your profile and preferences" },
-};
+import { ConfirmationModal } from "./ConfirmationModal";
+import { getDoctorName, getFirstName } from "@/app/utils/tokenUtils";
 
 export function DoctorTopBar() {
-  const { session, activeSection, sidebarCollapsed, setActiveSection } = useDoctorContext();
+  const { session, activeSection, sidebarCollapsed, setActiveSection, logout } = useDoctorContext();
   const { doctor, refetch } = useAppointments();
   const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>("");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  const firstName = getFirstName();
+  const doctorName = getDoctorName();
+
+  const pageTitles: Record<string, { title: string; subtitle: string }> = {
+    dashboard:     { title: "Overview", subtitle: `Welcome back, ${firstName}!` },
+    appointments:  { title: "Appointments", subtitle: "Manage and review your scheduled appointments" },
+    patients:      { title: "My Patients", subtitle: "View and manage your patient records" },
+    prescriptions: { title: "Prescriptions", subtitle: "Create and track medical prescriptions" },
+    telemedicine:  { title: "Telemedicine", subtitle: "Start or join video consultations" },
+    schedule:      { title: "My Schedule", subtitle: "Manage your availability and working hours" },
+    reports:       { title: "Reports & Analytics", subtitle: "Insights into your clinical performance" },
+    profile:      { title: "Profile", subtitle: "Manage your profile and preferences" },
+  };
 
   const page = pageTitles[activeSection] ?? pageTitles.dashboard;
 
@@ -101,7 +107,8 @@ export function DoctorTopBar() {
   };
 
   return (
-    <header style={{
+    <>
+      <header style={{
       position: "fixed",
       top: 0,
       left: sideWidth,
@@ -253,10 +260,10 @@ export function DoctorTopBar() {
               color: "#fff", fontWeight: 700, fontSize: "13px",
               boxShadow: "0 0 10px rgba(6,182,212,0.35)",
             }}>
-              {session?.displayName?.replace("Dr. ", "").charAt(0).toUpperCase() || "D"}
+              {getFirstName().charAt(0).toUpperCase()}
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{session?.displayName || "Doctor"}</p>
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>{doctorName}</p>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                 <span style={{ fontSize: "11px", color: "#64748b" }}></span>
                 <div style={{
@@ -283,6 +290,24 @@ export function DoctorTopBar() {
                 </div>
               </div>
             </div>
+            <svg 
+              width="16" 
+              height="16" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{
+                transition: "transform 0.2s",
+                transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)"
+              }}
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 9l-7 7-7-7" 
+              />
+            </svg>
           </button>
 
           {profileOpen && (
@@ -303,10 +328,10 @@ export function DoctorTopBar() {
                     color: "#fff", fontWeight: 700, fontSize: "15px",
                     boxShadow: "0 0 12px rgba(6,182,212,0.4)",
                   }}>
-                    {session?.displayName?.replace("Dr. ", "").charAt(0).toUpperCase() || "D"}
+                    {getFirstName().charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{session?.displayName || "Doctor"}</p>
+                    <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{doctorName}</p>
                     <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>General Physician</p>
                   </div>
                 </div>
@@ -378,15 +403,21 @@ export function DoctorTopBar() {
                   View Profile
                 </button>
                 <div style={{ height: "1px", background: "#f1f5f9", margin: "8px 0" }} />
-                <button style={{
-                  width: "100%", padding: "10px 20px",
-                  background: "none", border: "none",
-                  display: "flex", alignItems: "center", gap: "12px",
-                  cursor: "pointer", transition: "background 0.2s",
-                  fontSize: "13px", color: "#ef4444",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#fef2f2"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}>
+                <button
+                  onClick={() => {
+                    setShowLogoutModal(true);
+                    setProfileOpen(false);
+                  }}
+                  style={{
+                    width: "100%", padding: "10px 20px",
+                    background: "none", border: "none",
+                    display: "flex", alignItems: "center", gap: "12px",
+                    cursor: "pointer", transition: "background 0.2s",
+                    fontSize: "13px", color: "#ef4444",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#fef2f2"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+                >
                   <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
@@ -398,5 +429,21 @@ export function DoctorTopBar() {
         </div>
       </div>
     </header>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to sign in again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={() => {
+          logout();
+          setShowLogoutModal(false);
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+    </>
   );
 }

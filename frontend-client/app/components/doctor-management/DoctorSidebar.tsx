@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useDoctorContext, DoctorNavSection } from "@/app/context/DoctorContext";
+import { ConfirmationModal } from "./ConfirmationModal";
+import { getDoctorName } from "@/app/utils/tokenUtils";
 
 interface NavItem {
   id: DoctorNavSection;
@@ -87,9 +90,11 @@ const navItems: NavItem[] = [
 
 export function DoctorSidebar() {
   const { session, activeSection, setActiveSection, sidebarCollapsed, toggleSidebar, logout } = useDoctorContext();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
-    <aside style={{
+    <>
+      <aside style={{
       width: sidebarCollapsed ? "72px" : "260px",
       minHeight: "100vh",
       background: "linear-gradient(180deg, #0a0f1e 0%, #0d1529 40%, #0b1220 100%)",
@@ -228,17 +233,20 @@ export function DoctorSidebar() {
       {/* Logout */}
       <div style={{ padding: sidebarCollapsed ? "12px 10px" : "12px", borderTop: "1px solid rgba(6,182,212,0.08)" }}>
         <button
-          onClick={logout}
+          onClick={() => setShowLogoutModal(true)}
           title={sidebarCollapsed ? "Logout" : undefined}
           style={{
             display: "flex", alignItems: "center", gap: "12px",
             padding: sidebarCollapsed ? "12px" : "11px 14px",
-            borderRadius: "10px", border: "none", cursor: "pointer",
-            background: "rgba(239,68,68,0.08)",
-            color: "#f87171", fontWeight: 500, fontSize: "14px",
-            transition: "all 0.2s", width: "100%",
+            borderRadius: "10px", border: "none",
+            cursor: "pointer", transition: "all 0.2s",
+            background: "rgba(239, 68, 68, 0.1)", color: "#ef4444",
+            fontSize: "14px", fontWeight: 500,
+            width: "100%", textAlign: "left",
             justifyContent: sidebarCollapsed ? "center" : "flex-start",
           }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.2)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239, 68, 68, 0.1)"; }}
         >
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -247,5 +255,21 @@ export function DoctorSidebar() {
         </button>
       </div>
     </aside>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to sign in again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={() => {
+          logout();
+          setShowLogoutModal(false);
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+    </>
   );
 }
