@@ -26,5 +26,7 @@ public interface PrescriptionService {
 
     void deletePrescription(UUID id);
 
-    boolean isPrescriptionOwnerById(UUID prescriptionId, UUID userId);
+    boolean isPrescriptionOwnerById(UUID prescriptionId, Long userId);
+
+    boolean isDoctorOwner(UUID doctorId, Long userId);
 }

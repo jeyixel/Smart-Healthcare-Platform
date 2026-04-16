@@ -1,4 +1,4 @@
-package com.smarthealth.prescription.service;
+package com.smarthealth.notification.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

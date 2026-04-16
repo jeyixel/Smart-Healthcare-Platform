@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,12 +22,16 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final NotificationLogRepository logRepository;
 
-    public NotificationLog sendEmail(EmailRequest request) {
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000), retryFor = MailException.class)
+    public void sendEmail(EmailRequest request, String eventType) {
+        log.info("Attempting to send email to {} for event: {}", request.getTo(), eventType);
+        
         NotificationLog logEntry = NotificationLog.builder()
                 .recipient(request.getTo())
                 .subject(request.getSubject())
                 .message(request.getBody())
-                .type(NotificationType.EMAIL)
+                .channel(NotificationType.EMAIL)
+                .eventType(eventType)
                 .status(NotificationStatus.PENDING)
                 .build();
 
@@ -37,14 +43,15 @@ public class EmailService {
             mailSender.send(message);
 
             logEntry.setStatus(NotificationStatus.SENT);
+            logRepository.save(logEntry);
             log.info("Email sent successfully to {}", request.getTo());
 
         } catch (MailException e) {
             logEntry.setStatus(NotificationStatus.FAILED);
             logEntry.setErrorMessage(e.getMessage());
-            log.error("Failed to send email to {}: {}", request.getTo(), e.getMessage());
+            logRepository.save(logEntry);
+            log.error("Failed attempt to send email to {}: {}", request.getTo(), e.getMessage());
+            throw e; // Re-throw to trigger @Retryable
         }
-
-        return logRepository.save(logEntry);
     }
 }

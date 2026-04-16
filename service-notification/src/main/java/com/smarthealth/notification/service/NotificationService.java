@@ -6,6 +6,8 @@ import com.smarthealth.notification.enums.NotificationStatus;
 import com.smarthealth.notification.repository.NotificationLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class NotificationService {
 
     // Send appointment confirmation to patient (email + optional SMS)
     public void sendAppointmentConfirmation(AppointmentNotificationRequest request) {
+        String eventType = "appointment-confirmed-manual";
         String subject = "Appointment Confirmed – Smart Healthcare";
         String body = buildAppointmentEmailBody(request);
 
@@ -28,7 +31,7 @@ public class NotificationService {
         emailRequest.setTo(request.getPatientEmail());
         emailRequest.setSubject(subject);
         emailRequest.setBody(body);
-        emailService.sendEmail(emailRequest);
+        emailService.sendEmail(emailRequest, eventType);
 
         if (request.getPatientPhone() != null && !request.getPatientPhone().isBlank()) {
             String smsBody = "Hi " + request.getPatientName() + ", your appointment with Dr. "
@@ -39,12 +42,13 @@ public class NotificationService {
             SmsRequest smsRequest = new SmsRequest();
             smsRequest.setTo(request.getPatientPhone());
             smsRequest.setMessage(smsBody);
-            smsService.sendSms(smsRequest);
+            smsService.sendSms(smsRequest, eventType);
         }
     }
 
     // Send appointment cancellation notice
     public void sendAppointmentCancellation(AppointmentNotificationRequest request) {
+        String eventType = "appointment-cancelled-manual";
         String subject = "Appointment Cancelled – Smart Healthcare";
         String body = "Dear " + request.getPatientName() + ",\n\n"
                 + "Your appointment with Dr. " + request.getDoctorName()
@@ -58,11 +62,12 @@ public class NotificationService {
         emailRequest.setTo(request.getPatientEmail());
         emailRequest.setSubject(subject);
         emailRequest.setBody(body);
-        emailService.sendEmail(emailRequest);
+        emailService.sendEmail(emailRequest, eventType);
     }
 
     // Send consultation completion notice
     public void sendConsultationComplete(AppointmentNotificationRequest request) {
+        String eventType = "consultation-complete-manual";
         String subject = "Consultation Completed – Smart Healthcare";
         String body = "Dear " + request.getPatientName() + ",\n\n"
                 + "Your video consultation with Dr. " + request.getDoctorName()
@@ -74,7 +79,11 @@ public class NotificationService {
         emailRequest.setTo(request.getPatientEmail());
         emailRequest.setSubject(subject);
         emailRequest.setBody(body);
-        emailService.sendEmail(emailRequest);
+        emailService.sendEmail(emailRequest, eventType);
+    }
+
+    public Page<NotificationLog> getAllLogsPaginated(Pageable pageable) {
+        return logRepository.findAll(pageable);
     }
 
     public List<NotificationLog> getAllLogs() {

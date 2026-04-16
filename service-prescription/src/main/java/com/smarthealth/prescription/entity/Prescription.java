@@ -58,4 +58,7 @@ public class Prescription extends AuditableEntity{
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PrescriptionItem> items = new ArrayList<>();
+
+    @Column(name = "digital_signature", columnDefinition = "TEXT")
+    private String digitalSignature;
 }

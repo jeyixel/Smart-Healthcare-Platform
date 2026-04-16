@@ -1,9 +1,11 @@
-package com.smarthealth.notification.kafka;
+package com.smarthealth.notification.kafka;
 
 import com.smarthealth.notification.dto.EmailRequest;
 import com.smarthealth.notification.dto.PaymentEventDto;
 import com.smarthealth.notification.dto.SmsRequest;
+import com.smarthealth.notification.kafka.DLQPublisher;
 import com.smarthealth.notification.service.EmailService;
+import com.smarthealth.notification.service.NotificationTemplateService;
 import com.smarthealth.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,48 +19,69 @@ public class KafkaNotificationConsumer {
 
     private final EmailService emailService;
     private final SmsService smsService;
+    private final NotificationTemplateService templateService;
+    private final DLQPublisher dlqPublisher;
 
     @KafkaListener(topics = "payment-success", groupId = "notification-service")
     public void handlePaymentSuccess(PaymentEventDto event) {
-        log.info("Received payment-success event for order: {}", event.getOrderId());
+        String topic = "payment-success";
+        log.info("Received {} event for order: {}", topic, event.getOrderId());
 
-        // Send Email
-        EmailRequest emailReq = new EmailRequest();
-        emailReq.setTo(event.getPatientEmail());
-        emailReq.setSubject("Payment Successful - " + event.getItemDescription());
-        emailReq.setBody(String.format("Dear %s %s,\n\nYour payment of %s %s for %s has been successfully processed.\n\nThank you,\nSmart Healthcare Team",
-                event.getPatientFirstName(), event.getPatientLastName(), event.getAmount(), event.getCurrency(), event.getItemDescription()));
-        emailService.sendEmail(emailReq);
+        try {
+            // 1. Send Booking Confirmation Email
+            EmailRequest confirmEmail = new EmailRequest();
+            confirmEmail.setTo(event.getPatientEmail());
+            confirmEmail.setSubject(templateService.buildPaymentSubject(topic));
+            confirmEmail.setBody(templateService.buildPaymentEmailBody(event));
+            emailService.sendEmail(confirmEmail, topic);
 
-        // Send SMS
-        if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
-            SmsRequest smsReq = new SmsRequest();
-            smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format("Payment of %s %s successful for %s. - Smart Healthcare",
-                    event.getAmount(), event.getCurrency(), event.getItemDescription()));
-            smsService.sendSms(smsReq);
+            // 2. Send Receipt Email
+            EmailRequest receiptEmail = new EmailRequest();
+            receiptEmail.setTo(event.getPatientEmail());
+            receiptEmail.setSubject("Payment Receipt - " + event.getTransactionId());
+            receiptEmail.setBody(templateService.buildPaymentReceiptBody(event));
+            emailService.sendEmail(receiptEmail, topic);
+
+            // 3. Send SMS
+            if (isValidPhone(event.getPatientPhone())) {
+                SmsRequest smsReq = new SmsRequest();
+                smsReq.setTo(event.getPatientPhone());
+                smsReq.setMessage(templateService.buildPaymentSmsBody(event));
+                smsService.sendSms(smsReq, topic);
+            }
+        } catch (Exception e) {
+            log.error("Exhausted retries for {}: {}. Sending to DLQ.", topic, event.getOrderId());
+            dlqPublisher.publishToDLQ(event, topic, e.getMessage());
         }
     }
 
     @KafkaListener(topics = "payment-failed", groupId = "notification-service")
     public void handlePaymentFailed(PaymentEventDto event) {
-        log.info("Received payment-failed event for order: {}", event.getOrderId());
+        String topic = "payment-failed";
+        log.info("Received {} event for order: {}", topic, event.getOrderId());
 
-        // Send Email
-        EmailRequest emailReq = new EmailRequest();
-        emailReq.setTo(event.getPatientEmail());
-        emailReq.setSubject("Payment Failed - " + event.getItemDescription());
-        emailReq.setBody(String.format("Dear %s %s,\n\nUnfortunately, your payment of %s %s for %s has failed. Please try again.\n\nThank you,\nSmart Healthcare Team",
-                event.getPatientFirstName(), event.getPatientLastName(), event.getAmount(), event.getCurrency(), event.getItemDescription()));
-        emailService.sendEmail(emailReq);
+        try {
+            // 1. Send Payment Failed Email
+            EmailRequest failEmail = new EmailRequest();
+            failEmail.setTo(event.getPatientEmail());
+            failEmail.setSubject(templateService.buildPaymentSubject(topic));
+            failEmail.setBody(templateService.buildPaymentEmailBody(event));
+            emailService.sendEmail(failEmail, topic);
 
-        // Send SMS
-        if (event.getPatientPhone() != null && !event.getPatientPhone().isBlank()) {
-            SmsRequest smsReq = new SmsRequest();
-            smsReq.setTo(event.getPatientPhone());
-            smsReq.setMessage(String.format("Payment of %s %s failed for %s. Please try again. - Smart Healthcare",
-                    event.getAmount(), event.getCurrency(), event.getItemDescription()));
-            smsService.sendSms(smsReq);
+            // 2. Send SMS
+            if (isValidPhone(event.getPatientPhone())) {
+                SmsRequest smsReq = new SmsRequest();
+                smsReq.setTo(event.getPatientPhone());
+                smsReq.setMessage(templateService.buildPaymentSmsBody(event));
+                smsService.sendSms(smsReq, topic);
+            }
+        } catch (Exception e) {
+            log.error("Exhausted retries for {}: {}. Sending to DLQ.", topic, event.getOrderId());
+            dlqPublisher.publishToDLQ(event, topic, e.getMessage());
         }
+    }
+
+    private boolean isValidPhone(String phone) {
+        return phone != null && !phone.isBlank();
     }
 }

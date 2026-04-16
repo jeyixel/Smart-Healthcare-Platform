@@ -1,7 +1,6 @@
-package com.smarthealth.prescription.config;
+package com.smarthealth.notification.config;
 
-import com.smarthealth.prescription.config.UserPrincipal;
-import com.smarthealth.prescription.service.JwtService;
+import com.smarthealth.notification.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,15 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
-
         jwt = authHeader.substring(7);
         userEmail = jwtService.extractUsername(jwt);
-
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String role = jwtService.extractRole(jwt);
             Long userId = jwtService.extractUserId(jwt);
@@ -49,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.isTokenValid(jwt, userPrincipal)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userPrincipal,
-                        jwt, // Store JWT token in credentials
+                        jwt, 
                         userPrincipal.getAuthorities()
                 );
                 authToken.setDetails(
