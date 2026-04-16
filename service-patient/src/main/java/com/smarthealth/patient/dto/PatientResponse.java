@@ -16,7 +16,7 @@ public record PatientResponse(
         String address,
         String emergencyContactName,
         String emergencyContactPhone,
-        boolean active,
+        Boolean active,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {

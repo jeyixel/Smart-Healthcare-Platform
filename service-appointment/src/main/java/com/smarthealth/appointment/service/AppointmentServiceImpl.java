@@ -5,8 +5,6 @@ import com.smarthealth.appointment.dto.external.DoctorResponse;
 import com.smarthealth.appointment.dto.external.PatientResponse;
 import com.smarthealth.appointment.entity.Appointment;
 import com.smarthealth.appointment.entity.AppointmentStatus;
-import com.smarthealth.appointment.entity.ConsultationType;
-import com.smarthealth.appointment.event.OnlineAppointmentCreatedEvent;
 import com.smarthealth.appointment.exception.BusinessException;
 import com.smarthealth.appointment.exception.ResourceNotFoundException;
 import com.smarthealth.appointment.mapper.AppointmentMapper;
@@ -14,7 +12,6 @@ import com.smarthealth.appointment.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -29,7 +26,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final ServiceClient serviceClient;
-    private final ApplicationEventPublisher eventPublisher;
+    private final AppointmentEventPublisher appointmentEventPublisher;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
@@ -83,21 +80,10 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .status(AppointmentStatus.PENDING)
                 .build();
 
-        // Save first so the event carries a persistent appointment id.
-        Appointment savedAppointment = appointmentRepository.save(appointment);
-
-        // If appointment is online, publish an event to trigger telemedicine session creation. We do this after saving
-        // to ensure the appointment ID is generated and available in the event.
-        if (savedAppointment.getConsultationType() == ConsultationType.ONLINE) {
-            //
-            eventPublisher.publishEvent(new OnlineAppointmentCreatedEvent(
-                    savedAppointment.getId(),
-                    savedAppointment.getPatientId(),
-                    savedAppointment.getDoctorId()
-            ));
-        }
-
-        return AppointmentMapper.toResponse(savedAppointment);
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-created", "APPOINTMENT_CREATED", appointment);
+        
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -142,7 +128,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setStatus(request.status());
         appointment.setNotes(request.notes());
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-status-changed", "APPOINTMENT_STATUS_CHANGED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -173,7 +162,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentTime(request.appointmentTime());
         appointment.setStatus(AppointmentStatus.PENDING);
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-rescheduled", "APPOINTMENT_RESCHEDULED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override

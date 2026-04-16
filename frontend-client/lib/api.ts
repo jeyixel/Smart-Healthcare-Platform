@@ -9,6 +9,9 @@ import {
   PatientEvent,
   RegisterInput,
   NotificationLog,
+  AdminAppointment,
+  DashboardSummary,
+  SystemEvent,
 } from "@/types/api";
 
 const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API_BASE ?? "http://localhost:8087";
@@ -187,4 +190,48 @@ export async function fetchNotifications(recipient: string): Promise<Notificatio
   });
 
   return safeJson<NotificationLog[]>(response);
+}
+
+export async function fetchAdminAppointments(token: string): Promise<AdminAppointment[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/appointments`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<AdminAppointment[]>(response);
+}
+
+export async function updateAppointmentStatus(
+  token: string,
+  appointmentId: string,
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED"
+): Promise<AdminAppointment> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/appointments/${appointmentId}/status`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  return safeJson<AdminAppointment>(response);
+}
+
+export async function fetchDashboardSummary(token: string): Promise<DashboardSummary> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/dashboard-summary`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<DashboardSummary>(response);
+}
+
+export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/recent-events`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<SystemEvent[]>(response);
 }

@@ -12,5 +12,6 @@ public record UpdatePrescriptionRequest(
         @Size(max = 3000) String clinicalNotes,
         Boolean followUpRequired,
         LocalDate followUpDate,
-        @Valid List<CreatePrescriptionItemRequest> items
+        @Valid List<CreatePrescriptionItemRequest> items,
+        String digitalSignature
 ) {}

@@ -116,7 +116,7 @@ public class PatientService {
                 patient.getAddress(),
                 patient.getEmergencyContactName(),
                 patient.getEmergencyContactPhone(),
-                patient.isActive(),
+                Boolean.TRUE.equals(patient.getActive()),
                 patient.getCreatedAt(),
                 patient.getUpdatedAt()
         );
