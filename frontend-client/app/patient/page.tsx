@@ -129,8 +129,10 @@ export default function PatientDashboard() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">Telemedicine</h3>
             <p className="mt-2 text-slate-600">Connect with doctors online</p>
-            <button className="mt-4 inline-block rounded-lg bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700">
-              Start Consultation
+            <button 
+              onClick={() => router.push('/patient/telemedicine')}
+              className="mt-4 inline-block rounded-lg bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700">
+              Manage Consultations
             </button>
           </div>
 

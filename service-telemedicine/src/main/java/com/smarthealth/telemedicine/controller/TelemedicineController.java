@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -104,6 +105,13 @@ public class TelemedicineController {
         Optional<TelemedicineSession> session = service.getSessionByAppointment(appointmentId);
         return session.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build()); // Return 404 if not found
+    }
+
+    // Endpoint to retrieve all sessions for a specific patient (Will be called by Frontend Dashboard)
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<TelemedicineSession>> getPatientSessions(@PathVariable String patientId) {
+        List<TelemedicineSession> sessions = service.getSessionsByPatientId(patientId);
+        return ResponseEntity.ok(sessions);
     }
 
     // Endpoint to mark a session as completed
