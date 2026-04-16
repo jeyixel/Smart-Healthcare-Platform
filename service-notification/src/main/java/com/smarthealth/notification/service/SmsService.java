@@ -8,6 +8,8 @@ import com.smarthealth.notification.enums.NotificationType;
 import com.smarthealth.notification.repository.NotificationLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -23,12 +25,16 @@ public class SmsService {
 
     private static final String NOTIFY_LK_URL = "https://app.notify.lk/api/v1/send";
 
-    public NotificationLog sendSms(SmsRequest request) {
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000), retryFor = Exception.class)
+    public void sendSms(SmsRequest request, String eventType) {
+        log.info("Attempting to send SMS to {} for event: {}", request.getTo(), eventType);
+
         NotificationLog logEntry = NotificationLog.builder()
                 .recipient(request.getTo())
                 .subject("SMS Notification")
                 .message(request.getMessage())
-                .type(NotificationType.SMS)
+                .channel(NotificationType.SMS)
+                .eventType(eventType)
                 .status(NotificationStatus.PENDING)
                 .build();
 
@@ -45,14 +51,15 @@ public class SmsService {
             log.info("Notify.lk response: {}", response);
 
             logEntry.setStatus(NotificationStatus.SENT);
+            logRepository.save(logEntry);
             log.info("SMS sent successfully to {}", request.getTo());
 
         } catch (Exception e) {
             logEntry.setStatus(NotificationStatus.FAILED);
             logEntry.setErrorMessage(e.getMessage());
-            log.error("Failed to send SMS to {}: {}", request.getTo(), e.getMessage());
+            logRepository.save(logEntry);
+            log.error("Failed attempt to send SMS to {}: {}", request.getTo(), e.getMessage());
+            throw e; // Re-throw to trigger @Retryable
         }
-
-        return logRepository.save(logEntry);
     }
 }

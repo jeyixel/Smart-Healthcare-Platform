@@ -18,6 +18,10 @@ public class PaymentEventDto {
     private String patientPhone;
     private String patientFirstName;
     private String patientLastName;
+    private String patientName;
+    private String doctorName;
+    private String appointmentDate;
+    private String transactionId;
     private BigDecimal amount;
     private String currency;
     private String status;      // SUCCESS, FAILED, CANCELLED

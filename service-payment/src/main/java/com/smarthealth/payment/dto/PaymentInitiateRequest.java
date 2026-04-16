@@ -26,6 +26,12 @@ public class PaymentInitiateRequest {
     @NotBlank(message = "Last name is required")
     private String patientLastName;
 
+    @NotBlank(message = "Doctor name is required")
+    private String doctorName;
+
+    @NotBlank(message = "Appointment date is required")
+    private String appointmentDate;
+
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     private BigDecimal amount;

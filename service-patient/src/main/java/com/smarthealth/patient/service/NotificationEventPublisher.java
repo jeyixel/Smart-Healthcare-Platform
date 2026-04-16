@@ -40,7 +40,7 @@ public class NotificationEventPublisher {
         event.setRecipientEmail(patient.getEmail());
         event.setRecipientPhone(patient.getPhoneNumber());
         event.setSubject("Patient account status changed");
-        event.setMessage("Hi " + safeName(patient) + ", your account status is now " + (patient.isActive() ? "ACTIVE" : "INACTIVE") + ".");
+        event.setMessage("Hi " + safeName(patient) + ", your account status is now " + (Boolean.TRUE.equals(patient.getActive()) ? "ACTIVE" : "INACTIVE") + ".");
         event.setSendEmail(patient.getEmail() != null && !patient.getEmail().isBlank());
         event.setSendSms(patient.getPhoneNumber() != null && !patient.getPhoneNumber().isBlank());
         event.setTimestamp(System.currentTimeMillis());
