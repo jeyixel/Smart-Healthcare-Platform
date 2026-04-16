@@ -26,6 +26,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final ServiceClient serviceClient;
+    private final AppointmentEventPublisher appointmentEventPublisher;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
@@ -79,7 +80,10 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .status(AppointmentStatus.PENDING)
                 .build();
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-created", "APPOINTMENT_CREATED", appointment);
+        
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -124,7 +128,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setStatus(request.status());
         appointment.setNotes(request.notes());
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-status-changed", "APPOINTMENT_STATUS_CHANGED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override
@@ -155,7 +162,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentTime(request.appointmentTime());
         appointment.setStatus(AppointmentStatus.PENDING);
 
-        return AppointmentMapper.toResponse(appointmentRepository.save(appointment));
+        appointment = appointmentRepository.save(appointment);
+        appointmentEventPublisher.publishAppointmentEvent("appointment-rescheduled", "APPOINTMENT_RESCHEDULED", appointment);
+
+        return AppointmentMapper.toResponse(appointment);
     }
 
     @Override

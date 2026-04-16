@@ -10,7 +10,7 @@ public record PatientResponse(
         String lastName,
         String email,
         String phoneNumber,
-        boolean active,
+        Boolean active,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {}

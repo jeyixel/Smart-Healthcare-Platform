@@ -44,6 +44,12 @@ public class Payment {
     @Column(nullable = false)
     private String patientLastName;
 
+    @Column(nullable = false)
+    private String doctorName;
+
+    @Column(nullable = false)
+    private String appointmentDate;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
