@@ -5,7 +5,9 @@ import { Patient } from "@/types/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PATIENT_API = process.env.NEXT_PUBLIC_PATIENT_API_BASE ?? "http://localhost:8081";
+// API Gateway - Routes all requests through a single endpoint (port 8080)
+// The gateway automatically routes /api/v1/patients/** to Patient Service (8081)
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
 // ─── Safe JSON helper ─────────────────────────────────────────────────────────
 
@@ -44,7 +46,7 @@ export function usePatients(patientIds: string[]) {
 
       // Fetch patients in parallel
       const promises = ids.map(id =>
-        fetch(`${PATIENT_API}/api/v1/patients/${id}`, {
+        fetch(`${API_GATEWAY}/api/v1/patients/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         }).then(res => safeJson<Patient>(res))
       );

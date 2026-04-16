@@ -46,6 +46,21 @@ export function DoctorTopBar() {
     return () => clearInterval(id);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const dropdown = document.getElementById('profile-dropdown');
+      
+      if (dropdown && !dropdown.contains(target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Add pulse animation styles
   useEffect(() => {
     const style = document.createElement('style');
@@ -72,12 +87,18 @@ export function DoctorTopBar() {
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const handleStatusChange = async () => {
+  const handleStatusChange = async (e?: React.MouseEvent) => {
     if (!doctor || updatingStatus) return;
+    
+    // Prevent event propagation to keep dropdown open during status change
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     
     setUpdatingStatus(true);
     try {
-      const DOCTOR_API = process.env.NEXT_PUBLIC_DOCTOR_API_BASE ?? "http://localhost:8082";
+      const DOCTOR_API = process.env.NEXT_PUBLIC_API_GATEWAY ?? "http://localhost:8080";
       const token = localStorage.getItem("smart_admin_token");
       
       const response = await fetch(`${DOCTOR_API}/api/v1/doctors/${doctor.id}/active?active=${!doctor.active}`, {
@@ -311,7 +332,7 @@ export function DoctorTopBar() {
           </button>
 
           {profileOpen && (
-            <div style={{
+            <div id="profile-dropdown" style={{
               position: "absolute", top: "calc(100% + 10px)", right: 0,
               width: "280px", background: "#fff",
               borderRadius: "16px", border: "1px solid #e2e8f0",
