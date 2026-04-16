@@ -20,5 +20,6 @@ public record PrescriptionResponse(
         Instant issuedAt,
         List<PrescriptionItemResponse> items,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String digitalSignature
 ) {}

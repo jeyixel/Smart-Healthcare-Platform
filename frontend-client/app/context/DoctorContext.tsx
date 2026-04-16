@@ -27,6 +27,8 @@ interface DoctorContextValue {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   logout: () => void;
+  prescriptionDraftAppointment: any;
+  setPrescriptionDraftAppointment: (appt: any) => void;
 }
 
 const DoctorContext = createContext<DoctorContextValue | null>(null);
@@ -35,6 +37,7 @@ export function DoctorProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<DoctorSession | null>(null);
   const [activeSection, setActiveSection] = useState<DoctorNavSection>("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [prescriptionDraftAppointment, setPrescriptionDraftAppointment] = useState<any>(null);
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((c) => !c), []);
 
@@ -48,7 +51,13 @@ export function DoctorProvider({ children }: { children: ReactNode }) {
 
   return (
     <DoctorContext.Provider
-      value={{ session, setSession, activeSection, setActiveSection, sidebarCollapsed, toggleSidebar, logout }}
+      value={{ 
+        session, setSession, 
+        activeSection, setActiveSection, 
+        sidebarCollapsed, toggleSidebar, 
+        logout,
+        prescriptionDraftAppointment, setPrescriptionDraftAppointment 
+      }}
     >
       {children}
     </DoctorContext.Provider>

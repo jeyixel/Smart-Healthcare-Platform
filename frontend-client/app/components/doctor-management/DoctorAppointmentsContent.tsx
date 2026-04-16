@@ -6,6 +6,8 @@ import {
   Appointment,
   AppointmentStatus,
 } from "@/app/hooks/useAppointments";
+import { useDoctorContext } from "@/app/context/DoctorContext";
+import { useRouter } from "next/navigation";
 
 // ─── Palette helpers ──────────────────────────────────────────────────────────
 
@@ -148,7 +150,13 @@ function StatusModal({ appt, onClose, onSave }: StatusModalProps) {
   const allowedTransitions: AppointmentStatus[] =
     appt.status === "COMPLETED" || appt.status === "CANCELLED"
       ? []
-      : (["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"] as AppointmentStatus[]);
+      : appt.status === "CONFIRMED" 
+        ? ["CONFIRMED", "COMPLETED", "CANCELLED"] as AppointmentStatus[]
+        : (["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"] as AppointmentStatus[]);
+
+  const isStatusBlocked = (status: AppointmentStatus) => {
+    return appt.status === "CONFIRMED" && status === "PENDING";
+  };
 
   const handleSave = async () => {
     if (allowedTransitions.length === 0) return;
@@ -252,23 +260,26 @@ function StatusModal({ appt, onClose, onSave }: StatusModalProps) {
                 {allowedTransitions.map((s) => {
                   const m = STATUS_META[s];
                   const active = status === s;
+                  const blocked = isStatusBlocked(s);
                   return (
                     <button
                       key={s}
-                      onClick={() => setStatus(s)}
+                      onClick={() => !blocked && setStatus(s)}
                       style={{
                         padding: "10px 14px",
                         borderRadius: "10px",
-                        border: active ? `2px solid ${m.dot}` : "2px solid #e2e8f0",
-                        background: active ? m.bg : "#f8fafc",
-                        color: active ? m.color : "#64748b",
+                        border: active ? `2px solid ${m.dot}` : (blocked ? "2px solid #f1f5f9" : "2px solid #e2e8f0"),
+                        background: active ? m.bg : (blocked ? "#f1f5f9" : "#f8fafc"),
+                        color: active ? m.color : (blocked ? "#9ca3af" : "#64748b"),
                         fontWeight: active ? 700 : 500,
                         fontSize: "13px",
-                        cursor: "pointer",
+                        cursor: blocked ? "not-allowed" : "pointer",
                         transition: "all 0.15s",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
+                        opacity: blocked ? 0.6 : 1,
+                        position: "relative",
                       }}
                     >
                       <span
@@ -276,11 +287,16 @@ function StatusModal({ appt, onClose, onSave }: StatusModalProps) {
                           width: "8px",
                           height: "8px",
                           borderRadius: "50%",
-                          background: active ? m.dot : "#cbd5e1",
+                          background: active ? m.dot : (blocked ? "#cbd5e1" : "#cbd5e1"),
                           flexShrink: 0,
                         }}
                       />
                       {m.label}
+                      {blocked && (
+                        <svg width="12" height="12" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" style={{ marginLeft: "4px" }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2m14 0V9a2 2 0 01-2-2h-7z" />
+                        </svg>
+                      )}
                     </button>
                   );
                 })}
@@ -393,10 +409,12 @@ function DetailDrawer({
   appt,
   onClose,
   onEdit,
+  onIssuePrescription,
 }: {
   appt: Appointment;
   onClose: () => void;
   onEdit: () => void;
+  onIssuePrescription: () => void;
 }) {
   const hue = avatarColor(appt.patientId);
   const typeMeta = TYPE_META[appt.consultationType] ?? TYPE_META.PHYSICAL;
@@ -612,11 +630,60 @@ function DetailDrawer({
         </div>
 
         {/* Footer actions */}
+        {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
+          <div
+            style={{
+              padding: "16px 24px 8px 24px",
+              display: "flex",
+              position: "relative",
+              zIndex: 10
+            }}
+          >
+             <button
+              onClick={onIssuePrescription}
+              style={{
+                flex: 1,
+                padding: "12px 16px",
+                borderRadius: "12px",
+                border: "none",
+                background: "linear-gradient(135deg, #10b981, #059669)",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "14px",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(16,185,129,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.2s ease",
+                transform: "translateY(-2px)",
+                position: "relative"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "linear-gradient(135deg, #059669, #047857)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(16,185,129,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.35)";
+              }}
+            >
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Issue Prescription
+            </button>
+          </div>
+        )}
+
         {appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
           <div
             style={{
               padding: "16px 24px",
-              borderTop: "1px solid #f1f5f9",
+              borderTop: appt.status === "CONFIRMED" ? "none" : "1px solid #f1f5f9",
               display: "flex",
               gap: "10px",
             }}
@@ -1077,6 +1144,8 @@ type SortKey = "date" | "time" | "status" | "type";
 export function DoctorAppointmentsContent() {
   const { appointments, doctor, loading, error, refetch, updateAppointmentStatus } =
     useAppointments();
+  const { setPrescriptionDraftAppointment, setActiveSection } = useDoctorContext();
+  const router = useRouter();
 
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("ALL");
   const [filterType, setFilterType] = useState<"ALL" | "ONLINE" | "PHYSICAL">("ALL");
@@ -1750,6 +1819,11 @@ export function DoctorAppointmentsContent() {
           onEdit={() => {
             setEditAppt(selectedAppt);
             setSelectedAppt(null);
+          }}
+          onIssuePrescription={() => {
+             setPrescriptionDraftAppointment(selectedAppt);
+             setActiveSection('prescriptions');
+             router.push('/doctor');
           }}
         />
       )}
