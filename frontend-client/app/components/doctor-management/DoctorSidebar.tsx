@@ -75,12 +75,11 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    id: "settings",
-    label: "Settings",
+    id: "profile",
+    label: "Profile",
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
   },
@@ -160,36 +159,6 @@ export function DoctorSidebar() {
           </svg>
         </button>
       </div>
-
-      {/* Doctor profile mini card */}
-      {!sidebarCollapsed && session && (
-        <div style={{
-          margin: "16px 12px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.06))",
-          border: "1px solid rgba(6,182,212,0.15)",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}>
-          <div style={{
-            width: "40px", height: "40px", borderRadius: "50%",
-            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 700, color: "#fff", fontSize: "15px", flexShrink: 0,
-            boxShadow: "0 0 12px rgba(6,182,212,0.4)",
-          }}>
-            {session.displayName.replace("Dr. ", "").charAt(0).toUpperCase()}
-          </div>
-          <div style={{ overflow: "hidden" }}>
-            <p style={{ margin: 0, color: "#e2e8f0", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {session.displayName}
-            </p>
-            <p style={{ margin: 0, color: "#06b6d4", fontSize: "11px", fontWeight: 600 }}>● Online</p>
-          </div>
-        </div>
-      )}
 
       {/* Nav label */}
       {!sidebarCollapsed && (

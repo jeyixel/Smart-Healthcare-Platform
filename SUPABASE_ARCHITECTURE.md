@@ -17,7 +17,7 @@ Supabase Project: smart-healthcare-platform
 ├── payment_schema
 │   └── tables: payments, invoices, transactions, etc.
 ├── telemedicine_schema
-│   └── tables: consultations, video_sessions, recordings, etc.
+│   └── tables: telemedicine_sessions
 └── notification_schema
     └── tables: notifications, email_queue, sms_queue, etc.
 ```
@@ -45,6 +45,8 @@ Each microservice uses a consistent naming pattern:
 | Payment | `payment_schema` | `PAYMENT_DB_*` |
 | Telemedicine | `telemedicine_schema` | `TELEMEDICINE_DB_*` |
 | Notification | `notification_schema` | `NOTIFICATION_DB_*` |
+
+> **Telemedicine implementation note:** the current `service-telemedicine` module maps a single JPA entity to `telemedicine_sessions`. Its checked-in `application.properties` / `.env.example` still use generic `DB_URL`, `DB_USER`, and `DB_PASSWORD` variables and default the JDBC connection to `currentSchema=public`. If you want this service to follow the schema-per-service convention described here, wire it to `telemedicine_schema` explicitly.
 
 ## PostgreSQL Schemas Creation Script
 
