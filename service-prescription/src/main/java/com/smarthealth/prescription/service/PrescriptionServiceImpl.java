@@ -29,6 +29,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     private final PrescriptionRepository prescriptionRepository;
     private final ServiceClient serviceClient;
+    private final PrescriptionEventPublisher eventPublisher;
 
     @Override
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
@@ -90,7 +91,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         prescription.getItems().addAll(items);
 
-        return PrescriptionMapper.toResponse(prescriptionRepository.save(prescription));
+        prescription = prescriptionRepository.save(prescription);
+        eventPublisher.publishPrescriptionEvent("prescription-created", "PRESCRIPTION_CREATED", prescription);
+
+        return PrescriptionMapper.toResponse(prescription);
     }
 
     @Override
@@ -179,7 +183,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             throw new BusinessException("followUpDate is required when followUpRequired is true");
         }
 
-        return PrescriptionMapper.toResponse(prescriptionRepository.save(prescription));
+        prescription = prescriptionRepository.save(prescription);
+        eventPublisher.publishPrescriptionEvent("prescription-updated", "PRESCRIPTION_UPDATED", prescription);
+
+        return PrescriptionMapper.toResponse(prescription);
     }
 
     @Override
@@ -197,7 +204,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             prescription.setIssuedAt(Instant.now());
         }
 
-        return PrescriptionMapper.toResponse(prescriptionRepository.save(prescription));
+        prescription = prescriptionRepository.save(prescription);
+        
+        if (request.status() == PrescriptionStatus.ISSUED) {
+            // Alternatively, fire an updated event when explicitly issued
+            eventPublisher.publishPrescriptionEvent("prescription-updated", "PRESCRIPTION_ISSUED", prescription);
+        }
+
+        return PrescriptionMapper.toResponse(prescription);
     }
 
     @Override
