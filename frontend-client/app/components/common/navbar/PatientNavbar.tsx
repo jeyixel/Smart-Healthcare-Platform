@@ -91,7 +91,10 @@ export default function PatientNavbar() {
 
     async function loadNotifications() {
       try {
-        const logs: NotificationLog[] = await fetchNotifications(patientEmail);
+        const token = localStorage.getItem("smart_admin_token");
+        if (!token) return;
+        
+        const logs: NotificationLog[] = await fetchNotifications(token, patientEmail);
         const mapped = logs.map(log => ({
           id: log.id,
           title: log.subject,
@@ -185,7 +188,7 @@ export default function PatientNavbar() {
 
           {/* Right-side actions */}
           <div className={styles.navActions}>
-            <Link href="/register" className={styles.btnBook} id="nav-book-btn">
+            <Link href="/patient/book" className={styles.btnBook} id="nav-book-btn">
               Book Appointment
             </Link>
 
@@ -373,7 +376,7 @@ export default function PatientNavbar() {
             ))}
           </ul>
           <div className={styles.mobileActions}>
-            <Link href="/register" className={styles.mobileBtnBook}
+            <Link href="/patient/book" className={styles.mobileBtnBook}
                   id="mob-book-btn" onClick={() => setMenuOpen(false)}>
               Book Appointment
             </Link>

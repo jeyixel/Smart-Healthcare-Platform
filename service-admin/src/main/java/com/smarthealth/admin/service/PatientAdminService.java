@@ -57,9 +57,10 @@ public class PatientAdminService {
         return response;
     }
 
-    public List<PatientResponse> getAllPatients() {
+    public List<PatientResponse> getAllPatients(String token) {
         return patientRestClient.get()
                 .uri(properties.getEndpoints().getBase())
+                .header("Authorization", token)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<PatientResponse>>() {});
     }

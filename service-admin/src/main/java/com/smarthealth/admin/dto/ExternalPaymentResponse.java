@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 public class ExternalPaymentResponse {
     private Long id;
     private String orderId;
-    private Long appointmentId;
+    private UUID appointmentId;
     private String patientId;
     private BigDecimal amount;
     private String currency;

@@ -31,9 +31,10 @@ public class AnalyticsAdminService {
     private final AdminActionLogRepository adminActionLogRepository;
     private final UserRepository userRepository;
 
-    public PaymentAnalysisResponse getPaymentAnalysis() {
+    public PaymentAnalysisResponse getPaymentAnalysis(String token) {
         List<ExternalPaymentResponse> payments = paymentRestClient.get()
                 .uri(paymentProperties.getEndpoints().getBase())
+                .header("Authorization", token)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<ExternalPaymentResponse>>() {});
 
@@ -87,6 +88,7 @@ public class AnalyticsAdminService {
         // Fetch patient count
         List<PatientResponse> patients = patientRestClient.get()
                 .uri(patientProperties.getEndpoints().getBase())
+                .header("Authorization", token)
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<PatientResponse>>() {});
         long totalPatients = patients != null ? patients.size() : 0;

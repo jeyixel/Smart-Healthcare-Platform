@@ -14,6 +14,9 @@ import {
   SystemEvent,
   PaymentAnalysis,
   DailyRevenue,
+  DoctorSearchResponse,
+  CreateAppointmentRequest,
+  AppointmentResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -26,6 +29,7 @@ import {
 // - /api/v1/prescriptions/** → Prescription Service (8088)
 // - /api/notifications/** → Notification Service (8086)
 const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+const ADMIN_API = API_GATEWAY;
 
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -104,8 +108,11 @@ export async function resetForgotPassword(input: ForgotPasswordResetInput): Prom
   return safeJson<{ message: string }>(response);
 }
 
-export async function fetchPatients(): Promise<Patient[]> {
+export async function fetchPatients(token: string): Promise<Patient[]> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients`, {
+    headers: {
+       Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 
@@ -133,8 +140,11 @@ export async function updatePatientStatus(
   return safeJson<Patient>(response);
 }
 
-export async function fetchPatientEvents(): Promise<PatientEvent[]> {
+export async function fetchPatientEvents(token: string): Promise<PatientEvent[]> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patient-events`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 
@@ -164,8 +174,9 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
-export async function fetchPatientByEmail(email: string): Promise<Patient> {
+export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
 
@@ -193,8 +204,9 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
   return safeJson<CurrentUserProfile>(response);
 }
 
-export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${API_GATEWAY}/api/notifications/logs/${recipient}`, {
+export async function fetchNotifications(token: string, recipient: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/notifications/logs/${recipient}`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
 
@@ -252,4 +264,36 @@ export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalys
   });
 
   return safeJson<PaymentAnalysis>(response);
+}
+
+export async function fetchNotificationLogs(token: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/notifications`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<NotificationLog[]>(response);
+}
+
+export async function fetchActiveDoctors(token: string): Promise<DoctorSearchResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<DoctorSearchResponse>(payload);
+}
+
+export async function createAppointment(token: string, data: CreateAppointmentRequest): Promise<AppointmentResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/appointments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<AppointmentResponse>(response);
 }

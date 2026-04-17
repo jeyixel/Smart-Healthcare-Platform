@@ -71,7 +71,7 @@ export default function PatientHero() {
 
           {/* CTA row */}
           <div className={styles.heroActions}>
-            <Link href="/register" className={styles.ctaPrimary} id="hero-book-btn">
+            <Link href="/patient/book" className={styles.ctaPrimary} id="hero-book-btn">
               Book Appointment
               <svg className={styles.ctaArrow} width="18" height="18"
                    viewBox="0 0 24 24" fill="none" stroke="currentColor"

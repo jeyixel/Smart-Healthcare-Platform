@@ -118,10 +118,62 @@ export interface DailyRevenue {
   revenue: number;
 }
 
+export interface NotificationLog {
+  id: number;
+  recipient: string;
+  subject: string;
+  message: string;
+  channel: "EMAIL" | "SMS";
+  status: "SENT" | "FAILED" | "PENDING";
+  errorMessage: string | null;
+  sentAt: string;
+}
+
 export interface PaymentAnalysis {
   totalRevenue: number;
   totalTransactions: number;
   successRate: number;
   statusBreakdown: Record<string, number>;
   trends: DailyRevenue[];
+}
+
+export interface DoctorSearchResponse {
+  id: string;
+  fullName: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  verified: boolean;
+  active: boolean;
+  profileImageUrl: string | null;
+}
+
+export interface CreateAppointmentRequest {
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string; // YYYY-MM-DD
+  appointmentTime: string; // HH:mm:ss
+  consultationType: "PHYSICAL" | "VIRTUAL";
+  reason: string;
+}
+
+export interface AppointmentResponse {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  consultationType: "PHYSICAL" | "VIRTUAL";
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  paymentStatus: "PENDING_PAYMENT" | "PAID" | "FAILED";
+  paymentDeadline: string | null;
+  paymentReference: string | null;
+  reason: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -23,7 +23,7 @@ public class DatabaseMappingTest {
     void testSaveAndFindPayment() {
         Payment payment = Payment.builder()
                 .orderId("TEST-" + UUID.randomUUID())
-                .appointmentId(1L)
+                .appointmentId(UUID.randomUUID())
                 .patientId("PAT-123")
                 .patientEmail("test@example.com")
                 .patientPhone("1234567890")

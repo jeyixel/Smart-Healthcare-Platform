@@ -2,15 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-
-interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  active: boolean;
-  updatedAt: string;
-}
+import { fetchPatients, updatePatientStatus } from "@/lib/api";
+import { Patient } from "@/types/api";
 
 export default function PatientsManagementPage() {
   const router = useRouter();
@@ -19,7 +12,7 @@ export default function PatientsManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchPatients = useCallback(async () => {
+  const loadPatients = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("smart_admin_token");
@@ -28,17 +21,7 @@ export default function PatientsManagementPage() {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_BASE}/api/v1/admin/patients`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch patients");
-      }
-
-      const data = await response.json();
+      const data = await fetchPatients(token);
       setPatients(data);
       setError(null);
     } catch (err: any) {
@@ -49,27 +32,20 @@ export default function PatientsManagementPage() {
   }, [router]);
 
   useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
+    loadPatients();
+  }, [loadPatients]);
 
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem("smart_admin_token");
-      const nextStatus = !currentStatus;
-      
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ADMIN_API_BASE}/api/v1/admin/patients/${id}/status?active=${nextStatus}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const user = localStorage.getItem("smart_admin_user");
+      const adminData = user ? JSON.parse(user) : null;
+      const adminEmail = adminData?.email || "system-admin";
 
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
+      if (!token) return;
+
+      const nextStatus = !currentStatus;
+      await updatePatientStatus(token, id, nextStatus, adminEmail);
 
       // Optimistic update
       setPatients(prev => prev.map(p => 
@@ -121,7 +97,7 @@ export default function PatientsManagementPage() {
       {error && (
         <div className="rounded-xl bg-red-50 p-4 text-red-700 border border-red-100 flex items-center gap-2">
           <span>⚠️</span> {error}
-          <button onClick={fetchPatients} className="ml-auto underline font-bold">Retry</button>
+          <button onClick={loadPatients} className="ml-auto underline font-bold">Retry</button>
         </div>
       )}
 
