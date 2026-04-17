@@ -31,7 +31,7 @@ export default function PatientDashboard() {
         throw new Error("Session information is missing.");
       }
       
-      const patientProfile = await fetchPatientByEmail(session.email);
+      const patientProfile = await fetchPatientByEmail(session.email, session.token);
       if (!patientProfile || !patientProfile.id) {
          throw new Error("Could not retrieve patient profile.");
       }
