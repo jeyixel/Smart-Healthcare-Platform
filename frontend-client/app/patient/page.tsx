@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { fetchPatientByEmail } from "@/lib/api";
 
 interface PatientSession {
   email: string;
@@ -13,6 +14,50 @@ export default function PatientDashboard() {
   const router = useRouter();
   const [session, setSession] = useState<PatientSession | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // AI Suggestion State
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiTips, setAiTips] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleGetAiSuggestions = async () => {
+    setIsAiModalOpen(true);
+    setIsAiLoading(true);
+    setAiError(null);
+    
+    try {
+      if (!session || !session.email || !session.token) {
+        throw new Error("Session information is missing.");
+      }
+      
+      const patientProfile = await fetchPatientByEmail(session.email);
+      if (!patientProfile || !patientProfile.id) {
+         throw new Error("Could not retrieve patient profile.");
+      }
+      const patientId = patientProfile.id;
+      
+      const response = await fetch("/api/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId, token: session.token }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+         throw new Error(data.error || "Failed to fetch AI suggestions.");
+      }
+      
+      setAiTips(data.suggestions);
+      
+    } catch (error: any) {
+      console.error("Error fetching AI suggestions:", error);
+      setAiError(error.message || "An unexpected error occurred.");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("smart_admin_token");
@@ -129,8 +174,10 @@ export default function PatientDashboard() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">Telemedicine</h3>
             <p className="mt-2 text-slate-600">Connect with doctors online</p>
-            <button className="mt-4 inline-block rounded-lg bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700">
-              Start Consultation
+            <button 
+              onClick={() => router.push('/patient/telemedicine')}
+              className="mt-4 inline-block rounded-lg bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700">
+              Manage Consultations
             </button>
           </div>
 
@@ -157,12 +204,79 @@ export default function PatientDashboard() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">Health Tips</h3>
             <p className="mt-2 text-slate-600">Get personalized health recommendations</p>
-            <button className="mt-4 inline-block rounded-lg bg-pink-600 px-4 py-2 font-semibold text-white transition hover:bg-pink-700">
-              Read Tips
+            <button 
+              onClick={handleGetAiSuggestions}
+              className="mt-4 inline-block rounded-lg bg-pink-600 px-4 py-2 font-semibold text-white transition hover:bg-pink-700">
+              Get AI Suggestions
             </button>
           </div>
         </div>
       </div>
+
+      {/* AI Suggestions Modal */}
+      {isAiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-all duration-300">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl flex flex-col max-h-[80vh] border justify-between border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                <div className="bg-pink-100 p-2 rounded-lg">
+                  <svg className="h-6 w-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                AI Health Suggestions
+              </h3>
+              <button 
+                onClick={() => setIsAiModalOpen(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-6 styled-scrollbar">
+              {isAiLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 rounded-full blur-xl bg-pink-200 opacity-50 animate-pulse"></div>
+                    <svg className="relative h-12 w-12 animate-spin text-pink-600" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </div>
+                  <p className="font-medium animate-pulse text-lg">Analyzing your medical history...</p>
+                  <p className="text-sm mt-2 text-slate-400">Our AI is generating personalized tips</p>
+                </div>
+              ) : aiError ? (
+                <div className="rounded-xl bg-red-50 p-5 text-red-600 border border-red-100">
+                  <div className="flex items-center gap-3 mb-2">
+                    <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="font-bold text-lg">Could not generate suggestions</p>
+                  </div>
+                  <p className="text-red-500 ml-9">{aiError}</p>
+                </div>
+              ) : (
+                <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed">
+                  {aiTips}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-5 border-t border-slate-100 flex justify-end">
+               <button 
+                  onClick={() => setIsAiModalOpen(false)}
+                  className="rounded-lg bg-slate-100 px-6 py-2.5 font-bold text-slate-700 transition hover:bg-slate-200"
+               >
+                 Close Suggestions
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

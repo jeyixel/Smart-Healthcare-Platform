@@ -113,6 +113,17 @@ export interface SystemEvent {
   timestamp: string;
 }
 
+export interface MedicalHistory {
+  id: string;
+  patientId: string;
+  diagnosis?: string;
+  treatment?: string;
+  symptoms?: string;
+  date?: string;
+  notes?: string;
+  [key: string]: any;
+}
+
 export interface DailyRevenue {
   date: string;
   revenue: number;

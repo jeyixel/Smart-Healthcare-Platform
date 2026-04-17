@@ -73,7 +73,16 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllLogsPaginated(pageable));
     }
 
-    // Get logs by recipient
+    // Get logs for the currently authenticated patient (reads email from JWT)
+    @GetMapping("/logs/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<NotificationLog>> getMyLogs(
+            java.security.Principal principal) {
+        String email = principal.getName();
+        return ResponseEntity.ok(notificationService.getLogsByRecipient(email));
+    }
+
+    // Get logs by recipient (admin only)
     @GetMapping("/logs/{recipient:.+}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
     public ResponseEntity<List<NotificationLog>> getLogsByRecipient(
