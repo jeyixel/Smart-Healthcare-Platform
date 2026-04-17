@@ -5,6 +5,7 @@ import com.smarthealth.appointment.service.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,22 @@ public class AppointmentController {
             @RequestParam(required = false) String status
     ) {
         return appointmentService.getAll(patientId, doctorId, status);
+    }
+
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<AppointmentResponse>> getPatientAppointments(
+            @PathVariable UUID patientId,
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(appointmentService.getAll(patientId, null, status));
+    }
+
+    @GetMapping("/{id}/payment-status")
+    public ResponseEntity<java.util.Map<String, Object>> getPaymentStatus(@PathVariable UUID id) {
+        AppointmentResponse appointment = appointmentService.getById(id);
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("paymentStatus", appointment.paymentStatus());
+        response.put("paymentDeadline", appointment.paymentDeadline());
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status")

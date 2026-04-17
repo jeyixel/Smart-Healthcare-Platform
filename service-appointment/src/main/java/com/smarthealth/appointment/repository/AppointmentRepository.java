@@ -24,4 +24,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             List<AppointmentStatus> statuses
     );
 
+    List<Appointment> findByPaymentStatusAndPaymentDeadlineBefore(
+            com.smarthealth.appointment.entity.PaymentStatus paymentStatus,
+            java.time.LocalDateTime now
+    );
 }

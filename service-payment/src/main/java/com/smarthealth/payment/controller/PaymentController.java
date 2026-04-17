@@ -45,7 +45,7 @@ public class PaymentController {
 
     // Get payments for an appointment
     @GetMapping("/appointment/{appointmentId}")
-    public ResponseEntity<List<PaymentResponse>> getByAppointment(@PathVariable Long appointmentId) {
+    public ResponseEntity<List<PaymentResponse>> getByAppointment(@PathVariable java.util.UUID appointmentId) {
         return ResponseEntity.ok(paymentService.getPaymentsByAppointment(appointmentId));
     }
 

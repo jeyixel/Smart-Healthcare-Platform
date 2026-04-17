@@ -4,5 +4,12 @@ public enum PaymentMethod {
     CREDIT_CARD,
     DEBIT_CARD,
     NET_BANKING,
-    PAYHERE_WALLET
+    PAYHERE_WALLET,
+    CARD,
+    VISA,
+    MASTER,
+    AMEX,
+    PAYPAL,
+    BANK,
+    OTHER
 }

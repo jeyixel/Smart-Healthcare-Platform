@@ -9,6 +9,7 @@ import com.smarthealth.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,7 @@ public class PaymentService {
                 .amount(request.getAmount())
                 .currency("LKR")
                 .itemDescription(request.getItemDescription())
+                .paymentReference(request.getPaymentReference())
                 .status(PaymentStatus.PENDING)
                 .build();
 
@@ -87,6 +89,11 @@ public class PaymentService {
             return;
         }
 
+        if (payment.getStatus() == PaymentStatus.SUCCESS || payment.getStatus() == PaymentStatus.FAILED || payment.getStatus() == PaymentStatus.CANCELLED) {
+            log.info("Payment webhook ignored, duplicate or already processed for order: {}", notify.getOrder_id());
+            return;
+        }
+
         // PayHere status codes: 2=Success, 0=Pending, -1=Cancelled, -2=Failed, -3=Chargedback
         String statusCode = notify.getStatus_code();
 
@@ -114,6 +121,16 @@ public class PaymentService {
                 payment.setPayhereStatusCode(statusCode);
                 event.setStatus("SUCCESS");
                 eventProducer.sendPaymentSuccess(event);
+                
+                eventProducer.sendPaymentCompleted(
+                        new com.smarthealth.payment.dto.PaymentCompletedEventDto(
+                                payment.getAppointmentId().toString(),
+                                payment.getPatientId(),
+                                payment.getAmount(),
+                                "SUCCESS",
+                                payment.getPaymentReference()
+                        )
+                );
                 log.info("Payment successful for order: {}", notify.getOrder_id());
             }
             case "-1" -> {
@@ -121,6 +138,16 @@ public class PaymentService {
                 payment.setPayhereStatusCode(statusCode);
                 event.setStatus("CANCELLED");
                 eventProducer.sendPaymentFailed(event);
+                
+                eventProducer.sendPaymentCompleted(
+                        new com.smarthealth.payment.dto.PaymentCompletedEventDto(
+                                payment.getAppointmentId().toString(),
+                                payment.getPatientId(),
+                                payment.getAmount(),
+                                "FAILED",
+                                payment.getPaymentReference()
+                        )
+                );
                 log.info("Payment cancelled for order: {}", notify.getOrder_id());
             }
             case "-2", "-3" -> {
@@ -129,6 +156,16 @@ public class PaymentService {
                 payment.setFailureReason(notify.getStatus_message());
                 event.setStatus("FAILED");
                 eventProducer.sendPaymentFailed(event);
+                
+                eventProducer.sendPaymentCompleted(
+                        new com.smarthealth.payment.dto.PaymentCompletedEventDto(
+                                payment.getAppointmentId().toString(),
+                                payment.getPatientId(),
+                                payment.getAmount(),
+                                "FAILED",
+                                payment.getPaymentReference()
+                        )
+                );
                 log.info("Payment failed for order: {}", notify.getOrder_id());
             }
             default -> log.warn("Unknown PayHere status code: {}", statusCode);
@@ -137,22 +174,26 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
+    @Transactional(readOnly = true)
     public PaymentResponse getPaymentByOrderId(String orderId) {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Payment not found: " + orderId));
         return mapToResponse(payment);
     }
 
+    @Transactional(readOnly = true)
     public List<PaymentResponse> getPaymentsByPatient(String patientId) {
         return paymentRepository.findByPatientId(patientId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PaymentResponse> getPaymentsByAppointment(Long appointmentId) {
         return paymentRepository.findByAppointmentId(appointmentId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findAll()
                 .stream().map(this::mapToResponse).collect(Collectors.toList());

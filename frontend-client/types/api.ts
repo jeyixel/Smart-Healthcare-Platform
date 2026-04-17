@@ -86,6 +86,8 @@ export interface AdminAppointment {
   id: string;
   patientId: string;
   doctorId: string;
+  patientName: string;
+  doctorName: string;
   appointmentDate: string;
   appointmentTime: string;
   consultationType: "VIRTUAL" | "PHYSICAL";
@@ -109,6 +111,17 @@ export interface SystemEvent {
   requestedBy: string;
   description: string;
   timestamp: string;
+}
+
+export interface MedicalHistory {
+  id: string;
+  patientId: string;
+  diagnosis?: string;
+  treatment?: string;
+  symptoms?: string;
+  date?: string;
+  notes?: string;
+  [key: string]: any;
 }
 
 export interface DailyRevenue {

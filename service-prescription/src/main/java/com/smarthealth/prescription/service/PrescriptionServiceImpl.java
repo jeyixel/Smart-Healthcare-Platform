@@ -1,25 +1,27 @@
 package com.smarthealth.prescription.service;
 
 import com.smarthealth.prescription.client.ServiceClient;
+import com.smarthealth.prescription.dto.*;
 import com.smarthealth.prescription.dto.external.AppointmentResponse;
 import com.smarthealth.prescription.dto.external.DoctorResponse;
-import com.smarthealth.prescription.exception.BusinessException;
-import com.smarthealth.prescription.exception.ResourceNotFoundException;
 import com.smarthealth.prescription.entity.Prescription;
 import com.smarthealth.prescription.entity.PrescriptionItem;
-import com.smarthealth.prescription.dto.*;
 import com.smarthealth.prescription.entity.PrescriptionStatus;
+import com.smarthealth.prescription.exception.BusinessException;
+import com.smarthealth.prescription.exception.ResourceNotFoundException;
 import com.smarthealth.prescription.mapper.PrescriptionMapper;
 import com.smarthealth.prescription.repository.PrescriptionRepository;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import static com.smarthealth.prescription.entity.AppointmentStatus.*;
+import static com.smarthealth.prescription.entity.AppointmentStatus.CANCELLED;
+import static com.smarthealth.prescription.entity.AppointmentStatus.PENDING;
 
 
 @Service
@@ -72,7 +74,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             throw new BusinessException("followUpDate is required when followUpRequired is true");
         }
 
-        Prescription prescription = Prescription.builder()
+         Prescription prescription = Prescription.builder()
                 .appointmentId(request.appointmentId())
                 .patientId(request.patientId())
                 .doctorId(request.doctorId())
@@ -92,8 +94,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         prescription.getItems().addAll(items);
 
-        prescription = prescriptionRepository.save(prescription);
-        eventPublisher.publishPrescriptionEvent("prescription-created", "PRESCRIPTION_CREATED", prescription);
+        Prescription saved = prescriptionRepository.save(prescription);
+        eventPublisher.publishPrescriptionEvent("prescription-created", "PRESCRIPTION_CREATED", saved);
 
         return PrescriptionMapper.toResponse(prescription);
     }
@@ -188,8 +190,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             throw new BusinessException("followUpDate is required when followUpRequired is true");
         }
 
-        prescription = prescriptionRepository.save(prescription);
-        eventPublisher.publishPrescriptionEvent("prescription-updated", "PRESCRIPTION_UPDATED", prescription);
+        Prescription saved = prescriptionRepository.save(prescription);
+        eventPublisher.publishPrescriptionEvent("prescription-updated", "PRESCRIPTION_UPDATED", saved);
 
         return PrescriptionMapper.toResponse(prescription);
     }
@@ -210,7 +212,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
         prescription = prescriptionRepository.save(prescription);
-        
+
         if (request.status() == PrescriptionStatus.ISSUED) {
             // Alternatively, fire an updated event when explicitly issued
             eventPublisher.publishPrescriptionEvent("prescription-updated", "PRESCRIPTION_ISSUED", prescription);

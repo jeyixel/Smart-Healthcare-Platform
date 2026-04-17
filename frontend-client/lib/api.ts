@@ -9,11 +9,6 @@ import {
   PatientEvent,
   RegisterInput,
   NotificationLog,
-  AdminAppointment,
-  DashboardSummary,
-  SystemEvent,
-  PaymentAnalysis,
-  DailyRevenue,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -245,11 +240,20 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
   return safeJson<SystemEvent[]>(response);
 }
 
-export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalysis> {
-  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/payment-analysis`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
+export async function fetchPatientMedicalHistory(
+  patientId: string,
+  token: string
+): Promise<MedicalHistory[]> {
+  const response = await fetch(
+    `${API_GATEWAY}/api/v1/patients/${patientId}/medical-histories`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
 
-  return safeJson<PaymentAnalysis>(response);
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalHistory>(payload);
 }

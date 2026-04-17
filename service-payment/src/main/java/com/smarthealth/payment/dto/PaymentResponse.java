@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
     private Long id;
     private String orderId;
-    private Long appointmentId;
+    private java.util.UUID appointmentId;
     private String patientId;
     private BigDecimal amount;
     private String currency;
