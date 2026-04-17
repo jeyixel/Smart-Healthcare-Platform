@@ -26,7 +26,7 @@ export default function AdminLayout({
 
   if (!isAuthorized) {
     return (
-      <div style={{
+      <div suppressHydrationWarning style={{
         minHeight: "100vh",
         background: "linear-gradient(135deg,#0a0f1e 0%,#0d1b3e 50%,#0a1628 100%)",
         display: "flex",
@@ -35,7 +35,7 @@ export default function AdminLayout({
         flexDirection: "column",
         gap: "20px",
       }}>
-        <div style={{
+        <div suppressHydrationWarning style={{
           width: "60px", height: "60px", borderRadius: "16px",
           background: "linear-gradient(135deg,#06b6d4,#0891b2)",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -46,7 +46,7 @@ export default function AdminLayout({
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/>
           </svg>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div suppressHydrationWarning style={{ textAlign: "center" }}>
           <p style={{ margin: 0, color: "#e2e8f0", fontWeight: 700, fontSize: "16px" }}>SmartHealth Admin</p>
           <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "13px" }}>Security clearance required…</p>
         </div>
@@ -58,7 +58,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0f4f8" }}>
+    <div suppressHydrationWarning style={{ minHeight: "100vh", background: "#f0f4f8" }}>
       <AdminSidebar />
       <AdminTopBar />
       <main style={{

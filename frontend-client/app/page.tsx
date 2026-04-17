@@ -55,7 +55,7 @@ export default function Home() {
       return;
     }
     if (savedRole === "PATIENT") {
-      window.location.href = "/patient";
+      window.location.href = "/patient-landing";
       return;
     }
     if (savedRole === "ADMIN") {

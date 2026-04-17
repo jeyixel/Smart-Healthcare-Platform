@@ -19,6 +19,7 @@ import {
   CreateAppointmentRequest,
   AppointmentResponse,
   PrescriptionResponse,
+  Doctor,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -290,10 +291,13 @@ export async function fetchDoctorByUserId(userId: number, token: string): Promis
   return safeJson<DoctorProfile>(response);
 }
 
-export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
+export async function updatePatientProfile(token: string, id: string, data: Partial<Patient>): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(data),
   });
 

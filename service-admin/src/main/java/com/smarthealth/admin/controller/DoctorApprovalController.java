@@ -25,6 +25,15 @@ public class DoctorApprovalController {
 
     private final UserRepository userRepository;
 
+    @GetMapping
+    public ResponseEntity<List<DoctorApprovalResponse>> getAllDoctors() {
+        List<DoctorApprovalResponse> doctors = userRepository.findByRole(Role.DOCTOR)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+        return ResponseEntity.ok(doctors);
+    }
+
     @GetMapping("/pending")
     public ResponseEntity<List<DoctorApprovalResponse>> getPendingDoctors() {
         List<DoctorApprovalResponse> pending = userRepository.findByRoleAndApproved(Role.DOCTOR, false)

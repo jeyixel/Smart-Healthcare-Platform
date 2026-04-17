@@ -11,6 +11,23 @@ export default function DoctorsManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const formatConsultationFee = (value: unknown): string => {
+    if (value === null || value === undefined) {
+      return "0";
+    }
+
+    const numericValue =
+      typeof value === "number"
+        ? value
+        : Number.parseFloat(String(value));
+
+    if (!Number.isFinite(numericValue)) {
+      return "0";
+    }
+
+    return numericValue.toLocaleString("en-US");
+  };
+
   const loadDoctors = useCallback(async () => {
     try {
       setLoading(true);
@@ -87,10 +104,10 @@ export default function DoctorsManagementPage() {
                   background: "linear-gradient(135deg, #ef4444, #b91c1c)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "20px", fontWeight: 800
-                }}>{doc.firstName.charAt(0)}</div>
+                }}>{(doc.firstName?.charAt(0) ?? "?")}</div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Dr. {doc.firstName} {doc.lastName}</h3>
-                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>{doc.specialization}</p>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Dr. {doc.firstName ?? "Unknown"} {doc.lastName ?? "Doctor"}</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>{doc.specialization ?? "General"}</p>
                 </div>
               </div>
               <div style={{ padding: "12px", background: "#fef2f2", borderRadius: "12px", border: "1px solid #fee2e2" }}>
@@ -154,18 +171,18 @@ export default function DoctorsManagementPage() {
                         background: "linear-gradient(135deg, #06b6d4, #0284c7)",
                         color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "14px", fontWeight: 700
-                      }}>{doc.firstName.charAt(0)}</div>
+                      }}>{(doc.firstName?.charAt(0) ?? "?")}</div>
                       <div>
-                        <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Dr. {doc.firstName} {doc.lastName}</p>
-                        <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>{doc.email}</p>
+                        <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Dr. {doc.firstName ?? "Unknown"} {doc.lastName ?? "Doctor"}</p>
+                        <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>{doc.email ?? "N/A"}</p>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: "18px 24px" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#475569" }}>{doc.specialization}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#475569" }}>{doc.specialization ?? "General"}</span>
                   </td>
                   <td style={{ padding: "18px 24px" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{doc.consultationFee.toLocaleString()}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{formatConsultationFee(doc.consultationFee)}</span>
                   </td>
                   <td style={{ padding: "18px 24px" }}>
                     <span style={{
