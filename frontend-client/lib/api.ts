@@ -20,7 +20,8 @@ import {
 // - /api/v1/appointments/** → Appointment Service (8083)
 // - /api/v1/prescriptions/** → Prescription Service (8088)
 // - /api/notifications/** → Notification Service (8086)
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://127.0.0.1:8080";
+const ADMIN_API = API_GATEWAY;
 
 export interface DoctorProfile {
   id: string;
@@ -75,23 +76,40 @@ function normalizeListResponse<T>(payload: unknown): T[] {
 }
 
 export async function registerAdmin(input: RegisterInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  return safeJson<AuthResponse>(response);
+  try {
+    const response = await fetch(`${API_GATEWAY}/api/v1/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      mode: "cors",
+    });
+    return safeJson<AuthResponse>(response);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("fetch")) {
+      throw new Error("Failed to connect to Auth Service. Please ensure the API Gateway and Auth Service are running.");
+    }
+    throw error;
+  }
 }
 
 export async function loginAdmin(input: LoginInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  return safeJson<AuthResponse>(response);
+  try {
+    const response = await fetch(`${API_GATEWAY}/api/v1/auth/login`, {
+      method: "POST",
+      mode: "cors",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(input),
+    });
+    return safeJson<AuthResponse>(response);
+  } catch (error) {
+    if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("Failed to fetch"))) {
+      throw new Error("Network error: Unable to reach the Gateway at " + API_GATEWAY + ". Please ensure the Gateway is running and CORS is allowed. If you're on a VPN or Proxy, please disable it.");
+    }
+    throw error;
+  }
 }
 
 export async function requestPasswordOtp(input: ForgotPasswordOtpInput): Promise<{ message: string }> {
