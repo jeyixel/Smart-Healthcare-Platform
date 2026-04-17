@@ -42,7 +42,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or (hasRole('PATIENT') and @prescriptionServiceImpl.isPatientOwner(#patientId, authentication.principal.userId))")
     public List<PrescriptionResponse> getByPatientId(@PathVariable UUID patientId) {
         return prescriptionService.getByPatientId(patientId);
     }

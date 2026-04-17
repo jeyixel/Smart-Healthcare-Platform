@@ -265,6 +265,19 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
     }
 
+    @Override
+    public boolean isPatientOwner(UUID patientId, Long userId) {
+        try {
+            var patient = serviceClient.getPatient(patientId);
+            if (patient == null || patient.authUserId() == null) {
+                return false;
+            }
+            return patient.authUserId().equals(String.valueOf(userId));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private void ensureDraftOnly(Prescription prescription) {
         if (prescription.getStatus() != PrescriptionStatus.DRAFT) {
             throw new BusinessException("Only DRAFT prescriptions can be updated ");
