@@ -37,6 +37,12 @@ public class DoctorController {
         return doctorService.getDoctorByUserId(userId);
     }
 
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public DoctorResponse getDoctorByEmail(@PathVariable String email) {
+        return doctorService.getDoctorByEmail(email);
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("(hasRole('DOCTOR'))")
     public DoctorResponse updateDoctor(@PathVariable UUID id,

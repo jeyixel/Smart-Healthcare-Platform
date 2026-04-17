@@ -68,6 +68,14 @@ public class DoctorServiceImpl implements DoctorService{
 
     @Override
     @Transactional(readOnly = true)
+    public DoctorResponse getDoctorByEmail(String email) {
+        Doctor doctor = doctorRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with email: " + email));
+        return DoctorMapper.toResponse(doctor);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public DoctorResponse getDoctorByUserId(Long userId) {
         Doctor doctor = doctorRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor profile not found for user: " + userId));
