@@ -217,3 +217,16 @@ export interface PrescriptionResponse {
   updatedAt: string;
   digitalSignature: string | null;
 }
+export interface Doctor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  licenseNumber: string;
+  specialization: string;
+  consultationFee: number;
+  approved: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

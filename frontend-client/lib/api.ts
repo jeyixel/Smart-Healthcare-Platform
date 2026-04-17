@@ -199,6 +199,34 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
+export async function updateDoctorApproval(
+  token: string, 
+  doctorId: string, 
+  approved: boolean, 
+  adminUserHeader: string
+): Promise<void> {
+  const url = new URL(`${API_GATEWAY}/api/v1/admin/doctors/${doctorId}/approval`);
+  url.searchParams.set("approved", String(approved));
+
+  await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "X-Admin-User": adminUserHeader,
+    },
+  });
+}
+
+export async function fetchDoctors(token: string): Promise<Doctor[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/admin/doctors`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<Doctor>(payload);
+}
+
 export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -350,5 +378,18 @@ export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalys
   });
 
   return safeJson<PaymentAnalysis>(response);
+}
+
+export async function fetchServiceStatus(token: string) {
+  // In a real environment, this might hit a discovery service or actuator
+  // Mocking the cluster health for the dashboard UI
+  return [
+    { serviceName: "AUTH-SERVICE", status: "UP" },
+    { serviceName: "PATIENT-SERVICE", status: "UP" },
+    { serviceName: "DOCTOR-SERVICE", status: "UP" },
+    { serviceName: "APPOINTMENT-SERVICE", status: "UP" },
+    { serviceName: "ADMIN-SERVICE", status: "UP" },
+    { serviceName: "NOTIFICATION-SERVICE", status: "UP" },
+  ];
 }
 

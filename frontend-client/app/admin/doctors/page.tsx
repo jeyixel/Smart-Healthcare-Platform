@@ -1,127 +1,197 @@
 "use client";
 
-import { approveDoctor, fetchPendingDoctors } from "@/lib/api";
-import { DoctorApprovalItem } from "@/types/api";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { fetchDoctors, updateDoctorApproval } from "@/lib/api";
+import { Doctor } from "@/types/api";
 
 export default function DoctorsManagementPage() {
   const router = useRouter();
-  const [pendingDoctors, setPendingDoctors] = useState<DoctorApprovalItem[]>([]);
-  const [loadingPending, setLoadingPending] = useState(false);
-  const [pendingNotice, setPendingNotice] = useState("");
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDoctors = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("smart_admin_token");
+      if (!token) {
+        router.push("/login?role=ADMIN");
+        return;
+      }
+
+      const data = await fetchDoctors(token);
+      setDoctors(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
-    const token = localStorage.getItem("smart_admin_token");
-    if (token) loadPendingDoctors(token);
-  }, []);
+    loadDoctors();
+  }, [loadDoctors]);
 
-  const loadPendingDoctors = async (token: string) => {
-    setLoadingPending(true);
-    setPendingNotice("");
+  const handleApproval = async (id: string, isApproved: boolean) => {
     try {
-      const items = await fetchPendingDoctors(token);
-      setPendingDoctors(items);
-    } catch (error) {
-      setPendingNotice(error instanceof Error ? error.message : "Failed to load pending doctors");
-    } finally {
-      setLoadingPending(false);
+      const token = localStorage.getItem("smart_admin_token");
+      const user = localStorage.getItem("smart_admin_user");
+      const adminData = user ? JSON.parse(user) : null;
+      const adminEmail = adminData?.email || "system-admin";
+
+      if (!token) return;
+
+      await updateDoctorApproval(token, id, isApproved, adminEmail);
+      
+      // Update local state
+      setDoctors(prev => prev.map(doc => 
+        doc.id === id ? { ...doc, approved: isApproved } : doc
+      ));
+    } catch (err: any) {
+      alert("Error updating approval status: " + err.message);
     }
   };
 
-  const onApproveDoctor = async (doctorId: number) => {
-    const token = localStorage.getItem("smart_admin_token");
-    if (!token) return;
-
-    setPendingNotice("");
-    try {
-      await approveDoctor(token, doctorId);
-      setPendingNotice("Doctor approved successfully");
-      await loadPendingDoctors(token);
-    } catch (error) {
-      setPendingNotice(error instanceof Error ? error.message : "Failed to approve doctor");
-    }
-  };
+  const pendingDoctors = doctors.filter(doc => !doc.approved);
+  const verifiedDoctors = doctors.filter(doc => doc.approved);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Health Professionals</h1>
-        <p className="text-slate-500">Manage and approve doctor credentials and system access.</p>
-      </header>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">Pending Approvals</h2>
-          <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
-            {pendingDoctors.length} Requests
+    <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      
+      {/* === Pending Verification Header === */}
+      <section>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+          <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#0f172a" }}>Pending Credentials</h2>
+          <span style={{ background: "#f59e0b", color: "#fff", fontSize: "11px", fontWeight: 700, padding: "2px 10px", borderRadius: "999px" }}>
+            {pendingDoctors.length} Waiting
           </span>
         </div>
 
-        {loadingPending && <p className="animate-pulse text-sm text-slate-500">Updating registry...</p>}
-        {pendingNotice && (
-          <div className="mb-4 rounded-lg bg-emerald-50 p-4 text-sm font-medium text-emerald-800 border border-emerald-100">
-            {pendingNotice}
-          </div>
-        )}
-
-        {!loadingPending && pendingDoctors.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 text-4xl">✅</div>
-            <p className="font-medium text-slate-900">All caught up!</p>
-            <p className="text-sm text-slate-500">There are no pending doctor registrations at this time.</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {pendingDoctors.map((doctor) => (
-            <div
-              key={doctor.id}
-              className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-md"
-            >
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                  {doctor.firstName.charAt(0)}
-                </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+          {pendingDoctors.map((doc) => (
+            <div key={doc.id} style={{
+              background: "#fff",
+              border: "1px solid #fee2e2",
+              borderRadius: "18px",
+              padding: "24px",
+              boxShadow: "0 4px 12px rgba(239,68,68,0.05)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px"
+            }}>
+              <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                <div style={{
+                  width: "50px", height: "50px", borderRadius: "14px",
+                  background: "linear-gradient(135deg, #ef4444, #b91c1c)",
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "20px", fontWeight: 800
+                }}>{doc.firstName.charAt(0)}</div>
                 <div>
-                  <p className="font-bold text-slate-900 group-hover:text-indigo-900 transition-colors">
-                    {doctor.firstName} {doctor.lastName}
-                  </p>
-                  <p className="text-sm text-slate-500">{doctor.email}</p>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Dr. {doc.firstName} {doc.lastName}</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>{doc.specialization}</p>
                 </div>
               </div>
-              <button
-                onClick={() => void onApproveDoctor(doctor.id)}
-                className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 shadow-sm hover:shadow-indigo-200"
-              >
-                Approve Access
-              </button>
+              <div style={{ padding: "12px", background: "#fef2f2", borderRadius: "12px", border: "1px solid #fee2e2" }}>
+                <p style={{ margin: 0, fontSize: "11px", color: "#991b1b", fontWeight: 600 }}>License: {doc.licenseNumber}</p>
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "#64748b" }}>{doc.email}</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
+                <button 
+                  onClick={() => handleApproval(doc.id, true)}
+                  style={{
+                    flex: 1, padding: "10px", borderRadius: "10px",
+                    background: "#10b981", color: "#fff", border: "none",
+                    fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(16,185,129,0.2)"
+                  }}
+                >Verify License</button>
+                <button style={{
+                  padding: "10px 16px", borderRadius: "10px",
+                  background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0",
+                  fontSize: "12px", fontWeight: 600, cursor: "pointer"
+                }}>Profile</button>
+              </div>
             </div>
           ))}
+          {pendingDoctors.length === 0 && (
+            <div style={{ gridColumn: "1/-1", padding: "40px", textAlign: "center", background: "#f8fafc", borderRadius: "20px", border: "1px dashed #e2e8f0" }}>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px", fontWeight: 600 }}>All providers have been successfully verified.</p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Placeholder for All Doctors List */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h2 className="mb-4 text-xl font-bold text-slate-900">Verified Doctors</h2>
-        <div className="overflow-hidden rounded-xl border border-slate-100">
-           <table className="w-full text-left text-sm">
-             <thead className="bg-slate-50 font-bold text-slate-600">
-               <tr>
-                 <th className="px-6 py-4">Name</th>
-                 <th className="px-6 py-4">Specialty</th>
-                 <th className="px-6 py-4">Status</th>
-                 <th className="px-6 py-4">Join Date</th>
-               </tr>
-             </thead>
-             <tbody className="divide-y divide-slate-100">
-               <tr className="text-slate-400 italic">
-                 <td colSpan={4} className="px-6 py-8 text-center">List view integration pending backend doctor registry sync.</td>
-               </tr>
-             </tbody>
-           </table>
+      {/* === Verified Registry Header === */}
+      <section style={{ background: "#fff", borderRadius: "24px", border: "1px solid #e8f0fe", boxShadow: "0 4px 24px rgba(0,0,0,0.03)", overflow: "hidden" }}>
+        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#0f172a" }}>Verified Provider Registry</h2>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <input placeholder="Filter by name..." style={{ padding: "8px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "12px", outline: "none", width: "220px" }} />
+            <button style={{ padding: "8px 16px", borderRadius: "10px", background: "#06b6d4", color: "#fff", border: "none", fontSize: "12px", fontWeight: 600 }}>Export</button>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", textAlign: "left" }}>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Doctor Profile</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Specialization</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Fee (LKR)</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody style={{ divideY: "1px solid #f1f5f9" }}>
+              {verifiedDoctors.map((doc) => (
+                <tr key={doc.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "#fcfdfe"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <td style={{ padding: "18px 24px" }}>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div style={{
+                        width: "36px", height: "36px", borderRadius: "50%",
+                        background: "linear-gradient(135deg, #06b6d4, #0284c7)",
+                        color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "14px", fontWeight: 700
+                      }}>{doc.firstName.charAt(0)}</div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Dr. {doc.firstName} {doc.lastName}</p>
+                        <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>{doc.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: "18px 24px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#475569" }}>{doc.specialization}</span>
+                  </td>
+                  <td style={{ padding: "18px 24px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{doc.consultationFee.toLocaleString()}</span>
+                  </td>
+                  <td style={{ padding: "18px 24px" }}>
+                    <span style={{
+                      padding: "4px 10px", borderRadius: "999px", fontSize: "10px", fontWeight: 700,
+                      background: doc.active ? "rgba(16,185,129,0.1)" : "rgba(241,245,249,1)",
+                      color: doc.active ? "#10b981" : "#64748b"
+                    }}>
+                      {doc.active ? "● ONLINE" : "OFFLINE"}
+                    </span>
+                  </td>
+                  <td style={{ padding: "18px 24px", textAlign: "right" }}>
+                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                      <button 
+                        onClick={() => handleApproval(doc.id, false)}
+                        style={{ padding: "6px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}
+                      >Revoke</button>
+                      <button style={{ padding: "6px 12px", borderRadius: "8px", background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", fontSize: "11px", fontWeight: 700 }}>Profile</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
+
     </div>
   );
 }
