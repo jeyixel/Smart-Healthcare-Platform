@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchDoctorByUserId } from "@/lib/api";
+import type { TelemedicineSessionResponse } from "@/app/types/telemedicine";
 
 const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
@@ -25,20 +26,9 @@ function decodeUserId(token: string): number | null {
   }
 }
 
-interface TelemedicineSession {
-  id: string;
-  appointmentId: string;
-  patientId: string;
-  doctorId: string;
-  roomName: string;
-  meetingUrl: string;
-  status: string;
-  createdAt: string;
-}
-
 export function DoctorTelemedicineContent() {
   const router = useRouter();
-  const [sessions, setSessions] = useState<TelemedicineSession[]>([]);
+  const [sessions, setSessions] = useState<TelemedicineSessionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +72,7 @@ export function DoctorTelemedicineContent() {
         throw new Error("Failed to fetch your telemedicine sessions");
       }
 
-      const data: TelemedicineSession[] = await res.json();
+      const data: TelemedicineSessionResponse[] = await res.json();
       setSessions(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
@@ -154,7 +144,7 @@ export function DoctorTelemedicineContent() {
         ) : (
           <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
             {sessions.map((session, index) => (
-              <li key={session.id} style={{
+              <li key={session.sessionId} style={{
                 padding: "20px 24px",
                 borderBottom: index < sessions.length - 1 ? "1px solid #f1f5f9" : "none",
                 display: "flex",

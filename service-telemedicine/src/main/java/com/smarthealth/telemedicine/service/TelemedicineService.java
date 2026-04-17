@@ -80,9 +80,21 @@ public class TelemedicineService {
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("name", userName != null ? userName : "Guest");
         userMap.put("email", userEmail != null ? userEmail : "");
+
+        // Enable a baseline set of capabilities for all authenticated participants.
+        Map<String, Object> featuresMap = new HashMap<>();
+        featuresMap.put("camera", "true");
+        featuresMap.put("microphone", "true");
+        featuresMap.put("chat", "true");
+        featuresMap.put("recording", "true");
+        featuresMap.put("livestreaming", "true");
+        featuresMap.put("transcription", "true");
+        featuresMap.put("outbound-call", "true");
+        featuresMap.put("sip-outbound-call", "true");
         
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("user", userMap);
+        contextMap.put("features", featuresMap);
 
         // Subtract 2 minutes from current time to prevent NBF (Not Before) clock drift issues
         long currentTime = System.currentTimeMillis();
@@ -92,10 +104,11 @@ public class TelemedicineService {
         return Jwts.builder()
                 .setHeaderParam("kid", jaasApiKeyId)
                 .setHeaderParam("typ", "JWT")
-                .setIssuer(jaasAppId)
+                .setIssuer("chat")
                 .setSubject(jaasAppId)
                 .setAudience("jitsi")
                 .claim("room", room != null && !room.isBlank() ? room : "*")
+                .claim("features", featuresMap)
                 .claim("context", contextMap)
                 .setIssuedAt(issueTime)
                 .setNotBefore(issueTime)
