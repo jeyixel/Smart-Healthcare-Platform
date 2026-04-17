@@ -58,15 +58,17 @@ ${formattedHistory}`;
 
     let responseText = "";
     try {
+      console.log("[AI_SUGGESTIONS] Prompting Gemini model...");
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
       });
+      console.log("[AI_SUGGESTIONS] Gemini responded successfully.");
       responseText = response?.text || "Could not generate suggestions at this time.";
     } catch (apiError: any) {
       console.error("[AI_SUGGESTIONS_ERROR]: Failed during Gemini API call.", apiError);
       return NextResponse.json(
-        { error: "Failed to generate AI suggestions due to an upstream API error." },
+        { error: `Failed to generate AI suggestions due to an upstream API error. Details: ${apiError.message || "Unknown error"}` },
         { status: 502 }
       );
     }
