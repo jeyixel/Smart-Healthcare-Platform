@@ -19,13 +19,13 @@ public class CorsConfig implements WebMvcConfigurer {
 				.toArray(String[]::new);
 	}
 
-	// This class registers CORS for all gateway routes
-
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**")
-				.allowedOrigins(this.allowedOrigins)
+				.allowedOrigins(allowedOrigins)
 				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-				.allowedHeaders("*");
+				.allowedHeaders("*")
+				.allowCredentials(true)
+				.maxAge(3600L);
 	}
 }

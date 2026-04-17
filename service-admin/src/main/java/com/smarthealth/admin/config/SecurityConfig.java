@@ -33,7 +33,6 @@ public class SecurityConfig {
                                                    JwtAuthenticationFilter jwtAuthFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.disable()) // Explicitly disable CORS
                 .authorizeHttpRequests(req ->
                     req.requestMatchers(
                             "/api/v1/auth/register",
