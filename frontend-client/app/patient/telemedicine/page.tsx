@@ -41,8 +41,8 @@ export default function PatientTelemedicinePage() {
       setLoading(true);
       setError(null);
       // 1. Get the patient profile to retrieve the patientId
-      const patient = await fetchPatientByEmail(email);
-      
+      const patient = await fetchPatientByEmail(email, token);
+
       // 2. Fetch the telemedicine sessions from the gateway
       const res = await fetch(`http://localhost:8080/api/v1/telemedicine/sessions/patient/${patient.id}`, {
         headers: {

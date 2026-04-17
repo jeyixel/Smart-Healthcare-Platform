@@ -26,13 +26,13 @@ export default function PatientProfilePage() {
       return;
     }
 
-    loadProfile(email);
+    loadProfile(email, token);
   }, [router]);
 
-  async function loadProfile(email: string) {
+  async function loadProfile(email: string, token: string) {
     try {
       setLoading(true);
-      const data = await fetchPatientByEmail(email);
+      const data = await fetchPatientByEmail(email, token);
       setPatient(data);
       setFormData(data);
     } catch (err) {

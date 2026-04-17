@@ -42,7 +42,8 @@ public class TelemedicineSessionListener {
     // unavailable.
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOnlineAppointmentCreated(OnlineAppointmentCreatedEvent event) {
-        log.debug("Processing online appointment event for appointmentId: {}", event.appointmentId());
+        log.info("Received ONLINE appointment event. appointmentId={}, patientId={}, doctorId={}",
+                event.appointmentId(), event.patientId(), event.doctorId());
 
         // Safe exit if service URL is not configured
         if (telemedicineServiceUrl == null || telemedicineServiceUrl.trim().isEmpty()) {
@@ -57,7 +58,7 @@ public class TelemedicineSessionListener {
             requestData.put("patientId", event.patientId().toString());
             requestData.put("doctorId", event.doctorId().toString());
 
-            log.debug("Sending telemedicine session creation request to: {} with appointmentId: {}", 
+            log.info("Sending telemedicine session creation request to {} for appointment {}",
                     telemedicineServiceUrl, event.appointmentId());
 
             // Perform the POST. We intentionally ignore the response body and only log success / failure.

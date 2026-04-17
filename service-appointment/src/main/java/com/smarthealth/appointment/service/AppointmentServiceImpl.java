@@ -4,12 +4,15 @@ import com.smarthealth.appointment.dto.*;
 import com.smarthealth.appointment.dto.external.DoctorResponse;
 import com.smarthealth.appointment.dto.external.PatientResponse;
 import com.smarthealth.appointment.entity.Appointment;
+import com.smarthealth.appointment.entity.ConsultationType;
 import com.smarthealth.appointment.entity.AppointmentStatus;
+import com.smarthealth.appointment.event.OnlineAppointmentCreatedEvent;
 import com.smarthealth.appointment.exception.BusinessException;
 import com.smarthealth.appointment.exception.ResourceNotFoundException;
 import com.smarthealth.appointment.mapper.AppointmentMapper;
 import com.smarthealth.appointment.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final ServiceClient serviceClient;
     private final AppointmentEventPublisher appointmentEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public AppointmentResponse create(CreateAppointmentRequest request) {
@@ -86,6 +90,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointment = appointmentRepository.save(appointment);
         appointmentEventPublisher.publishAppointmentEvent("appointment-created", "APPOINTMENT_CREATED", appointment);
+
+        if (appointment.getConsultationType() == ConsultationType.ONLINE) {
+            applicationEventPublisher.publishEvent(new OnlineAppointmentCreatedEvent(
+                    appointment.getId(),
+                    appointment.getPatientId(),
+                    appointment.getDoctorId()
+            ));
+        }
         
         return AppointmentMapper.toResponse(appointment);
     }
