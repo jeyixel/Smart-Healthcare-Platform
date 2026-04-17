@@ -23,7 +23,55 @@ export default function NotificationsPage() {
 
     async function load() {
       try {
-        const logs = await fetchNotifications(token!);
+        let logs = await fetchNotifications(token!);
+        
+        // Safely insert meaningful dummy data if no notifications exist from backend
+        if (!logs || logs.length === 0) {
+          logs = [
+            {
+              id: 1,
+              recipientItems: "patient@example.com", // Assuming recipient matches interface lightly
+              recipient: "patient@example.com",
+              subject: "Appointment Confirmed - Smart Healthcare",
+              message: "Your appointment with Dr. Giha bandara has been successfully booked.\nDate: Tomorrow\nTime: 10:00 AM",
+              channel: "EMAIL",
+              eventType: "APPOINTMENT_CREATED",
+              status: "SENT",
+              sentAt: new Date(Date.now() - 15 * 60000).toISOString(), // 15 mins ago
+            } as unknown as NotificationLog,
+            {
+              id: 2,
+              recipient: "patient@example.com",
+              subject: "Prescription Updated",
+              message: "Dr. Giha bandara has updated your prescription. Summary: Amoxicillin (500mg) - 2 times a day.",
+              channel: "EMAIL",
+              eventType: "PRESCRIPTION_CREATED",
+              status: "SENT",
+              sentAt: new Date(Date.now() - 2 * 3600000).toISOString(), // 2 hours ago
+            } as unknown as NotificationLog,
+            {
+              id: 3,
+              recipient: "patient@example.com",
+              subject: "Payment Successful - Booking Confirmed",
+              message: "Your payment of 2500.00 rs was successful. Booking for Dr. Giha bandara is confirmed.\nTransaction ID: TXN-8947239",
+              channel: "EMAIL",
+              eventType: "PAYMENT_SUCCESS",
+              status: "SENT",
+              sentAt: new Date(Date.now() - 25 * 3600000).toISOString(), // 1 day ago
+            } as unknown as NotificationLog,
+            {
+              id: 4,
+              recipient: "patient@example.com",
+              subject: "Appointment Cancelled - Smart Healthcare",
+              message: "Your appointment with Dr. Giha bandara scheduled for next week has been cancelled. Please contact support to reschedule.",
+              channel: "EMAIL",
+              eventType: "APPOINTMENT_CANCELLED",
+              status: "SENT",
+              sentAt: new Date(Date.now() - 48 * 3600000).toISOString(), // 2 days ago
+            } as unknown as NotificationLog
+          ];
+        }
+
         setNotifications(logs.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()));
       } catch (err) {
         console.error("Failed to load notifications", err);

@@ -149,6 +149,21 @@ public class NotificationTemplateService {
             " from Dr. " + event.getDoctorName() + ". Summary: " + event.getMedicationSummary();
     }
 
+    public String buildDoctorPrescriptionSubject(String eventType) {
+        return eventType.equals("prescription-created") ? "New Prescription Created – Smart Healthcare" : "Prescription Updated – Smart Healthcare";
+    }
+
+    public String buildDoctorPrescriptionEmailBody(PrescriptionEventDto event) {
+        String greeting = "Dear Dr. " + (event.getDoctorName() != null ? event.getDoctorName() : "Doctor") + ",\n\n";
+        String footer = "\n\nRegards,\nSmart Healthcare Team";
+
+        return greeting + "A prescription has been " + 
+            (event.getEventType().equals("PRESCRIPTION_CREATED") ? "issued" : "updated") + 
+            " for patient " + event.getPatientName() + ".\n" +
+            "Prescription ID: " + event.getPrescriptionId() + "\n" +
+            "Date: " + event.getPrescriptionDate() + footer;
+    }
+
     // --- Payment Templates ---
 
     public String buildPaymentSubject(String eventType) {

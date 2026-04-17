@@ -231,17 +231,9 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
-<<<<<<< HEAD
 export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
     headers: { Authorization: `Bearer ${token}` },
-=======
-export async function fetchPatientByEmail(email: string, token: string): Promise<Patient> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
->>>>>>> 4e4e1ff6a6f9af28afe689525bc9cc5f64ff8059
     cache: "no-store",
   });
 

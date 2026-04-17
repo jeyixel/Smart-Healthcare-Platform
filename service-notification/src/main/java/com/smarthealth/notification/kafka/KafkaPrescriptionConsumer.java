@@ -44,13 +44,12 @@ public class KafkaPrescriptionConsumer {
                 smsService.sendSms(smsReq, topic);
             }
 
-            // Notify Doctor (Optional confirmation)
+            // Notify Doctor
             if (isValidEmail(event.getDoctorEmail())) {
                 EmailRequest docEmail = new EmailRequest();
                 docEmail.setTo(event.getDoctorEmail());
-                docEmail.setSubject("Prescription Successfully Issued");
-                docEmail.setBody(String.format("Dear Dr. %s,\nYou have successfully issued a prescription for appointment %s.\nSummary: %s",
-                        event.getDoctorName(), event.getAppointmentId(), event.getMedicationSummary()));
+                docEmail.setSubject(templateService.buildDoctorPrescriptionSubject(topic));
+                docEmail.setBody(templateService.buildDoctorPrescriptionEmailBody(event));
                 emailService.sendEmail(docEmail, topic);
             }
         } catch (Exception e) {
@@ -85,9 +84,8 @@ public class KafkaPrescriptionConsumer {
             if (isValidEmail(event.getDoctorEmail())) {
                 EmailRequest docEmail = new EmailRequest();
                 docEmail.setTo(event.getDoctorEmail());
-                docEmail.setSubject("Prescription Successfully Updated");
-                docEmail.setBody(String.format("Dear Dr. %s,\nYou have successfully updated the prescription for appointment %s.\nSummary: %s",
-                        event.getDoctorName(), event.getAppointmentId(), event.getMedicationSummary()));
+                docEmail.setSubject(templateService.buildDoctorPrescriptionSubject(topic));
+                docEmail.setBody(templateService.buildDoctorPrescriptionEmailBody(event));
                 emailService.sendEmail(docEmail, topic);
             }
         } catch (Exception e) {
