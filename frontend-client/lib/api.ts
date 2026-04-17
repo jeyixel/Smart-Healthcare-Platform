@@ -14,9 +14,11 @@ import {
   SystemEvent,
   PaymentAnalysis,
   DailyRevenue,
+  MedicalHistory,
   DoctorSearchResponse,
   CreateAppointmentRequest,
   AppointmentResponse,
+  PrescriptionResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -56,13 +58,36 @@ function normalizeListResponse<T>(payload: unknown): T[] {
     return payload;
   }
 
-  if (
-    payload !== null &&
-    typeof payload === "object" &&
-    "value" in payload &&
-    Array.isArray((payload as { value: unknown }).value)
-  ) {
-    return (payload as { value: T[] }).value;
+  if (payload !== null && typeof payload === "object") {
+    const wrapped = payload as Record<string, unknown>;
+    const candidates = ["value", "data", "content", "items", "results"];
+
+    for (const key of candidates) {
+      if (Array.isArray(wrapped[key])) {
+        return wrapped[key] as T[];
+      }
+    }
+  }
+
+  return [];
+}
+
+function extractFirstObjectArray<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
+
+  if (payload !== null && typeof payload === "object") {
+    const values = Object.values(payload as Record<string, unknown>);
+    for (const value of values) {
+      if (Array.isArray(value)) {
+        return value as T[];
+      }
+      const nested = extractFirstObjectArray<T>(value);
+      if (nested.length > 0) {
+        return nested;
+      }
+    }
   }
 
   return [];
@@ -204,8 +229,8 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
   return safeJson<CurrentUserProfile>(response);
 }
 
-export async function fetchNotifications(token: string, recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/notifications/logs/${recipient}`, {
+export async function fetchNotifications(token: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/notifications/logs/my`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -291,7 +316,8 @@ export async function fetchActiveDoctors(token: string): Promise<DoctorSearchRes
   });
 
   const payload = await safeJson<unknown>(response);
-  return normalizeListResponse<DoctorSearchResponse>(payload);
+  const parsedDoctors = normalizeListResponse<DoctorSearchResponse>(payload);
+  return parsedDoctors.length > 0 ? parsedDoctors : extractFirstObjectArray<DoctorSearchResponse>(payload);
 }
 
 export async function createAppointment(token: string, data: CreateAppointmentRequest): Promise<AppointmentResponse> {
@@ -306,3 +332,23 @@ export async function createAppointment(token: string, data: CreateAppointmentRe
 
   return safeJson<AppointmentResponse>(response);
 }
+
+export async function fetchPatientPrescriptions(token: string, patientId: string): Promise<PrescriptionResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/prescriptions/patient/${patientId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<PrescriptionResponse>(payload);
+}
+
+export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalysis> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/payment-analysis`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<PaymentAnalysis>(response);
+}
+

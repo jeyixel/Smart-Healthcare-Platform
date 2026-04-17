@@ -91,7 +91,7 @@ export default function PatientTelemedicinePage() {
               <p className="mt-1 text-slate-600">{userEmail}</p>
             </div>
             <button
-              onClick={() => router.push('/patient')}
+              onClick={() => router.push('/patient-landing')}
               className="rounded-lg bg-slate-200 px-6 py-2 font-semibold text-slate-700 transition hover:bg-slate-300"
             >
               Back to Dashboard

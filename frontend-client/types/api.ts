@@ -188,3 +188,32 @@ export interface AppointmentResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export type PrescriptionStatus = "DRAFT" | "ISSUED" | "CANCELLED";
+
+export interface PrescriptionItemResponse {
+  id: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  quantity: string;
+}
+
+export interface PrescriptionResponse {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  diagnosis: string;
+  clinicalNotes: string;
+  status: PrescriptionStatus;
+  followUpRequired: boolean;
+  followUpDate: string | null;
+  issuedAt: string | null;
+  items: PrescriptionItemResponse[];
+  createdAt: string;
+  updatedAt: string;
+  digitalSignature: string | null;
+}
