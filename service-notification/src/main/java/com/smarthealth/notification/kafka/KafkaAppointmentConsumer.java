@@ -44,12 +44,18 @@ public class KafkaAppointmentConsumer {
 
     private void processAppointmentEvent(AppointmentEventDto event, String topic) {
         log.info("Processing {} event for appointment: {}", topic, event.getAppointmentId());
+        
+        // Map CANCELLED status to the correct template identifier
+        if ("CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            event.setEventType("APPOINTMENT_CANCELLED");
+        }
+        
         try {
             // 1. Send Email
             if (isValidEmail(event.getPatientEmail())) {
                 EmailRequest emailReq = new EmailRequest();
                 emailReq.setTo(event.getPatientEmail());
-                emailReq.setSubject(templateService.buildAppointmentSubject(topic));
+                emailReq.setSubject(templateService.buildAppointmentSubject(topic, event));
                 emailReq.setBody(templateService.buildAppointmentEmailBody(event));
                 emailService.sendEmail(emailReq, topic);
             }

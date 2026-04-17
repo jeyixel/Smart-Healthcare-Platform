@@ -184,8 +184,11 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
   return safeJson<CurrentUserProfile>(response);
 }
 
-export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${NOTIFICATION_API}/api/notifications/logs/${recipient}`, {
+export async function fetchNotifications(token: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${NOTIFICATION_API}/api/v1/notifications/logs/my`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 

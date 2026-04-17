@@ -12,8 +12,11 @@ public class NotificationTemplateService {
 
     // --- Appointment Templates ---
 
-    public String buildAppointmentSubject(String eventType) {
-        return switch (eventType) {
+    public String buildAppointmentSubject(String topic, AppointmentEventDto event) {
+        if ("appointment-status-changed".equals(topic) && "CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            return "Appointment Cancelled – Smart Healthcare";
+        }
+        return switch (topic) {
             case "appointment-created" -> "Appointment Confirmed - Smart Healthcare";
             case "appointment-rescheduled" -> "Appointment Rescheduled - Smart Healthcare";
             case "appointment-status-changed" -> "Appointment Status Updated";
@@ -36,7 +39,15 @@ public class NotificationTemplateService {
                 "New Date: " + event.getAppointmentDate() + "\n" +
                 "New Time: " + event.getAppointmentTime() + footer;
             case "APPOINTMENT_CANCELLED" -> greeting +
-                "Your appointment with Dr. " + event.getDoctorName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
+                "Your appointment with Dr. " + event.getDoctorName() +
+                " scheduled for " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + 
+                " has been cancelled.\n\n" +
+                "Appointment Details:\n" +
+                "- Doctor: Dr. " + event.getDoctorName() + "\n" +
+                "- Date: " + event.getAppointmentDate() + "\n" +
+                "- Time: " + event.getAppointmentTime() + "\n\n" +
+                "Please log in to the platform to rebook your appointment at your earliest convenience.\n" +
+                footer;
             default -> greeting + "There is an update regarding your appointment with Dr. " + event.getDoctorName() + "." + footer;
         };
     }
