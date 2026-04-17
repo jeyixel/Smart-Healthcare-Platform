@@ -12,11 +12,13 @@ import {
   AdminAppointment,
   DashboardSummary,
   SystemEvent,
+  MedicalHistory,
 } from "@/types/api";
 
 const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API_BASE ?? "http://localhost:8087";
 const PATIENT_API = process.env.NEXT_PUBLIC_PATIENT_API_BASE ?? "http://localhost:8081";
 const NOTIFICATION_API = process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE ?? "http://localhost:8086";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_URL ?? "http://localhost:8080";
 
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -234,4 +236,22 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
   });
 
   return safeJson<SystemEvent[]>(response);
+}
+
+export async function fetchPatientMedicalHistory(
+  patientId: string,
+  token: string
+): Promise<MedicalHistory[]> {
+  const response = await fetch(
+    `${API_GATEWAY}/api/v1/patients/${patientId}/medical-histories`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalHistory>(payload);
 }

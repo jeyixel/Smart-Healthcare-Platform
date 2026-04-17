@@ -110,3 +110,15 @@ export interface SystemEvent {
   description: string;
   timestamp: string;
 }
+
+export interface MedicalHistory {
+  id: string;
+  patientId: string;
+  diagnosis?: string;
+  treatment?: string;
+  symptoms?: string;
+  date?: string;
+  notes?: string;
+  [key: string]: any;
+}
+
