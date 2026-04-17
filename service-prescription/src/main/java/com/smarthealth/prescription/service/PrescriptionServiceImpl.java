@@ -85,9 +85,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 .issuedAt(Instant.now())
                 .build();
 
+        final Prescription prescriptionRef = prescription;
         List<PrescriptionItem> items = request.items()
                 .stream()
-                .map(item -> toPrescriptionItem(item, prescription))
+            .map(item -> toPrescriptionItem(item, prescriptionRef))
                 .toList();
 
         prescription.getItems().addAll(items);
@@ -176,9 +177,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
             prescription.getItems().clear();
 
-            List<PrescriptionItem> updatedItems = request.items()
+                final Prescription prescriptionRef = prescription;
+                List<PrescriptionItem> updatedItems = request.items()
                     .stream()
-                    .map(item -> toPrescriptionItem(item, prescription))
+                    .map(item -> toPrescriptionItem(item, prescriptionRef))
                     .toList();
 
             prescription.getItems().addAll(updatedItems);

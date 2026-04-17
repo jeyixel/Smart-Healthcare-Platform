@@ -30,9 +30,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req ->
                         req
-                        .requestMatchers("/api/v1/doctors/search").permitAll()  // Allow public endpoints
-                        .requestMatchers("/api/v1/doctors").permitAll()  // Allow public endpoints
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
