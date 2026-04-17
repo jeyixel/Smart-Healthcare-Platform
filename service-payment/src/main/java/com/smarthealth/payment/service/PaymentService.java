@@ -188,7 +188,7 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentResponse> getPaymentsByAppointment(Long appointmentId) {
+    public List<PaymentResponse> getPaymentsByAppointment(UUID appointmentId) {
         return paymentRepository.findByAppointmentId(appointmentId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
