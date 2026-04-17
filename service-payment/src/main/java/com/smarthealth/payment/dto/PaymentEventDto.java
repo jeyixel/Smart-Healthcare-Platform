@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class PaymentEventDto {
     private String orderId;
-    private Long appointmentId;
+    private java.util.UUID appointmentId;
     private String patientId;
     private String patientEmail;
     private String patientPhone;
