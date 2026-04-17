@@ -95,8 +95,17 @@ public class AuthenticationFilter implements Filter {
                 httpResponse.getWriter().write("Invalid or expired token");
             }
         } catch (Exception e) {
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            httpResponse.getWriter().write("Authentication failed: " + e.getMessage());
+            // Log the actual error for debugging
+            System.err.println("Gateway Error: " + e.getMessage());
+            e.printStackTrace();
+            
+            if (e.getMessage().contains("ResourceAccessException") || e.getMessage().contains("Connection")) {
+                httpResponse.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                httpResponse.getWriter().write("Downstream service unreachable: " + e.getMessage());
+            } else {
+                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                httpResponse.getWriter().write("Internal Gateway Error: " + e.getMessage());
+            }
         }
     }
 }

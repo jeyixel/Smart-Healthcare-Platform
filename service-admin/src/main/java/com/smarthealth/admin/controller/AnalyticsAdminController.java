@@ -29,7 +29,7 @@ public class AnalyticsAdminController {
     }
 
     @GetMapping("/payment-analysis")
-    public com.smarthealth.admin.dto.PaymentAnalysisResponse getPaymentAnalysis() {
-        return analyticsService.getPaymentAnalysis();
+    public com.smarthealth.admin.dto.PaymentAnalysisResponse getPaymentAnalysis(@RequestHeader("Authorization") String token) {
+        return analyticsService.getPaymentAnalysis(token);
     }
 }

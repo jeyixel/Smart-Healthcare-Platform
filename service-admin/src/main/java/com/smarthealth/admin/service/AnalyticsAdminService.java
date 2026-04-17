@@ -31,13 +31,60 @@ public class AnalyticsAdminService {
     private final AdminActionLogRepository adminActionLogRepository;
     private final UserRepository userRepository;
 
-    public PaymentAnalysisResponse getPaymentAnalysis() {
-        List<ExternalPaymentResponse> payments = paymentRestClient.get()
-                .uri(paymentProperties.getEndpoints().getBase())
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<ExternalPaymentResponse>>() {});
+    public PaymentAnalysisResponse getPaymentAnalysis(String token) {
+        try {
+            List<ExternalPaymentResponse> payments = paymentRestClient.get()
+                    .uri(paymentProperties.getEndpoints().getBase())
+                    .header("Authorization", token)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<ExternalPaymentResponse>>() {});
 
-        if (payments == null || payments.isEmpty()) {
+            if (payments == null || payments.isEmpty()) {
+                return PaymentAnalysisResponse.builder()
+                        .totalRevenue(BigDecimal.ZERO)
+                        .totalTransactions(0)
+                        .successRate(0.0)
+                        .statusBreakdown(Map.of())
+                        .trends(List.of())
+                        .build();
+            }
+
+            BigDecimal totalRevenue = payments.stream()
+                    .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                    .map(ExternalPaymentResponse::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            long successfulCount = payments.stream()
+                    .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                    .count();
+
+            Map<String, Long> statusBreakdown = payments.stream()
+                    .collect(Collectors.groupingBy(ExternalPaymentResponse::getStatus, Collectors.counting()));
+
+            Map<String, BigDecimal> dailyRevenue = payments.stream()
+                    .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                    .collect(Collectors.groupingBy(
+                            p -> p.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                            Collectors.reducing(BigDecimal.ZERO, ExternalPaymentResponse::getAmount, BigDecimal::add)
+                    ));
+
+            List<PaymentAnalysisResponse.DailyRevenue> trends = dailyRevenue.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(e -> PaymentAnalysisResponse.DailyRevenue.builder()
+                            .date(e.getKey())
+                            .revenue(e.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return PaymentAnalysisResponse.builder()
+                    .totalRevenue(totalRevenue)
+                    .totalTransactions(payments.size())
+                    .successRate((double) successfulCount / payments.size() * 100)
+                    .statusBreakdown(statusBreakdown)
+                    .trends(trends)
+                    .build();
+        } catch (Exception e) {
+            System.err.println("Error fetching payment analysis: " + e.getMessage());
             return PaymentAnalysisResponse.builder()
                     .totalRevenue(BigDecimal.ZERO)
                     .totalTransactions(0)
@@ -46,58 +93,34 @@ public class AnalyticsAdminService {
                     .trends(List.of())
                     .build();
         }
-
-        BigDecimal totalRevenue = payments.stream()
-                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
-                .map(ExternalPaymentResponse::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        long successfulCount = payments.stream()
-                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
-                .count();
-
-        Map<String, Long> statusBreakdown = payments.stream()
-                .collect(Collectors.groupingBy(ExternalPaymentResponse::getStatus, Collectors.counting()));
-
-        Map<String, BigDecimal> dailyRevenue = payments.stream()
-                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
-                .collect(Collectors.groupingBy(
-                        p -> p.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                        Collectors.reducing(BigDecimal.ZERO, ExternalPaymentResponse::getAmount, BigDecimal::add)
-                ));
-
-        List<PaymentAnalysisResponse.DailyRevenue> trends = dailyRevenue.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> PaymentAnalysisResponse.DailyRevenue.builder()
-                        .date(e.getKey())
-                        .revenue(e.getValue())
-                        .build())
-                .collect(Collectors.toList());
-
-        return PaymentAnalysisResponse.builder()
-                .totalRevenue(totalRevenue)
-                .totalTransactions(payments.size())
-                .successRate((double) successfulCount / payments.size() * 100)
-                .statusBreakdown(statusBreakdown)
-                .trends(trends)
-                .build();
     }
 
     public DashboardSummaryResponse getDashboardSummary(String token) {
         // Fetch patient count
-        List<PatientResponse> patients = patientRestClient.get()
-                .uri(patientProperties.getEndpoints().getBase())
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<PatientResponse>>() {});
-        long totalPatients = patients != null ? patients.size() : 0;
+        long totalPatients = 0;
+        try {
+            List<PatientResponse> patients = patientRestClient.get()
+                    .uri(patientProperties.getEndpoints().getBase())
+                    .header("Authorization", token)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<PatientResponse>>() {});
+            totalPatients = patients != null ? patients.size() : 0;
+        } catch (Exception e) {
+            System.err.println("Error fetching patient count: " + e.getMessage());
+        }
 
         // Fetch appointment count
-        List<AppointmentResponse> appointments = appointmentRestClient.get()
-                .uri(appointmentProperties.getEndpoints().getBase())
-                .header("Authorization", token)
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<AppointmentResponse>>() {});
-        long totalAppointments = appointments != null ? appointments.size() : 0;
+        long totalAppointments = 0;
+        try {
+            List<AppointmentResponse> appointments = appointmentRestClient.get()
+                    .uri(appointmentProperties.getEndpoints().getBase())
+                    .header("Authorization", token)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<AppointmentResponse>>() {});
+            totalAppointments = appointments != null ? appointments.size() : 0;
+        } catch (Exception e) {
+            System.err.println("Error fetching appointment count: " + e.getMessage());
+        }
 
         // Count approved doctors
         long activeDoctors = userRepository.findByRoleAndApproved(Role.DOCTOR, true).size();

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchDashboardSummary, fetchRecentEvents } from "@/lib/api";
-import { DashboardSummary, SystemEvent } from "@/types/api";
+import { fetchDashboardSummary, fetchNotificationLogs } from "@/lib/api";
+import { DashboardSummary, NotificationLog } from "@/types/api";
 
 export default function AdminDashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [events, setEvents] = useState<SystemEvent[]>([]);
+  const [notifications, setNotifications] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -20,12 +20,12 @@ export default function AdminDashboard() {
       }
 
       try {
-        const [sumData, eventData] = await Promise.all([
+        const [sumData, notifyData] = await Promise.all([
           fetchDashboardSummary(token),
-          fetchRecentEvents(token)
+          fetchNotificationLogs(token)
         ]);
         setSummary(sumData);
-        setEvents(eventData);
+        setNotifications(notifyData);
         setSyncError(null);
       } catch (err) {
         console.error("Dashboard sync failed:", err);
@@ -93,31 +93,41 @@ export default function AdminDashboard() {
         {/* Recent Activity Feed */}
         <section className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
           <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
-            <h3 className="font-bold text-slate-900">Live Health Event Stream</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Event Trace</span>
+            <h3 className="font-bold text-slate-900">Live Notification Hub</h3>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real-time Delivery</span>
           </div>
           <div className="flex-1 min-h-[400px]">
             {loading ? (
-              <div className="h-full flex items-center justify-center text-slate-400 italic">Syncing event registry...</div>
-            ) : events.length > 0 ? (
+              <div className="h-full flex items-center justify-center text-slate-400 italic">Syncing communication logs...</div>
+            ) : notifications.length > 0 ? (
               <div className="divide-y divide-slate-50">
-                {events.map((event) => (
-                  <div key={event.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
-                    <div className="h-2 w-2 rounded-full bg-indigo-400"></div>
+                {notifications.map((log) => (
+                  <div key={log.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
+                    <div className={`h-2 w-2 rounded-full ${log.status === 'SENT' ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
                     <div className="flex-1">
-                      <p className="text-sm text-slate-900"><span className="font-bold">{event.requestedBy}</span> {event.description}</p>
-                      <p className="text-xs text-slate-500">{new Date(event.timestamp).toLocaleString()}</p>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${log.channel === 'EMAIL' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {log.channel}
+                        </span>
+                        <p className="text-sm font-bold text-slate-900">{log.recipient}</p>
+                      </div>
+                      <p className="text-xs text-slate-600 line-clamp-1">{log.subject}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{new Date(log.sentAt).toLocaleString()}</p>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">EVENT_PUB</span>
+                    <div className="text-right">
+                       <span className={`text-[10px] font-bold uppercase tracking-tighter ${log.status === 'SENT' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                         {log.status}
+                       </span>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 italic">No system events recorded.</div>
+              <div className="h-full flex items-center justify-center text-slate-400 italic">No communication logs recorded.</div>
             )}
           </div>
           <div className="p-4 bg-slate-50 text-center border-t border-slate-100">
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-700">Connect to WebSocket Feed →</button>
+            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-700">View Full Dispatcher Registry →</button>
           </div>
         </section>
 

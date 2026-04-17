@@ -37,6 +37,12 @@ public class DoctorController {
         return doctorService.getDoctorByUserId(userId);
     }
 
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public DoctorResponse getDoctorByEmail(@PathVariable String email) {
+        return doctorService.getDoctorByEmail(email);
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("(hasRole('DOCTOR'))")
     public DoctorResponse updateDoctor(@PathVariable UUID id,
@@ -67,7 +73,6 @@ public class DoctorController {
 
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('PATIENT')")
     public List<DoctorSearchResponse> searchDoctors(
             @RequestParam(required = false) String specialty,
             @RequestParam(required = false) String category,
@@ -78,7 +83,6 @@ public class DoctorController {
 
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR') or hasRole('PATIENT')")
     public List<DoctorSearchResponse> listVerifiedActiveDoctors() {
         return doctorService.listVerifiedActiveDoctors();
     }

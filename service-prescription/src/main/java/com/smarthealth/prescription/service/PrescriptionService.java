@@ -29,4 +29,6 @@ public interface PrescriptionService {
     boolean isPrescriptionOwnerById(UUID prescriptionId, Long userId);
 
     boolean isDoctorOwner(UUID doctorId, Long userId);
+
+    boolean isPatientOwner(UUID patientId, Long userId);
 }

@@ -5,7 +5,7 @@ const TELEMEDICINE_BASE_URL = "http://localhost:8080/api/v1/telemedicine/session
 export async function fetchSessionByAppointmentId(
   appointmentId: string,
 ): Promise<TelemedicineSessionResponse> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : "";
   const response = await fetch(
     `${TELEMEDICINE_BASE_URL}/appointment/${encodeURIComponent(appointmentId)}`,
     {
@@ -29,7 +29,7 @@ export async function fetchSessionByAppointmentId(
 }
 
 export async function completeSession(sessionId: string): Promise<void> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : "";
   const response = await fetch(
     `${TELEMEDICINE_BASE_URL}/${encodeURIComponent(sessionId)}/status`,
     {

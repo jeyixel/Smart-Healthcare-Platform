@@ -9,6 +9,16 @@ import {
   PatientEvent,
   RegisterInput,
   NotificationLog,
+  AdminAppointment,
+  DashboardSummary,
+  SystemEvent,
+  PaymentAnalysis,
+  DailyRevenue,
+  MedicalHistory,
+  DoctorSearchResponse,
+  CreateAppointmentRequest,
+  AppointmentResponse,
+  PrescriptionResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -20,19 +30,35 @@ import {
 // - /api/v1/appointments/** → Appointment Service (8083)
 // - /api/v1/prescriptions/** → Prescription Service (8088)
 // - /api/notifications/** → Notification Service (8086)
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://127.0.0.1:8080";
+const ADMIN_API = API_GATEWAY;
+
+export interface DoctorProfile {
+  id: string;
+  userId: number;
+  email: string;
+}
 
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.text();
+    let parsedMessage: string | undefined;
 
     try {
-      const parsed = JSON.parse(body) as { message?: string; error?: string };
-      const message = parsed.message ?? parsed.error;
-      throw new Error(message || `Request failed with status ${response.status}`);
+      const parsed = JSON.parse(body) as {
+        title?: string;
+        detail?: string;
+        message?: string;
+        error?: string;
+      };
+
+      const detail = parsed.detail ?? parsed.message ?? parsed.error;
+      parsedMessage = parsed.title && detail ? `${parsed.title}: ${detail}` : detail;
     } catch {
-      throw new Error(body || `Request failed with status ${response.status}`);
+      parsedMessage = undefined;
     }
+
+    throw new Error(parsedMessage || body || `Request failed with status ${response.status}`);
   }
 
   if (response.status === 204) {
@@ -47,36 +73,76 @@ function normalizeListResponse<T>(payload: unknown): T[] {
     return payload;
   }
 
-  if (
-    payload !== null &&
-    typeof payload === "object" &&
-    "value" in payload &&
-    Array.isArray((payload as { value: unknown }).value)
-  ) {
-    return (payload as { value: T[] }).value;
+  if (payload !== null && typeof payload === "object") {
+    const wrapped = payload as Record<string, unknown>;
+    const candidates = ["value", "data", "content", "items", "results"];
+
+    for (const key of candidates) {
+      if (Array.isArray(wrapped[key])) {
+        return wrapped[key] as T[];
+      }
+    }
+  }
+
+  return [];
+}
+
+function extractFirstObjectArray<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
+
+  if (payload !== null && typeof payload === "object") {
+    const values = Object.values(payload as Record<string, unknown>);
+    for (const value of values) {
+      if (Array.isArray(value)) {
+        return value as T[];
+      }
+      const nested = extractFirstObjectArray<T>(value);
+      if (nested.length > 0) {
+        return nested;
+      }
+    }
   }
 
   return [];
 }
 
 export async function registerAdmin(input: RegisterInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  return safeJson<AuthResponse>(response);
+  try {
+    const response = await fetch(`${API_GATEWAY}/api/v1/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      mode: "cors",
+    });
+    return safeJson<AuthResponse>(response);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("fetch")) {
+      throw new Error("Failed to connect to Auth Service. Please ensure the API Gateway and Auth Service are running.");
+    }
+    throw error;
+  }
 }
 
 export async function loginAdmin(input: LoginInput): Promise<AuthResponse> {
-  const response = await fetch(`${API_GATEWAY}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  return safeJson<AuthResponse>(response);
+  try {
+    const response = await fetch(`${API_GATEWAY}/api/v1/auth/login`, {
+      method: "POST",
+      mode: "cors",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(input),
+    });
+    return safeJson<AuthResponse>(response);
+  } catch (error) {
+    if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("Failed to fetch"))) {
+      throw new Error("Network error: Unable to reach the Gateway at " + API_GATEWAY + ". Please ensure the Gateway is running and CORS is allowed. If you're on a VPN or Proxy, please disable it.");
+    }
+    throw error;
+  }
 }
 
 export async function requestPasswordOtp(input: ForgotPasswordOtpInput): Promise<{ message: string }> {
@@ -99,8 +165,11 @@ export async function resetForgotPassword(input: ForgotPasswordResetInput): Prom
   return safeJson<{ message: string }>(response);
 }
 
-export async function fetchPatients(): Promise<Patient[]> {
+export async function fetchPatients(token: string): Promise<Patient[]> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients`, {
+    headers: {
+       Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 
@@ -128,8 +197,11 @@ export async function updatePatientStatus(
   return safeJson<Patient>(response);
 }
 
-export async function fetchPatientEvents(): Promise<PatientEvent[]> {
+export async function fetchPatientEvents(token: string): Promise<PatientEvent[]> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patient-events`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 
@@ -159,12 +231,36 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
-export async function fetchPatientByEmail(email: string): Promise<Patient> {
+
+export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
 
   return safeJson<Patient>(response);
+}
+
+export async function fetchDoctorByEmail(email: string, token: string): Promise<DoctorProfile> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/email/${email}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<DoctorProfile>(response);
+}
+
+export async function fetchDoctorByUserId(userId: number, token: string): Promise<DoctorProfile> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<DoctorProfile>(response);
 }
 
 export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
@@ -188,8 +284,9 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
   return safeJson<CurrentUserProfile>(response);
 }
 
-export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${API_GATEWAY}/api/notifications/logs/${recipient}`, {
+export async function fetchNotifications(token: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/notifications/logs/my`, {
+    headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
 
@@ -239,3 +336,74 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
 
   return safeJson<SystemEvent[]>(response);
 }
+
+export async function fetchPatientMedicalHistory(
+  patientId: string,
+  token: string
+): Promise<MedicalHistory[]> {
+  const response = await fetch(
+    `${API_GATEWAY}/api/v1/patients/${patientId}/medical-histories`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalHistory>(payload);
+}
+
+export async function fetchNotificationLogs(token: string): Promise<NotificationLog[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/notifications`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<NotificationLog[]>(response);
+}
+
+export async function fetchActiveDoctors(token: string): Promise<DoctorSearchResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  const payload = await safeJson<unknown>(response);
+  const parsedDoctors = normalizeListResponse<DoctorSearchResponse>(payload);
+  return parsedDoctors.length > 0 ? parsedDoctors : extractFirstObjectArray<DoctorSearchResponse>(payload);
+}
+
+export async function createAppointment(token: string, data: CreateAppointmentRequest): Promise<AppointmentResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/appointments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<AppointmentResponse>(response);
+}
+
+export async function fetchPatientPrescriptions(token: string, patientId: string): Promise<PrescriptionResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/prescriptions/patient/${patientId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<PrescriptionResponse>(payload);
+}
+
+export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalysis> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/analytics/payment-analysis`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  return safeJson<PaymentAnalysis>(response);
+}
+

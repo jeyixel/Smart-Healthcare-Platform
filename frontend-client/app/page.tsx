@@ -106,10 +106,10 @@ export default function Home() {
       <section className="hero hero-split">
         <div className="hero-copy">
           <div className="hero-badge">Smart Healthcare Platform</div>
-          <h1>Modern admin access for patient operations</h1>
+          <h1>Modern healthcare access for everyone</h1>
           <p>
-            Sign in to manage patients, trigger status changes, and watch the
-            event stream update in real time.
+            Sign in to your account to manage your health records, appointments, 
+            and clinical operations.
           </p>
 
           <div className="hero-highlights" aria-label="Platform highlights">
@@ -133,7 +133,7 @@ export default function Home() {
           <div className="metric-card metric-card-accent">
             <span>Session</span>
             <strong>{token ? "Authenticated" : "Ready to login"}</strong>
-            <small>{authRole ?? "ADMIN access"}</small>
+            <small>{authRole ?? "USER access"}</small>
           </div>
         </div>
       </section>
@@ -141,7 +141,7 @@ export default function Home() {
       {!token ? (
         <section className="panel auth-gate">
           <p className="eyebrow">Authentication required</p>
-          <h2>Login or create an admin account to continue</h2>
+          <h2>Sign in to continue</h2>
           <p className="panel-subtitle">
             Access control is now handled on dedicated pages for a cleaner workflow.
           </p>

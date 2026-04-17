@@ -113,9 +113,31 @@ export interface SystemEvent {
   timestamp: string;
 }
 
+export interface MedicalHistory {
+  id: string;
+  patientId: string;
+  diagnosis?: string;
+  treatment?: string;
+  symptoms?: string;
+  date?: string;
+  notes?: string;
+  [key: string]: any;
+}
+
 export interface DailyRevenue {
   date: string;
   revenue: number;
+}
+
+export interface NotificationLog {
+  id: number;
+  recipient: string;
+  subject: string;
+  message: string;
+  channel: "EMAIL" | "SMS";
+  status: "SENT" | "FAILED" | "PENDING";
+  errorMessage: string | null;
+  sentAt: string;
 }
 
 export interface PaymentAnalysis {
@@ -124,4 +146,74 @@ export interface PaymentAnalysis {
   successRate: number;
   statusBreakdown: Record<string, number>;
   trends: DailyRevenue[];
+}
+
+export interface DoctorSearchResponse {
+  id: string;
+  fullName: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  verified: boolean;
+  active: boolean;
+  profileImageUrl: string | null;
+}
+
+export interface CreateAppointmentRequest {
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string; // YYYY-MM-DD
+  appointmentTime: string; // HH:mm:ss
+  consultationType: "PHYSICAL" | "VIRTUAL";
+  reason: string;
+}
+
+export interface AppointmentResponse {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  consultationType: "PHYSICAL" | "VIRTUAL";
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  paymentStatus: "PENDING_PAYMENT" | "PAID" | "FAILED";
+  paymentDeadline: string | null;
+  paymentReference: string | null;
+  reason: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PrescriptionStatus = "DRAFT" | "ISSUED" | "CANCELLED";
+
+export interface PrescriptionItemResponse {
+  id: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  quantity: string;
+}
+
+export interface PrescriptionResponse {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  diagnosis: string;
+  clinicalNotes: string;
+  status: PrescriptionStatus;
+  followUpRequired: boolean;
+  followUpDate: string | null;
+  issuedAt: string | null;
+  items: PrescriptionItemResponse[];
+  createdAt: string;
+  updatedAt: string;
+  digitalSignature: string | null;
 }

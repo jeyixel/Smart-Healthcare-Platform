@@ -13,6 +13,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,6 +64,14 @@ public class TelemedicineService {
         return repository.save(session);
     }
 
+    public List<TelemedicineSession> getSessionsByPatientId(String patientId) {
+        return repository.findByPatientId(patientId);
+    }
+
+    public List<TelemedicineSession> getSessionsByDoctorId(String doctorId) {
+        return repository.findByDoctorId(doctorId);
+    }
+
     // TODO: Make sure to check if appointmentID exists in the Appointment DB Service before creating a session.
     //  I think in the appointment service, when an appointment is created it calls the telemedicine service to create a session, just check whether its still there
     public String generateJitsiToken(String room, String userName, String userEmail) throws Exception {
@@ -71,21 +80,39 @@ public class TelemedicineService {
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("name", userName != null ? userName : "Guest");
         userMap.put("email", userEmail != null ? userEmail : "");
+
+        // Enable a baseline set of capabilities for all authenticated participants.
+        Map<String, Object> featuresMap = new HashMap<>();
+        featuresMap.put("camera", "true");
+        featuresMap.put("microphone", "true");
+        featuresMap.put("chat", "true");
+        featuresMap.put("recording", "true");
+        featuresMap.put("livestreaming", "true");
+        featuresMap.put("transcription", "true");
+        featuresMap.put("outbound-call", "true");
+        featuresMap.put("sip-outbound-call", "true");
         
         Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("user", userMap);
+        contextMap.put("features", featuresMap);
+
+        // Subtract 2 minutes from current time to prevent NBF (Not Before) clock drift issues
+        long currentTime = System.currentTimeMillis();
+        Date issueTime = new Date(currentTime - 120000); 
+        Date expirationTime = new Date(currentTime + 7200 * 1000);
 
         return Jwts.builder()
                 .setHeaderParam("kid", jaasApiKeyId)
                 .setHeaderParam("typ", "JWT")
-                .setIssuer(jaasAppId)
+                .setIssuer("chat")
                 .setSubject(jaasAppId)
                 .setAudience("jitsi")
                 .claim("room", room != null && !room.isBlank() ? room : "*")
+                .claim("features", featuresMap)
                 .claim("context", contextMap)
-                .setIssuedAt(new Date())
-                .setNotBefore(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 7200 * 1000)) // valid for 2 hours
+                .setIssuedAt(issueTime)
+                .setNotBefore(issueTime)
+                .setExpiration(expirationTime)
                 .signWith(privateKey, SignatureAlgorithm.RS256)
                 .compact();
     }

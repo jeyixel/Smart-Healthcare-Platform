@@ -90,4 +90,15 @@ public class GatewayRoutesConfig {
                 .route(path("/api/v1/telemedicine/**", "/api/telemedicine/**"), http())
                 .build();
     }
+
+    @Value("${NOTIFICATION_SERVICE_URL:http://localhost:8086}")
+    private String notificationServiceUrl;
+
+    @Bean
+    RouterFunction<ServerResponse> notificationRoute() {
+        return route("notification-service")
+                .before(uri(notificationServiceUrl))
+                .route(path("/api/v1/notifications/**", "/api/notifications/**"), http())
+                .build();
+    }
 }

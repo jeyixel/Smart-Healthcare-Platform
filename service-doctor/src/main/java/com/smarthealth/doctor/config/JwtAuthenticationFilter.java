@@ -41,20 +41,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             String role = jwtService.extractRole(jwt);
-            Long userId = jwtService.extractUserId(jwt);
+            Long userId = null;
+            try {
+                userId = jwtService.extractUserId(jwt);
+            } catch (Exception e) {
+                System.out.println("ERROR parsing userId: " + e.getMessage());
+            }
+            
+            System.out.println("JWT Extracted - Email: " + userEmail + ", Role: " + role + ", UserId: " + userId);
             
             UserPrincipal userPrincipal = new UserPrincipal(userEmail, userId, role);
 
-            if (jwtService.isTokenValid(jwt, userPrincipal)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userPrincipal,
-                        null,
-                        userPrincipal.getAuthorities()
-                );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            try {
+                if (jwtService.isTokenValid(jwt, userPrincipal)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userPrincipal,
+                            null,
+                            userPrincipal.getAuthorities()
+                    );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("Authentication context set successfully with authorities: " + userPrincipal.getAuthorities());
+                } else {
+                    System.out.println("Token validation returned false.");
+                }
+            } catch (Exception e) {
+                System.out.println("Exception during token validation: " + e.getMessage());
+                e.printStackTrace();
             }
         }
         filterChain.doFilter(request, response);

@@ -84,7 +84,7 @@ public class NotificationController {
 
     // Get logs by recipient (admin only)
     @GetMapping("/logs/{recipient:.+}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PATIENT')")
     public ResponseEntity<List<NotificationLog>> getLogsByRecipient(
             @PathVariable("recipient") String recipient) {
         return ResponseEntity.ok(notificationService.getLogsByRecipient(recipient));

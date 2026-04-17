@@ -87,9 +87,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 .issuedAt(Instant.now())
                 .build();
 
+        final Prescription prescriptionRef = prescription;
         List<PrescriptionItem> items = request.items()
                 .stream()
-                .map(item -> toPrescriptionItem(item, prescription))
+            .map(item -> toPrescriptionItem(item, prescriptionRef))
                 .toList();
 
         prescription.getItems().addAll(items);
@@ -178,9 +179,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
             prescription.getItems().clear();
 
-            List<PrescriptionItem> updatedItems = request.items()
+                final Prescription prescriptionRef = prescription;
+                List<PrescriptionItem> updatedItems = request.items()
                     .stream()
-                    .map(item -> toPrescriptionItem(item, prescription))
+                    .map(item -> toPrescriptionItem(item, prescriptionRef))
                     .toList();
 
             prescription.getItems().addAll(updatedItems);
@@ -258,6 +260,19 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         try {
             DoctorResponse doctor = serviceClient.getDoctor(doctorId);
             return doctor.userId().equals(userId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isPatientOwner(UUID patientId, Long userId) {
+        try {
+            var patient = serviceClient.getPatient(patientId);
+            if (patient == null || patient.authUserId() == null) {
+                return false;
+            }
+            return patient.authUserId().equals(String.valueOf(userId));
         } catch (Exception e) {
             return false;
         }

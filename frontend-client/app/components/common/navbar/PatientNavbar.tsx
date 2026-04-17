@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import styles from "./PatientNavbar.module.css";
 import { fetchNotifications } from "@/lib/api";
 import { NotificationLog } from "@/types/api";
 
 const NAV_LINKS = [
-  { label: "Home",       href: "#home" },
-  { label: "Services",   href: "#services" },
-  { label: "About Us",   href: "#about" },
-  { label: "Blog",       href: "#blog" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Home",       href: "/patient-landing#home" },
+  { label: "Services",   href: "/patient-landing#services" },
+  { label: "About Us",   href: "/patient-landing#about" },
+  { label: "Blog",       href: "/patient-landing#blog" },
+  { label: "Contact Us", href: "/patient-landing#contact" },
 ];
 
 function NotificationIcon({ type }: { type: string }) {
@@ -69,6 +70,7 @@ export default function PatientNavbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [patientEmail, setPatientEmail] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const pathname = usePathname();
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -98,9 +100,12 @@ export default function PatientNavbar() {
     let active = true;
 
     async function loadNotifications() {
+      if (!patientEmail) return;
       try {
-        const logs: NotificationLog[] = await fetchNotifications(token!);
-        if (!active) return;
+        const token = localStorage.getItem("smart_admin_token");
+        if (!token) return;
+        
+        const logs: NotificationLog[] = await fetchNotifications(token);
         const mapped = logs.map(log => ({
           id: log.id,
           title: log.subject,
@@ -122,7 +127,7 @@ export default function PatientNavbar() {
       active = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [patientEmail]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -183,21 +188,32 @@ export default function PatientNavbar() {
 
           {/* Desktop Links */}
           <ul className={styles.navLinks} role="list">
-            {NAV_LINKS.map((link, i) => (
-              <li key={link.label}>
-                <a
-                  href={link.href}
-                  className={`${styles.navLink} ${i === 0 ? styles.navLinkActive : ""}`}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
+            {NAV_LINKS.map((link, i) => {
+              const isLandingPage = pathname === "/" || pathname === "/patient-landing";
+              const isActive = (isLandingPage && i === 0 && link.href.startsWith("#")) || 
+                               pathname === link.href || 
+                               (pathname.startsWith(link.href) && link.href !== "/" && link.href !== "/patient-landing");
+              
+              return (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className={`${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Right-side actions */}
           <div className={styles.navActions}>
-            <Link href="/register" className={styles.btnBook} id="nav-book-btn">
+            <Link 
+              href="/patient-landing/book" 
+              className={`${styles.btnBook} ${pathname === "/patient-landing/book" ? styles.btnBookActive : ""}`} 
+              id="nav-book-btn"
+            >
               Book Appointment
             </Link>
 
@@ -255,7 +271,7 @@ export default function PatientNavbar() {
                       </ul>
 
                       <div className={styles.dropdownFooter}>
-                        <Link href="/patient/notifications" className={styles.viewAllLink} onClick={() => setNotifOpen(false)}>
+                        <Link href="/patient-landing/notifications" className={styles.viewAllLink} onClick={() => setNotifOpen(false)}>
                           View all notifications
                         </Link>
                       </div>
@@ -291,7 +307,7 @@ export default function PatientNavbar() {
 
                       <ul className={styles.profileMenuList} role="list">
                         <li>
-                          <Link href="/patient/profile" className={styles.profileMenuItem} id="profile-view-link">
+                          <Link href="/patient-landing/profile" className={styles.profileMenuItem} id="profile-view-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                               <circle cx="12" cy="7" r="4" />
@@ -300,7 +316,7 @@ export default function PatientNavbar() {
                           </Link>
                         </li>
                         <li>
-                          <a href="#" className={styles.profileMenuItem} id="profile-appointments-link">
+                          <Link href="/patient-landing/book" className={styles.profileMenuItem} id="profile-appointments-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <rect x="3" y="4" width="18" height="18" rx="2" />
                               <line x1="16" y1="2" x2="16" y2="6" />
@@ -308,15 +324,15 @@ export default function PatientNavbar() {
                               <line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
                             My Appointments
-                          </a>
+                          </Link>
                         </li>
                         <li>
-                          <a href="#" className={styles.profileMenuItem} id="profile-health-link">
+                          <Link href="/patient-landing/prescriptions" className={styles.profileMenuItem} id="profile-health-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                             </svg>
-                            Health Records
-                          </a>
+                            Prescriptions
+                          </Link>
                         </li>
                         <li>
                           <a href="#" className={styles.profileMenuItem} id="profile-settings-link">
@@ -399,7 +415,7 @@ export default function PatientNavbar() {
             ))}
           </ul>
           <div className={styles.mobileActions}>
-            <Link href={isAuthenticated ? "/appointments" : "/register"} className={styles.mobileBtnBook}
+            <Link href="/patient-landing/book" className={styles.mobileBtnBook}
                   id="mob-book-btn" onClick={() => setMenuOpen(false)}>
               Book Appointment
             </Link>
