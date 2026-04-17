@@ -47,4 +47,9 @@ public class PatientAdminController {
     public List<PatientResponse> getAllPatients(@RequestHeader("Authorization") String token) {
         return patientAdminService.getAllPatients(token);
     }
+
+    @PostMapping("/patients/sync")
+    public void syncPatients() {
+        patientAdminService.syncMissingPatients();
+    }
 }
