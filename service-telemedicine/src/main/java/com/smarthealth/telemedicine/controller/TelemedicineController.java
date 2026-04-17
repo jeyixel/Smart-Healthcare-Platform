@@ -114,6 +114,13 @@ public class TelemedicineController {
         return ResponseEntity.ok(sessions);
     }
 
+    // Endpoint to retrieve all sessions for a specific doctor (Will be called by Frontend Dashboard)
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<TelemedicineSession>> getDoctorSessions(@PathVariable String doctorId) {
+        List<TelemedicineSession> sessions = service.getSessionsByDoctorId(doctorId);
+        return ResponseEntity.ok(sessions);
+    }
+
     // Endpoint to mark a session as completed
     @PatchMapping("/{sessionId}/status")
     public ResponseEntity<?> completeSession(@PathVariable UUID sessionId, HttpServletRequest request) {

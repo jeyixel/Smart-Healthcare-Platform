@@ -56,7 +56,6 @@ public class NotificationTemplateService {
                 "- Time: " + event.getAppointmentTime() + "\n\n" +
                 "Please log in to the platform to rebook your appointment at your earliest convenience.\n" +
                 footer;
-                "Your appointment with Dr. " + event.getDoctorName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
             case "APPOINTMENT_STATUS_CHANGED" -> {
                 if ("CANCELLED".equals(event.getStatus())) {
                     yield greeting + "Your appointment with Dr. " + event.getDoctorName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
