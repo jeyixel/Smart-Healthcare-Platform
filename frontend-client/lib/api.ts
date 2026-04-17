@@ -239,3 +239,21 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
 
   return safeJson<SystemEvent[]>(response);
 }
+
+export async function fetchPatientMedicalHistory(
+  patientId: string,
+  token: string
+): Promise<MedicalHistory[]> {
+  const response = await fetch(
+    `${API_GATEWAY}/api/v1/patients/${patientId}/medical-histories`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalHistory>(payload);
+}
