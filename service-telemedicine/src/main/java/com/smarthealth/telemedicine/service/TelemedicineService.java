@@ -68,6 +68,10 @@ public class TelemedicineService {
         return repository.findByPatientId(patientId);
     }
 
+    public List<TelemedicineSession> getSessionsByDoctorId(String doctorId) {
+        return repository.findByDoctorId(doctorId);
+    }
+
     // TODO: Make sure to check if appointmentID exists in the Appointment DB Service before creating a session.
     //  I think in the appointment service, when an appointment is created it calls the telemedicine service to create a session, just check whether its still there
     public String generateJitsiToken(String room, String userName, String userEmail) throws Exception {
