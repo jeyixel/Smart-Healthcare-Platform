@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: smart-healthcare
+  name: service-doctor
+  labels:
+    app: service-doctor
+spec:
+  selector:
+    app: service-doctor
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+  type: ClusterIP

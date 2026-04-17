@@ -1,0 +1,256 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(38, 170, 225, 0.15), transparent 26%),
+    radial-gradient(circle at 84% 18%, rgba(0, 163, 122, 0.12), transparent 32%),
+    linear-gradient(155deg, #eef7ff 0%, #d9eaf8 100%);
+}
+
+.shell {
+  width: min(1100px, 100%);
+  min-height: 640px;
+  border-radius: 28px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  background: #ffffff;
+  border: 1px solid #d7e5f1;
+  box-shadow: 0 26px 56px rgba(17, 61, 98, 0.18);
+}
+
+.visualPanel {
+  position: relative;
+  isolation: isolate;
+  padding: 1.6rem;
+  color: #f7fbff;
+  background:
+    radial-gradient(circle at 24% 30%, rgba(97, 235, 255, 0.22), transparent 40%),
+    linear-gradient(145deg, #0f2f4e 0%, #0a4a63 40%, #0f5b6d 100%);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 1rem;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    repeating-linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.04) 0,
+      rgba(255, 255, 255, 0.04) 2px,
+      transparent 2px,
+      transparent 12px
+    );
+}
+
+.brand {
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.topRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.badge,
+.badgeGhost {
+  padding: 0.38rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.badgeGhost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.copyWrap {
+  align-self: center;
+  max-width: 38ch;
+}
+
+.copyWrap h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.copyWrap p {
+  margin: 0.85rem 0 0;
+  color: rgba(237, 247, 255, 0.9);
+  line-height: 1.65;
+}
+
+.footerMeta {
+  display: flex;
+  gap: 1.1rem;
+}
+
+.footerMeta div {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  padding: 0.6rem 0.72rem;
+  min-width: 130px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.footerMeta strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.footerMeta span {
+  font-size: 0.78rem;
+  color: rgba(237, 247, 255, 0.86);
+}
+
+.formPanel {
+  padding: 2rem 2rem 1.7rem;
+  display: grid;
+  align-content: center;
+  gap: 0.85rem;
+}
+
+.kicker {
+  margin: 0;
+  width: fit-content;
+  padding: 0.3rem 0.68rem;
+  border-radius: 999px;
+  background: #eef8ff;
+  border: 1px solid #d3e8fb;
+  color: #19608f;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.formPanel h2 {
+  margin: 0.35rem 0 0;
+  font-size: 2.25rem;
+  line-height: 1.05;
+  color: #12263d;
+}
+
+.subtitle {
+  margin: 0;
+  color: #5b6d81;
+}
+
+.fieldStack {
+  margin-top: 0.35rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field span {
+  color: #4d6178;
+  font-size: 0.9rem;
+}
+
+.field input {
+  border: 1px solid #d2deeb;
+  border-radius: 10px;
+  padding: 0.72rem 0.82rem;
+  font: inherit;
+  color: #12263d;
+  background: #ffffff;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #2b84b8;
+  box-shadow: 0 0 0 4px rgba(43, 132, 184, 0.16);
+}
+
+.loginBtn {
+  margin-top: 0.25rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(90deg, #1e88b3, #0b6f93);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.loginBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.loginBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+}
+
+.metaRow {
+  margin-top: 0.1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  color: #667990;
+  font-size: 0.9rem;
+}
+
+.metaRow a {
+  color: #0b6f93;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.metaRow a:hover {
+  text-decoration: underline;
+}
+
+.notice {
+  margin: 0;
+  border: 1px solid #ffc4b7;
+  background: #fff2ef;
+  color: #8f2c15;
+  border-radius: 10px;
+  padding: 0.62rem 0.72rem;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 960px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .visualPanel {
+    min-height: 280px;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .footerMeta {
+    display: none;
+  }
+
+  .formPanel {
+    padding: 1.25rem;
+  }
+}
