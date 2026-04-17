@@ -10,6 +10,8 @@ public interface DoctorService {
 
     DoctorResponse getDoctorById(UUID id);
 
+    DoctorResponse getDoctorByEmail(String email);
+
     DoctorResponse getDoctorByUserId(Long userId);
 
     DoctorResponse updateDoctor(UUID id, UpdateDoctorRequest request);

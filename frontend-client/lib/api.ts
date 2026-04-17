@@ -22,17 +22,32 @@ import {
 // - /api/notifications/** → Notification Service (8086)
 const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
+export interface DoctorProfile {
+  id: string;
+  userId: number;
+  email: string;
+}
+
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = await response.text();
+    let parsedMessage: string | undefined;
 
     try {
-      const parsed = JSON.parse(body) as { message?: string; error?: string };
-      const message = parsed.message ?? parsed.error;
-      throw new Error(message || `Request failed with status ${response.status}`);
+      const parsed = JSON.parse(body) as {
+        title?: string;
+        detail?: string;
+        message?: string;
+        error?: string;
+      };
+
+      const detail = parsed.detail ?? parsed.message ?? parsed.error;
+      parsedMessage = parsed.title && detail ? `${parsed.title}: ${detail}` : detail;
     } catch {
-      throw new Error(body || `Request failed with status ${response.status}`);
+      parsedMessage = undefined;
     }
+
+    throw new Error(parsedMessage || body || `Request failed with status ${response.status}`);
   }
 
   if (response.status === 204) {
@@ -168,6 +183,28 @@ export async function fetchPatientByEmail(email: string, token: string): Promise
   });
 
   return safeJson<Patient>(response);
+}
+
+export async function fetchDoctorByEmail(email: string, token: string): Promise<DoctorProfile> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/email/${email}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<DoctorProfile>(response);
+}
+
+export async function fetchDoctorByUserId(userId: number, token: string): Promise<DoctorProfile> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  return safeJson<DoctorProfile>(response);
 }
 
 export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {

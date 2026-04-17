@@ -3,21 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchPatientByEmail } from "@/lib/api";
-
-interface TelemedicineSession {
-  id: string;
-  appointmentId: string;
-  patientId: string;
-  doctorId: string;
-  roomName: string;
-  meetingUrl: string;
-  status: string;
-  createdAt: string;
-}
+import type { TelemedicineSessionResponse } from "@/app/types/telemedicine";
 
 export default function PatientTelemedicinePage() {
   const router = useRouter();
-  const [sessions, setSessions] = useState<TelemedicineSession[]>([]);
+  const [sessions, setSessions] = useState<TelemedicineSessionResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -54,7 +44,7 @@ export default function PatientTelemedicinePage() {
         throw new Error("Failed to fetch your telemedicine sessions");
       }
 
-      const data: TelemedicineSession[] = await res.json();
+      const data: TelemedicineSessionResponse[] = await res.json();
       setSessions(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
@@ -121,7 +111,7 @@ export default function PatientTelemedicinePage() {
           ) : (
             <ul className="divide-y divide-slate-200">
               {sessions.map((session) => (
-                <li key={session.id} className="p-6 hover:bg-slate-50 transition">
+                <li key={session.sessionId} className="p-6 hover:bg-slate-50 transition">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-lg font-medium text-slate-900">

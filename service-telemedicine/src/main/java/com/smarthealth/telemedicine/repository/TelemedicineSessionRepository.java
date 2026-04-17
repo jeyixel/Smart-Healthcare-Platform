@@ -16,4 +16,7 @@ public interface TelemedicineSessionRepository extends JpaRepository<Telemedicin
 
     // Custom query to find all sessions for a specific patient
     List<TelemedicineSession> findByPatientId(String patientId);
-}
+
+    // Custom query to find all sessions for a specific doctor
+    List<TelemedicineSession> findByDoctorId(String doctorId);
+}
