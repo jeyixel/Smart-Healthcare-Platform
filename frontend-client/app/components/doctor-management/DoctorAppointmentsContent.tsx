@@ -101,12 +101,43 @@ function formatTime(timeStr: string) {
 }
 
 function isToday(dateStr: string) {
-  const today = new Date().toISOString().slice(0, 10);
-  return dateStr === today;
+  const today = new Date();
+  const appointmentDate = new Date(dateStr + "T00:00:00");
+  
+  // Compare dates in the same timezone
+  return today.toDateString() === appointmentDate.toDateString();
 }
 
 function isFuture(dateStr: string) {
-  return dateStr > new Date().toISOString().slice(0, 10);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+  const appointmentDate = new Date(dateStr + "T00:00:00");
+  
+  return appointmentDate > today;
+}
+
+function getRelativeDateLabel(dateStr: string): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+  const appointmentDate = new Date(dateStr + "T00:00:00");
+  
+  // Calculate difference in days
+  const diffTime = appointmentDate.getTime() - today.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return "TODAY";
+  } else if (diffDays === 1) {
+    return "TOMORROW";
+  } else if (diffDays === -1) {
+    return "YESTERDAY";
+  } else if (diffDays > 1) {
+    return `In ${diffDays} days`;
+  } else if (diffDays < -1) {
+    return `${Math.abs(diffDays)} days ago`;
+  }
+  
+  return formatDate(dateStr); // Fallback to formatted date
 }
 
 function avatarColor(str: string) {
@@ -804,6 +835,7 @@ function AppointmentRow({
   const typeMeta = TYPE_META[appt.consultationType] ?? TYPE_META.PHYSICAL;
   const today = isToday(appt.appointmentDate);
   const upcoming = isFuture(appt.appointmentDate);
+  const relativeDateLabel = getRelativeDateLabel(appt.appointmentDate);
 
   return (
     <tr
@@ -879,32 +911,32 @@ function AppointmentRow({
       {/* Date */}
       <td style={{ padding: "14px 16px" }}>
         <div>
-          <p
-            style={{
-              margin: 0,
-              fontWeight: 600,
-              fontSize: "13px",
-              color: today ? "#0891b2" : "#334155",
-            }}
-          >
-            {formatDate(appt.appointmentDate)}
-          </p>
-          {today && (
+          <div>
+            <p
+              style={{
+                margin: 0,
+                fontWeight: 600,
+                fontSize: "13px",
+                color: today ? "#0891b2" : "#334155",
+              }}
+            >
+              {formatDate(appt.appointmentDate)}
+            </p>
             <span
               style={{
                 fontSize: "10px",
                 fontWeight: 700,
-                color: "#06b6d4",
-                background: "rgba(6,182,212,0.10)",
+                color: today ? "#06b6d4" : "#64748b",
+                background: today ? "rgba(6,182,212,0.10)" : "rgba(100,116,139,0.10)",
                 padding: "1px 7px",
                 borderRadius: "999px",
                 marginTop: "2px",
                 display: "inline-block",
               }}
             >
-              TODAY
+              {relativeDateLabel}
             </span>
-          )}
+          </div>
           {upcoming && !today && (
             <span
               style={{
@@ -1158,10 +1190,11 @@ export function DoctorAppointmentsContent() {
   // ── Derived stats ──────────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
     return {
       total: appointments.length,
-      todayCount: appointments.filter((a) => a.appointmentDate === today).length,
+      todayCount: appointments.filter((a) => isToday(a.appointmentDate)).length,
       pending: appointments.filter((a) => a.status === "PENDING").length,
       confirmed: appointments.filter((a) => a.status === "CONFIRMED").length,
       completed: appointments.filter((a) => a.status === "COMPLETED").length,

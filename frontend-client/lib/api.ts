@@ -9,16 +9,18 @@ import {
   PatientEvent,
   RegisterInput,
   NotificationLog,
-  AdminAppointment,
-  DashboardSummary,
-  SystemEvent,
-  MedicalHistory,
 } from "@/types/api";
 
-const ADMIN_API = process.env.NEXT_PUBLIC_ADMIN_API_BASE ?? "http://localhost:8087";
-const PATIENT_API = process.env.NEXT_PUBLIC_PATIENT_API_BASE ?? "http://localhost:8081";
-const NOTIFICATION_API = process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE ?? "http://localhost:8086";
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_URL ?? "http://localhost:8080";
+// API Gateway - Routes all requests through a single endpoint
+// The gateway (port 8080) automatically routes based on path patterns:
+// - /api/v1/auth/** → Auth Service (8087)
+// - /api/v1/admin/** → Admin Service (8087)
+// - /api/v1/patients/** → Patient Service (8081)
+// - /api/v1/doctors/** → Doctor Service (8082)
+// - /api/v1/appointments/** → Appointment Service (8083)
+// - /api/v1/prescriptions/** → Prescription Service (8088)
+// - /api/notifications/** → Notification Service (8086)
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
 async function safeJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -58,7 +60,7 @@ function normalizeListResponse<T>(payload: unknown): T[] {
 }
 
 export async function registerAdmin(input: RegisterInput): Promise<AuthResponse> {
-  const response = await fetch(`${ADMIN_API}/api/v1/auth/register`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -68,7 +70,7 @@ export async function registerAdmin(input: RegisterInput): Promise<AuthResponse>
 }
 
 export async function loginAdmin(input: LoginInput): Promise<AuthResponse> {
-  const response = await fetch(`${ADMIN_API}/api/v1/auth/login`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -78,7 +80,7 @@ export async function loginAdmin(input: LoginInput): Promise<AuthResponse> {
 }
 
 export async function requestPasswordOtp(input: ForgotPasswordOtpInput): Promise<{ message: string }> {
-  const response = await fetch(`${ADMIN_API}/api/v1/auth/forgot-password/request-otp`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/auth/forgot-password/request-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -88,7 +90,7 @@ export async function requestPasswordOtp(input: ForgotPasswordOtpInput): Promise
 }
 
 export async function resetForgotPassword(input: ForgotPasswordResetInput): Promise<{ message: string }> {
-  const response = await fetch(`${ADMIN_API}/api/v1/auth/forgot-password/reset`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/auth/forgot-password/reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -98,7 +100,7 @@ export async function resetForgotPassword(input: ForgotPasswordResetInput): Prom
 }
 
 export async function fetchPatients(): Promise<Patient[]> {
-  const response = await fetch(`${PATIENT_API}/api/v1/patients`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients`, {
     cache: "no-store",
   });
 
@@ -112,7 +114,7 @@ export async function updatePatientStatus(
   active: boolean,
   adminUserHeader: string,
 ): Promise<Patient> {
-  const url = new URL(`${ADMIN_API}/api/v1/admin/patients/${patientId}/status`);
+  const url = new URL(`${API_GATEWAY}/api/v1/admin/patients/${patientId}/status`);
   url.searchParams.set("active", String(active));
 
   const response = await fetch(url, {
@@ -127,7 +129,7 @@ export async function updatePatientStatus(
 }
 
 export async function fetchPatientEvents(): Promise<PatientEvent[]> {
-  const response = await fetch(`${PATIENT_API}/api/v1/patient-events`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patient-events`, {
     cache: "no-store",
   });
 
@@ -136,7 +138,7 @@ export async function fetchPatientEvents(): Promise<PatientEvent[]> {
 }
 
 export async function fetchPendingDoctors(token: string): Promise<DoctorApprovalItem[]> {
-  const response = await fetch(`${ADMIN_API}/api/v1/admin/doctors/pending`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/admin/doctors/pending`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -147,7 +149,7 @@ export async function fetchPendingDoctors(token: string): Promise<DoctorApproval
 }
 
 export async function approveDoctor(token: string, doctorId: number): Promise<DoctorApprovalItem> {
-  const response = await fetch(`${ADMIN_API}/api/v1/admin/doctors/${doctorId}/approve`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/admin/doctors/${doctorId}/approve`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -158,7 +160,7 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
 }
 
 export async function fetchPatientByEmail(email: string): Promise<Patient> {
-  const response = await fetch(`${PATIENT_API}/api/v1/patients/email/${email}`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
     cache: "no-store",
   });
 
@@ -166,7 +168,7 @@ export async function fetchPatientByEmail(email: string): Promise<Patient> {
 }
 
 export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
-  const response = await fetch(`${PATIENT_API}/api/v1/patients/${id}`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -176,7 +178,7 @@ export async function updatePatientProfile(id: string, data: Partial<Patient>): 
 }
 
 export async function fetchCurrentUser(token: string): Promise<CurrentUserProfile> {
-  const response = await fetch(`${ADMIN_API}/api/v1/auth/me`, {
+  const response = await fetch(`${API_GATEWAY}/api/v1/auth/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -187,7 +189,7 @@ export async function fetchCurrentUser(token: string): Promise<CurrentUserProfil
 }
 
 export async function fetchNotifications(recipient: string): Promise<NotificationLog[]> {
-  const response = await fetch(`${NOTIFICATION_API}/api/v1/notifications/logs/${recipient}`, {
+  const response = await fetch(`${API_GATEWAY}/api/notifications/logs/${recipient}`, {
     cache: "no-store",
   });
 

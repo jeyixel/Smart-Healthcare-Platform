@@ -2,10 +2,8 @@ package com.smarthealth.admin.service;
 
 import com.smarthealth.admin.config.AppointmentServiceProperties;
 import com.smarthealth.admin.config.PatientServiceProperties;
-import com.smarthealth.admin.dto.AppointmentResponse;
-import com.smarthealth.admin.dto.DashboardSummaryResponse;
-import com.smarthealth.admin.dto.PatientResponse;
-import com.smarthealth.admin.dto.SystemEventResponse;
+import com.smarthealth.admin.config.PaymentServiceProperties;
+import com.smarthealth.admin.dto.*;
 import com.smarthealth.admin.model.Role;
 import com.smarthealth.admin.repository.AdminActionLogRepository;
 import com.smarthealth.admin.repository.UserRepository;
@@ -14,7 +12,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,10 +24,64 @@ public class AnalyticsAdminService {
 
     private final RestClient patientRestClient;
     private final RestClient appointmentRestClient;
+    private final RestClient paymentRestClient;
     private final PatientServiceProperties patientProperties;
     private final AppointmentServiceProperties appointmentProperties;
+    private final PaymentServiceProperties paymentProperties;
     private final AdminActionLogRepository adminActionLogRepository;
     private final UserRepository userRepository;
+
+    public PaymentAnalysisResponse getPaymentAnalysis() {
+        List<ExternalPaymentResponse> payments = paymentRestClient.get()
+                .uri(paymentProperties.getEndpoints().getBase())
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<ExternalPaymentResponse>>() {});
+
+        if (payments == null || payments.isEmpty()) {
+            return PaymentAnalysisResponse.builder()
+                    .totalRevenue(BigDecimal.ZERO)
+                    .totalTransactions(0)
+                    .successRate(0.0)
+                    .statusBreakdown(Map.of())
+                    .trends(List.of())
+                    .build();
+        }
+
+        BigDecimal totalRevenue = payments.stream()
+                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                .map(ExternalPaymentResponse::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long successfulCount = payments.stream()
+                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                .count();
+
+        Map<String, Long> statusBreakdown = payments.stream()
+                .collect(Collectors.groupingBy(ExternalPaymentResponse::getStatus, Collectors.counting()));
+
+        Map<String, BigDecimal> dailyRevenue = payments.stream()
+                .filter(p -> "SUCCESS".equalsIgnoreCase(p.getStatus()))
+                .collect(Collectors.groupingBy(
+                        p -> p.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        Collectors.reducing(BigDecimal.ZERO, ExternalPaymentResponse::getAmount, BigDecimal::add)
+                ));
+
+        List<PaymentAnalysisResponse.DailyRevenue> trends = dailyRevenue.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> PaymentAnalysisResponse.DailyRevenue.builder()
+                        .date(e.getKey())
+                        .revenue(e.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        return PaymentAnalysisResponse.builder()
+                .totalRevenue(totalRevenue)
+                .totalTransactions(payments.size())
+                .successRate((double) successfulCount / payments.size() * 100)
+                .statusBreakdown(statusBreakdown)
+                .trends(trends)
+                .build();
+    }
 
     public DashboardSummaryResponse getDashboardSummary(String token) {
         // Fetch patient count

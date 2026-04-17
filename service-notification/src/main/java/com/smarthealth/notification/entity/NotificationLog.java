@@ -45,6 +45,6 @@ public class NotificationLog {
     private String errorMessage;
 
     @CreationTimestamp
-    @Column(name = "sent_at")
+    @Column(name = "sent_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime sentAt;
 }

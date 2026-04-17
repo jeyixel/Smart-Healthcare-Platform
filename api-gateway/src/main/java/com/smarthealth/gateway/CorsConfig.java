@@ -10,22 +10,22 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    private final String[] allowedOrigins;
+	private final String[] allowedOrigins;
 
-    public CorsConfig(@Value("${app.cors.allowed-origins:http://localhost:3000}") String allowedOrigins) {
-        this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .toArray(String[]::new);
-    }
-
-    // This class registers CORS for all gateway routes
+	public CorsConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
+		this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
+				.map(String::trim)
+				.filter(origin -> !origin.isEmpty())
+				.toArray(String[]::new);
+	}
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**")
-				.allowedOrigins(this.allowedOrigins)
+				.allowedOrigins(allowedOrigins)
 				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-				.allowedHeaders("*");
+				.allowedHeaders("*")
+				.allowCredentials(true)
+				.maxAge(3600L);
 	}
 }

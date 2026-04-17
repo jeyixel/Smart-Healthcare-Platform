@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useDoctorContext, DoctorNavSection } from "@/app/context/DoctorContext";
+import { ConfirmationModal } from "./ConfirmationModal";
+import { getDoctorName } from "@/app/utils/tokenUtils";
 
 interface NavItem {
   id: DoctorNavSection;
@@ -75,12 +78,11 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    id: "settings",
-    label: "Settings",
+    id: "profile",
+    label: "Profile",
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
   },
@@ -88,9 +90,11 @@ const navItems: NavItem[] = [
 
 export function DoctorSidebar() {
   const { session, activeSection, setActiveSection, sidebarCollapsed, toggleSidebar, logout } = useDoctorContext();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
-    <aside style={{
+    <>
+      <aside style={{
       width: sidebarCollapsed ? "72px" : "260px",
       minHeight: "100vh",
       background: "linear-gradient(180deg, #0a0f1e 0%, #0d1529 40%, #0b1220 100%)",
@@ -161,36 +165,6 @@ export function DoctorSidebar() {
         </button>
       </div>
 
-      {/* Doctor profile mini card */}
-      {!sidebarCollapsed && session && (
-        <div style={{
-          margin: "16px 12px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(8,145,178,0.06))",
-          border: "1px solid rgba(6,182,212,0.15)",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-        }}>
-          <div style={{
-            width: "40px", height: "40px", borderRadius: "50%",
-            background: "linear-gradient(135deg,#06b6d4,#0284c7)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 700, color: "#fff", fontSize: "15px", flexShrink: 0,
-            boxShadow: "0 0 12px rgba(6,182,212,0.4)",
-          }}>
-            {session.displayName.replace("Dr. ", "").charAt(0).toUpperCase()}
-          </div>
-          <div style={{ overflow: "hidden" }}>
-            <p style={{ margin: 0, color: "#e2e8f0", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {session.displayName}
-            </p>
-            <p style={{ margin: 0, color: "#06b6d4", fontSize: "11px", fontWeight: 600 }}>● Online</p>
-          </div>
-        </div>
-      )}
-
       {/* Nav label */}
       {!sidebarCollapsed && (
         <p style={{ margin: "8px 20px 6px", color: "#475569", fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
@@ -259,17 +233,20 @@ export function DoctorSidebar() {
       {/* Logout */}
       <div style={{ padding: sidebarCollapsed ? "12px 10px" : "12px", borderTop: "1px solid rgba(6,182,212,0.08)" }}>
         <button
-          onClick={logout}
+          onClick={() => setShowLogoutModal(true)}
           title={sidebarCollapsed ? "Logout" : undefined}
           style={{
             display: "flex", alignItems: "center", gap: "12px",
             padding: sidebarCollapsed ? "12px" : "11px 14px",
-            borderRadius: "10px", border: "none", cursor: "pointer",
-            background: "rgba(239,68,68,0.08)",
-            color: "#f87171", fontWeight: 500, fontSize: "14px",
-            transition: "all 0.2s", width: "100%",
+            borderRadius: "10px", border: "none",
+            cursor: "pointer", transition: "all 0.2s",
+            background: "rgba(239, 68, 68, 0.1)", color: "#ef4444",
+            fontSize: "14px", fontWeight: 500,
+            width: "100%", textAlign: "left",
             justifyContent: sidebarCollapsed ? "center" : "flex-start",
           }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.2)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239, 68, 68, 0.1)"; }}
         >
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -278,5 +255,21 @@ export function DoctorSidebar() {
         </button>
       </div>
     </aside>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to sign in again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={() => {
+          logout();
+          setShowLogoutModal(false);
+        }}
+        onCancel={() => setShowLogoutModal(false)}
+      />
+    </>
   );
 }

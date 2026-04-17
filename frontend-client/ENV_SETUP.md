@@ -1,38 +1,50 @@
 # Frontend Environment Setup & Connection Guide
 
 ## Overview
-The Smart Healthcare Platform frontend is a Next.js application that connects to two backend microservices:
-- **Admin Service** (port 8087) - User authentication and patient management
-- **Patient Service** (port 8081) - Patient data and event logs
+The Smart Healthcare Platform frontend is a Next.js application that connects to the backend through an **API Gateway** that routes all requests to the appropriate microservices:
+- **API Gateway** (port 8080) - Routes requests to all backend services
+  - Admin Service (8087)
+  - Doctor Service (8082)
+  - Appointment Service (8083)
+  - Patient Service (8081)
+  - Prescription Service (8088)
+  - Notification Service (8086)
 
 ## Prerequisites
 
 1. **Node.js** (v18 or higher)
 2. **Backend Services Running:**
-   - Admin Service on `http://localhost:8087`
-   - Patient Service on `http://localhost:8081`
+   - API Gateway on `http://localhost:8080` (routes to all services)
+   - Individual services on their respective ports (see above)
    - Kafka/Redpanda on `localhost:29092`
 
 ## Environment Configuration
 
 ### 1. Development Environment (`.env.local`)
 
-The `.env.local` file is already created with default localhost settings:
+The `.env.local` file should use the API Gateway:
 
 ```bash
-NEXT_PUBLIC_ADMIN_API_BASE=http://localhost:8087
-NEXT_PUBLIC_PATIENT_API_BASE=http://localhost:8081
+NEXT_PUBLIC_API_GATEWAY_BASE=http://localhost:8080
 ```
 
 **This is used automatically when running `npm run dev`.**
 
+**Note:** The API Gateway automatically routes based on path patterns:
+- `/api/v1/auth/**` → Auth Service (8087)
+- `/api/v1/admin/**` → Admin Service (8087)
+- `/api/v1/doctors/**` → Doctor Service (8082)
+- `/api/v1/appointments/**` → Appointment Service (8083)
+- `/api/v1/patients/**` → Patient Service (8081)
+- `/api/v1/prescriptions/**` → Prescription Service (8088)
+- `/api/notifications/**` → Notification Service (8086)
+
 ### 2. Production Environment (`.env.production`)
 
-For production deployments, update `.env.production` with your actual service URLs:
+For production deployments, update `.env.production` with your API Gateway URL:
 
 ```bash
-NEXT_PUBLIC_ADMIN_API_BASE=https://admin-service.yourdomain.com
-NEXT_PUBLIC_PATIENT_API_BASE=https://patient-service.yourdomain.com
+NEXT_PUBLIC_API_GATEWAY_BASE=https://api-gateway.yourdomain.com
 ```
 
 **This is used when running `npm run build` and deploying.**
@@ -41,10 +53,20 @@ NEXT_PUBLIC_PATIENT_API_BASE=https://patient-service.yourdomain.com
 
 | Variable | Purpose | Default | Example |
 |----------|---------|---------|---------|
-| `NEXT_PUBLIC_ADMIN_API_BASE` | Admin service URL | `http://localhost:8087` | `http://localhost:8087` |
-| `NEXT_PUBLIC_PATIENT_API_BASE` | Patient service URL | `http://localhost:8081` | `http://localhost:8081` |
+| `NEXT_PUBLIC_API_GATEWAY_BASE` | API Gateway URL (routes to all services) | `http://localhost:8080` | `https://api-gateway.yourdomain.com` |
 
 **Note:** Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser and should not contain sensitive secrets.
+
+## API Gateway Architecture
+
+The API Gateway simplifies the frontend by:
+1. **Single Endpoint** - All API calls go through one URL
+2. **Automatic Routing** - Requests are routed to correct services based on path
+3. **Centralized Authentication** - JWT tokens are validated by the gateway
+4. **Load Balancing** - Can be distributed across multiple instances
+5. **Request/Response Logging** - Centralized logging of all API traffic
+
+See `api-gateway/src/main/resources/application.properties` for routing configuration.
 
 ## Running the Frontend
 

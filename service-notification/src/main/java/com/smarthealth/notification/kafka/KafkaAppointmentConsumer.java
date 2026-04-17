@@ -44,22 +44,50 @@ public class KafkaAppointmentConsumer {
 
     private void processAppointmentEvent(AppointmentEventDto event, String topic) {
         log.info("Processing {} event for appointment: {}", topic, event.getAppointmentId());
+        
+        // Map CANCELLED status to the correct template identifier
+        if ("CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            event.setEventType("APPOINTMENT_CANCELLED");
+        }
+        
         try {
-            // 1. Send Email
+            // 1. Send Email (Patient)
             if (isValidEmail(event.getPatientEmail())) {
                 EmailRequest emailReq = new EmailRequest();
                 emailReq.setTo(event.getPatientEmail());
-                emailReq.setSubject(templateService.buildAppointmentSubject(topic));
+                emailReq.setSubject(templateService.buildAppointmentSubject(topic, event));
                 emailReq.setBody(templateService.buildAppointmentEmailBody(event));
                 emailService.sendEmail(emailReq, topic);
             }
 
-            // 2. Send SMS
+            // 2. Send SMS (Patient)
             if (isValidPhone(event.getPatientPhone())) {
                 SmsRequest smsReq = new SmsRequest();
                 smsReq.setTo(event.getPatientPhone());
                 smsReq.setMessage(templateService.buildAppointmentSmsBody(event));
                 smsService.sendSms(smsReq, topic);
+            }
+
+            // 3. Notify Doctor (Created, Cancelled, Completed)
+            boolean notifyDoctor = "APPOINTMENT_CREATED".equals(event.getEventType()) || 
+                                   "APPOINTMENT_CANCELLED".equals(event.getEventType()) || 
+                                   ("APPOINTMENT_STATUS_CHANGED".equals(event.getEventType()) && 
+                                   ("CANCELLED".equals(event.getStatus()) || "COMPLETED".equals(event.getStatus())));
+            if (notifyDoctor) {
+                if (isValidEmail(event.getDoctorEmail())) {
+                    EmailRequest doctorEmail = new EmailRequest();
+                    doctorEmail.setTo(event.getDoctorEmail());
+                    doctorEmail.setSubject(templateService.buildDoctorAppointmentSubject(topic));
+                    doctorEmail.setBody(templateService.buildDoctorAppointmentEmailBody(event));
+                    emailService.sendEmail(doctorEmail, topic + "-doctor");
+                }
+                
+                if (isValidPhone(event.getDoctorPhone())) {
+                    SmsRequest doctorSms = new SmsRequest();
+                    doctorSms.setTo(event.getDoctorPhone());
+                    doctorSms.setMessage(templateService.buildDoctorAppointmentSmsBody(event));
+                    smsService.sendSms(doctorSms, topic + "-doctor");
+                }
             }
         } catch (Exception e) {
             log.error("Exhausted retries for {}: {}. Sending to DLQ.", topic, event.getAppointmentId());

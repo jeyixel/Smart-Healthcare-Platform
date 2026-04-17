@@ -12,12 +12,23 @@ public class NotificationTemplateService {
 
     // --- Appointment Templates ---
 
-    public String buildAppointmentSubject(String eventType) {
-        return switch (eventType) {
+    public String buildAppointmentSubject(String topic, AppointmentEventDto event) {
+        if ("appointment-status-changed".equals(topic) && "CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            return "Appointment Cancelled – Smart Healthcare";
+        }
+        return switch (topic) {
             case "appointment-created" -> "Appointment Confirmed - Smart Healthcare";
             case "appointment-rescheduled" -> "Appointment Rescheduled - Smart Healthcare";
             case "appointment-status-changed" -> "Appointment Status Updated";
             case "appointment-reminder" -> "Reminder: Upcoming Appointment";
+            default -> "Notification from Smart Healthcare";
+        };
+    }
+
+    public String buildDoctorAppointmentSubject(String eventType) {
+        return switch (eventType) {
+            case "appointment-created" -> "New Appointment Booked - Smart Healthcare";
+            case "appointment-status-changed" -> "Appointment Status Updated - Smart Healthcare";
             default -> "Notification from Smart Healthcare";
         };
     }
@@ -36,8 +47,51 @@ public class NotificationTemplateService {
                 "New Date: " + event.getAppointmentDate() + "\n" +
                 "New Time: " + event.getAppointmentTime() + footer;
             case "APPOINTMENT_CANCELLED" -> greeting +
+                "Your appointment with Dr. " + event.getDoctorName() +
+                " scheduled for " + event.getAppointmentDate() + " at " + event.getAppointmentTime() +
+                " has been cancelled.\n\n" +
+                "Appointment Details:\n" +
+                "- Doctor: Dr. " + event.getDoctorName() + "\n" +
+                "- Date: " + event.getAppointmentDate() + "\n" +
+                "- Time: " + event.getAppointmentTime() + "\n\n" +
+                "Please log in to the platform to rebook your appointment at your earliest convenience.\n" +
+                footer;
                 "Your appointment with Dr. " + event.getDoctorName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
+            case "APPOINTMENT_STATUS_CHANGED" -> {
+                if ("CANCELLED".equals(event.getStatus())) {
+                    yield greeting + "Your appointment with Dr. " + event.getDoctorName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
+                } else if ("COMPLETED".equals(event.getStatus())) {
+                    yield greeting + "Your appointment with Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + " has been marked as completed." + footer;
+                } else {
+                    yield greeting + "There is an update regarding your appointment with Dr. " + event.getDoctorName() + ". New Status: " + event.getStatus() + footer;
+                }
+            }
             default -> greeting + "There is an update regarding your appointment with Dr. " + event.getDoctorName() + "." + footer;
+        };
+    }
+
+    public String buildDoctorAppointmentEmailBody(AppointmentEventDto event) {
+        String greeting = "Dear Dr. " + (event.getDoctorName() != null ? event.getDoctorName() : "Doctor") + ",\n\n";
+        String footer = "\n\nRegards,\nSmart Healthcare Team";
+
+        return switch (event.getEventType()) {
+            case "APPOINTMENT_CREATED" -> greeting +
+                "A new appointment has been booked with you.\n" +
+                "Patient: " + event.getPatientName() + "\n" +
+                "Date: " + event.getAppointmentDate() + "\n" +
+                "Time: " + event.getAppointmentTime() + footer;
+            case "APPOINTMENT_STATUS_CHANGED" -> {
+                if ("CANCELLED".equals(event.getStatus())) {
+                    yield greeting + "The appointment with patient " + event.getPatientName() + " scheduled for " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + " has been cancelled." + footer;
+                } else if ("COMPLETED".equals(event.getStatus())) {
+                    yield greeting + "The appointment with patient " + event.getPatientName() + " on " + event.getAppointmentDate() + " has been marked as completed." + footer;
+                } else {
+                    yield greeting + "There is an update regarding your appointment with patient " + event.getPatientName() + ". New Status: " + event.getStatus() + footer;
+                }
+            }
+            case "APPOINTMENT_CANCELLED" -> greeting +
+                "The appointment with patient " + event.getPatientName() + " scheduled for " + event.getAppointmentDate() + " has been cancelled." + footer;
+            default -> greeting + "There is an update regarding your appointment with patient " + event.getPatientName() + "." + footer;
         };
     }
 
@@ -46,7 +100,33 @@ public class NotificationTemplateService {
             case "APPOINTMENT_CREATED" -> "Hi, your appointment with Dr. " + event.getDoctorName() + " is confirmed on " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + ".";
             case "APPOINTMENT_RESCHEDULED" -> "Appointment Rescheduled: Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + ".";
             case "APPOINTMENT_CANCELLED" -> "Appointment with Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + " has been cancelled.";
+            case "APPOINTMENT_STATUS_CHANGED" -> {
+                if ("CANCELLED".equals(event.getStatus())) {
+                    yield "Appointment with Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + " has been cancelled.";
+                } else if ("COMPLETED".equals(event.getStatus())) {
+                    yield "Appointment with Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + " is completed.";
+                } else {
+                    yield "Update on your appointment with Dr. " + event.getDoctorName() + ". New Status: " + event.getStatus();
+                }
+            }
             default -> "Update on your appointment with Dr. " + event.getDoctorName() + ". Check portal for details.";
+        };
+    }
+
+    public String buildDoctorAppointmentSmsBody(AppointmentEventDto event) {
+        return switch (event.getEventType()) {
+            case "APPOINTMENT_CREATED" -> "New appointment booked: Patient " + event.getPatientName() + " on " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + ".";
+            case "APPOINTMENT_CANCELLED" -> "Appointment cancelled: Patient " + event.getPatientName() + " on " + event.getAppointmentDate() + ".";
+            case "APPOINTMENT_STATUS_CHANGED" -> {
+                if ("CANCELLED".equals(event.getStatus())) {
+                    yield "Appointment cancelled: Patient " + event.getPatientName() + " on " + event.getAppointmentDate() + " at " + event.getAppointmentTime() + ".";
+                } else if ("COMPLETED".equals(event.getStatus())) {
+                    yield "Appointment completed: Patient " + event.getPatientName() + " on " + event.getAppointmentDate() + ".";
+                } else {
+                    yield "Update on appointment with " + event.getPatientName() + ". Status: " + event.getStatus();
+                }
+            }
+            default -> "Update on appointment with " + event.getPatientName() + ".";
         };
     }
 

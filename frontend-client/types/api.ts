@@ -86,6 +86,8 @@ export interface AdminAppointment {
   id: string;
   patientId: string;
   doctorId: string;
+  patientName: string;
+  doctorName: string;
   appointmentDate: string;
   appointmentTime: string;
   consultationType: "VIRTUAL" | "PHYSICAL";
@@ -122,3 +124,15 @@ export interface MedicalHistory {
   [key: string]: any;
 }
 
+export interface DailyRevenue {
+  date: string;
+  revenue: number;
+}
+
+export interface PaymentAnalysis {
+  totalRevenue: number;
+  totalTransactions: number;
+  successRate: number;
+  statusBreakdown: Record<string, number>;
+  trends: DailyRevenue[];
+}
