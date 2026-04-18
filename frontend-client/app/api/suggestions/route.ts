@@ -60,7 +60,7 @@ ${formattedHistory}`;
     try {
       console.log("[AI_SUGGESTIONS] Prompting Gemini model...");
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
       });
       console.log("[AI_SUGGESTIONS] Gemini responded successfully.");
