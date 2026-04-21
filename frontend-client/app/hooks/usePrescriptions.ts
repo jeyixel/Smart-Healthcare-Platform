@@ -87,7 +87,10 @@ export function usePrescriptions() {
         headers: { Authorization: `Bearer ${session.token}` },
         cache: "no-store",
       });
-      if (!res.ok) throw new Error("Failed to fetch prescriptions");
+      if (!res.ok) {
+        const body = await res.text().catch(() => "no body");
+        throw new Error(`Failed to fetch prescriptions: ${res.status} - ${body}`);
+      }
       const data = await res.json();
       setPrescriptions(Array.isArray(data) ? data : []);
     } catch (e) {
