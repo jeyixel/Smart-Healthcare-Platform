@@ -241,7 +241,7 @@ export async function fetchPatientByEmail(token: string, email: string): Promise
   return safeJson<Patient>(response);
 }
 
-export async function fetchDoctorByEmail(email: string, token: string): Promise<DoctorProfile> {
+export async function fetchDoctorByEmail(token: string, email: string): Promise<DoctorProfile> {
   const response = await fetch(`${API_GATEWAY}/api/v1/doctors/email/${email}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -252,7 +252,7 @@ export async function fetchDoctorByEmail(email: string, token: string): Promise<
   return safeJson<DoctorProfile>(response);
 }
 
-export async function fetchDoctorByUserId(userId: number, token: string): Promise<DoctorProfile> {
+export async function fetchDoctorByUserId(token: string, userId: number): Promise<DoctorProfile> {
   const response = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -338,8 +338,8 @@ export async function fetchRecentEvents(token: string): Promise<SystemEvent[]> {
 }
 
 export async function fetchPatientMedicalHistory(
+  token: string,
   patientId: string,
-  token: string
 ): Promise<MedicalHistory[]> {
   const response = await fetch(
     `${API_GATEWAY}/api/v1/patients/${patientId}/medical-histories`,
@@ -406,4 +406,3 @@ export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalys
 
   return safeJson<PaymentAnalysis>(response);
 }
-

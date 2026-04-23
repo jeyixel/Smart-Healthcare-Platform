@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     // Fetch medical history
-    const history = await fetchPatientMedicalHistory(patientId, token);
+    const history = await fetchPatientMedicalHistory(token, patientId);
 
     // Format top 3 entries
     if (!history || history.length === 0) {

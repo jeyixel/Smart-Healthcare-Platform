@@ -1,6 +1,7 @@
 package com.smarthealth.gateway.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +32,12 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
+        String sanitizedToken = sanitizeToken(token);
+
         return Jwts.parser()
                 .verifyWith(getSignInKey())
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(sanitizedToken)
                 .getPayload();
     }
 
@@ -43,7 +46,25 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token) {
-        return !isTokenExpired(token);
+        try {
+            return !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private String sanitizeToken(String token) {
+        if (token == null) {
+            throw new IllegalArgumentException("Token cannot be null");
+        }
+
+        String trimmed = token.trim();
+        long dotCount = trimmed.chars().filter(ch -> ch == '.').count();
+        if (trimmed.isEmpty() || dotCount != 2) {
+            throw new IllegalArgumentException("Invalid JWT compact format");
+        }
+
+        return trimmed;
     }
 
     private SecretKey getSignInKey() {

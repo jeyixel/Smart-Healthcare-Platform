@@ -1,6 +1,7 @@
 package com.smarthealth.gateway.filter;
 
 import com.smarthealth.gateway.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
@@ -22,9 +23,10 @@ public class AuthenticationFilter implements Filter {
         this.jwtUtil = jwtUtil;
     }
 
-    private final List<String> whiteListedEndpoints = List.of(
+    private static final List<String> WHITE_LISTED_PREFIXES = List.of(
             "/api/v1/auth/login",
-            "/api/v1/auth/register"
+            "/api/v1/auth/register",
+            "/api/v1/auth/forgot-password/"
     );
 
     @Override
@@ -35,77 +37,81 @@ public class AuthenticationFilter implements Filter {
 
         String path = httpRequest.getRequestURI();
 
-        // Allow CORS preflight (OPTIONS) requests through without authentication
-        // so that CorsConfig can add the proper Access-Control-Allow-* headers
-        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod()) || isWhitelisted(path)) {
             chain.doFilter(request, response);
             return;
         }
 
-        // Check if path is whitelisted (auth endpoints)
-        if (whiteListedEndpoints.stream().anyMatch(path::contains)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        // Check for Authorization header
         String authHeader = httpRequest.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            httpResponse.getWriter().write("Missing or invalid Authorization header");
+            writeUnauthorized(httpResponse, "Missing or invalid Authorization header");
             return;
         }
 
-        String token = authHeader.substring(7);
-        try {
-            // this part is important for the telemedicine service, extracts username and pw then
-            // sends it to the telemedicine service via headers
-            if (jwtUtil.validateToken(token)) {
-                // Extract claims
-                String userName = jwtUtil.extractUsername(token);
-                String userEmail = jwtUtil.extractClaim(token, claims -> claims.get("email", String.class));
-                if (userEmail == null) {
-                    userEmail = userName;
-                }
-
-                final String finalUserEmail = userEmail;
-
-                // Create a mutable request wrapper to inject headers
-                HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
-                    @Override
-                    public String getHeader(String name) {
-                        if ("X-User-Name".equalsIgnoreCase(name)) return userName;
-                        if ("X-User-Email".equalsIgnoreCase(name)) return finalUserEmail;
-                        return super.getHeader(name);
-                    }
-                };
-
-                // Set SecurityContext for Spring Security
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userName, 
-                    null, 
-                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                );
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                
-                // If valid, continue the filter chain
-                chain.doFilter(wrappedRequest, response);
-            } else {
-                httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                httpResponse.getWriter().write("Invalid or expired token");
-            }
-        } catch (Exception e) {
-            // Log the actual error for debugging
-            System.err.println("Gateway Error: " + e.getMessage());
-            e.printStackTrace();
-            
-            if (e.getMessage().contains("ResourceAccessException") || e.getMessage().contains("Connection")) {
-                httpResponse.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-                httpResponse.getWriter().write("Downstream service unreachable: " + e.getMessage());
-            } else {
-                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                httpResponse.getWriter().write("Internal Gateway Error: " + e.getMessage());
-            }
+        String token = authHeader.substring(7).trim();
+        if (token.isEmpty() || !isLikelyCompactJwt(token)) {
+            writeUnauthorized(httpResponse, "Invalid token format");
+            return;
         }
+
+        try {
+            if (!jwtUtil.validateToken(token)) {
+                writeUnauthorized(httpResponse, "Invalid or expired token");
+                return;
+            }
+
+            String userName = jwtUtil.extractUsername(token);
+            if (userName == null || userName.isBlank()) {
+                writeUnauthorized(httpResponse, "Invalid token payload");
+                return;
+            }
+
+            String userEmail = jwtUtil.extractClaim(token, claims -> claims.get("email", String.class));
+            if (userEmail == null || userEmail.isBlank()) {
+                userEmail = userName;
+            }
+
+            final String finalUserName = userName;
+            final String finalUserEmail = userEmail;
+
+            HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
+                @Override
+                public String getHeader(String name) {
+                    if ("X-User-Name".equalsIgnoreCase(name)) return finalUserName;
+                    if ("X-User-Email".equalsIgnoreCase(name)) return finalUserEmail;
+                    return super.getHeader(name);
+                }
+            };
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    userName,
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            chain.doFilter(wrappedRequest, response);
+        } catch (JwtException | IllegalArgumentException e) {
+            SecurityContextHolder.clearContext();
+            writeUnauthorized(httpResponse, "Invalid or expired token");
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+            httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            httpResponse.setContentType("text/plain");
+            httpResponse.getWriter().write("Internal Gateway Error");
+        }
+    }
+
+    private boolean isWhitelisted(String path) {
+        return WHITE_LISTED_PREFIXES.stream().anyMatch(path::startsWith);
+    }
+
+    private boolean isLikelyCompactJwt(String token) {
+        return token.chars().filter(ch -> ch == '.').count() == 2;
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("text/plain");
+        response.getWriter().write(message);
     }
 }

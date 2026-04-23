@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { fetchPatientByEmail } from "@/lib/api";
 import type { TelemedicineSessionResponse } from "@/app/types/telemedicine";
 
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+
 export default function PatientTelemedicinePage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<TelemedicineSessionResponse[]>([]);
@@ -31,10 +33,10 @@ export default function PatientTelemedicinePage() {
       setLoading(true);
       setError(null);
       // 1. Get the patient profile to retrieve the patientId
-      const patient = await fetchPatientByEmail(email, token);
+      const patient = await fetchPatientByEmail(token, email);
 
       // 2. Fetch the telemedicine sessions from the gateway
-      const res = await fetch(`http://localhost:8080/api/v1/telemedicine/sessions/patient/${patient.id}`, {
+      const res = await fetch(`${API_GATEWAY}/api/v1/telemedicine/sessions/patient/${patient.id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

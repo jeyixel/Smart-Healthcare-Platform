@@ -79,7 +79,10 @@ export function usePrescriptions() {
         headers: { Authorization: `Bearer ${session.token}` },
         cache: "no-store",
       });
-      if (!docRes.ok) throw new Error("Failed to fetch doctor");
+      if (!docRes.ok) {
+        const reason = await docRes.text();
+        throw new Error(reason || "Doctor profile not found for your account. Please contact admin.");
+      }
       const docData = await docRes.json();
 
       // 3. Fetch prescriptions for THIS doctor only
