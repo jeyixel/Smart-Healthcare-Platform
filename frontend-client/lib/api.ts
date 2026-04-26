@@ -263,10 +263,13 @@ export async function fetchDoctorByUserId(token: string, userId: number): Promis
   return safeJson<DoctorProfile>(response);
 }
 
-export async function updatePatientProfile(id: string, data: Partial<Patient>): Promise<Patient> {
+export async function updatePatientProfile(token: string, id: string, data: Partial<Patient>): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
     body: JSON.stringify(data),
   });
 

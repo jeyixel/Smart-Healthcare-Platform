@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePatientAppointments, ConsultationType, AppointmentStatus } from "@/app/hooks/usePatientAppointments";
 import PatientNavbar from "@/app/components/common/navbar/PatientNavbar";
 
-export function PatientAppointmentManagementContent() {
+export function PatientAppointmentManagementContent({ hideNavbar = false }: { hideNavbar?: boolean }) {
   const { appointments, patient, doctors, loading, error, createAppointment, rescheduleAppointment, deleteAppointment } = usePatientAppointments();
   const [activeTab, setActiveTab] = useState<'my-appointments' | 'book-appointment'>('my-appointments');
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
@@ -105,7 +105,7 @@ export function PatientAppointmentManagementContent() {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-[#0a0f1c]">
-        <PatientNavbar />
+        {!hideNavbar && <PatientNavbar />}
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#4fd1c5] border-t-transparent"></div>
@@ -117,10 +117,10 @@ export function PatientAppointmentManagementContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1c] text-slate-200 selection:bg-[#4fd1c5]/30 pb-12">
-      <PatientNavbar />
+    <div className={`min-h-screen ${hideNavbar ? "" : "bg-[#0a0f1c]"} text-slate-200 selection:bg-[#4fd1c5]/30 pb-12`}>
+      {!hideNavbar && <PatientNavbar />}
       
-      <main className="mx-auto max-w-7xl px-4 pt-32 sm:px-6 lg:px-8">
+      <main className={`mx-auto max-w-7xl px-4 ${hideNavbar ? "pt-4" : "pt-32"} sm:px-6 lg:px-8`}>
         {/* Header Section */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
