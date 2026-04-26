@@ -53,7 +53,7 @@ export default function PatientPrescriptionsPage() {
                 <p className="text-sm font-bold text-white">{patientName || "Loading profile..."}</p>
              </div>
              <button
-                onClick={() => router.push("/patient-landing")}
+                onClick={() => router.push("/patient")}
                 className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3 hover:bg-white/10 transition-colors flex items-center gap-2 text-sm font-bold text-slate-300"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>

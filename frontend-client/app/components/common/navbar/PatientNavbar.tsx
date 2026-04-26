@@ -8,13 +8,13 @@ import { fetchNotifications } from "@/lib/api";
 import { NotificationLog } from "@/types/api";
 
 const NAV_LINKS = [
-  { label: "Home",            href: "/patient-landing#home" },
-  { label: "Telemedicine",    href: "/patient-landing/telemedicine" },
-  { label: "AI Suggestions",  href: "/patient-landing/ai-suggestions" },
-  { label: "Services",        href: "/patient-landing#services" },
-  { label: "About Us",        href: "/patient-landing#about" },
-  { label: "Blog",            href: "/patient-landing#blog" },
-  { label: "Contact Us",      href: "/patient-landing#contact" },
+  { label: "Home",            href: "/patient#home" },
+  { label: "Telemedicine",    href: "/patient/telemedicine" },
+  { label: "AI Suggestions",  href: "/patient/ai-suggestions" },
+  { label: "Services",        href: "/patient#services" },
+  { label: "About Us",        href: "/patient#about" },
+  { label: "Blog",            href: "/patient#blog" },
+  { label: "Contact Us",      href: "/patient#contact" },
 ];
 
 function NotificationIcon({ type }: { type: string }) {
@@ -191,10 +191,10 @@ export default function PatientNavbar() {
           {/* Desktop Links */}
           <ul className={styles.navLinks} role="list">
             {NAV_LINKS.map((link, i) => {
-              const isLandingPage = pathname === "/" || pathname === "/patient-landing";
+              const isLandingPage = pathname === "/" || pathname === "/patient";
               const isActive = (isLandingPage && i === 0 && link.href.startsWith("#")) || 
                                pathname === link.href || 
-                               (pathname.startsWith(link.href) && link.href !== "/" && link.href !== "/patient-landing");
+                               (pathname.startsWith(link.href) && link.href !== "/" && link.href !== "/patient");
               
               return (
                 <li key={link.label}>
@@ -212,8 +212,8 @@ export default function PatientNavbar() {
           {/* Right-side actions */}
           <div className={styles.navActions}>
             <Link 
-              href="/patient-landing/book" 
-              className={`${styles.btnBook} ${pathname === "/patient-landing/book" ? styles.btnBookActive : ""}`} 
+              href="/patient/book" 
+              className={`${styles.btnBook} ${pathname === "/patient/book" ? styles.btnBookActive : ""}`} 
               id="nav-book-btn"
             >
               Book Appointment
@@ -273,7 +273,7 @@ export default function PatientNavbar() {
                       </ul>
 
                       <div className={styles.dropdownFooter}>
-                        <Link href="/patient-landing/notifications" className={styles.viewAllLink} onClick={() => setNotifOpen(false)}>
+                        <Link href="/patient/notifications" className={styles.viewAllLink} onClick={() => setNotifOpen(false)}>
                           View all notifications
                         </Link>
                       </div>
@@ -309,7 +309,7 @@ export default function PatientNavbar() {
 
                       <ul className={styles.profileMenuList} role="list">
                         <li>
-                          <Link href="/patient-landing/profile" className={styles.profileMenuItem} id="profile-view-link">
+                          <Link href="/patient/profile" className={styles.profileMenuItem} id="profile-view-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                               <circle cx="12" cy="7" r="4" />
@@ -318,7 +318,7 @@ export default function PatientNavbar() {
                           </Link>
                         </li>
                         <li>
-                          <Link href="/patient-landing/book" className={styles.profileMenuItem} id="profile-appointments-link">
+                          <Link href="/patient/book" className={styles.profileMenuItem} id="profile-appointments-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <rect x="3" y="4" width="18" height="18" rx="2" />
                               <line x1="16" y1="2" x2="16" y2="6" />
@@ -329,7 +329,7 @@ export default function PatientNavbar() {
                           </Link>
                         </li>
                         <li>
-                          <Link href="/patient-landing/prescriptions" className={styles.profileMenuItem} id="profile-health-link">
+                          <Link href="/patient/prescriptions" className={styles.profileMenuItem} id="profile-health-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                             </svg>
@@ -417,7 +417,7 @@ export default function PatientNavbar() {
             ))}
           </ul>
           <div className={styles.mobileActions}>
-            <Link href="/patient-landing/book" className={styles.mobileBtnBook}
+            <Link href="/patient/book" className={styles.mobileBtnBook}
                   id="mob-book-btn" onClick={() => setMenuOpen(false)}>
               Book Appointment
             </Link>

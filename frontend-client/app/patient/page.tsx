@@ -1,9 +1,9 @@
 import PatientLandingPage from "@/app/components/common/landing/PatientLandingPage";
 
 /**
- * Public patient-facing landing page
- * Route: /patient-landing
+ * Patient Dashboard / Landing page
+ * Route: /patient
  */
-export default function PatientLandingRoute() {
+export default function PatientDashboardRoute() {
   return <PatientLandingPage />;
 }

@@ -386,6 +386,7 @@
 /* Doctor image */
 .doctorImg {
   position: relative;
+  top: 15px;
   z-index: 3;
   width: 100%;
   max-width: 580px;
