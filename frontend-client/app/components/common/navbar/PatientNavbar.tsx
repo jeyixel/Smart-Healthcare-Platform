@@ -73,6 +73,7 @@ export default function PatientNavbar() {
   const [patientEmail, setPatientEmail] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const pathname = usePathname();
+  const isLandingPage = pathname === "/" || pathname === "/patient";
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -191,7 +192,6 @@ export default function PatientNavbar() {
           {/* Desktop Links */}
           <ul className={styles.navLinks} role="list">
             {NAV_LINKS.map((link, i) => {
-              const isLandingPage = pathname === "/" || pathname === "/patient";
               const isActive = (isLandingPage && i === 0 && link.href.startsWith("#")) || 
                                pathname === link.href || 
                                (pathname.startsWith(link.href) && link.href !== "/" && link.href !== "/patient");
@@ -212,14 +212,14 @@ export default function PatientNavbar() {
           {/* Right-side actions */}
           <div className={styles.navActions}>
             <Link 
-              href="/patient/book" 
+              href={isLandingPage ? "/login" : "/patient/book"} 
               className={`${styles.btnBook} ${pathname === "/patient/book" ? styles.btnBookActive : ""}`} 
               id="nav-book-btn"
             >
               Book Appointment
             </Link>
 
-            {isAuthenticated ? (
+            {isAuthenticated && !isLandingPage ? (
               <>
                 {/* ── Notification Bell ── */}
                 <div className={styles.iconGroup} ref={notifRef}>
@@ -365,12 +365,12 @@ export default function PatientNavbar() {
                   )}
                 </div>
               </>
-            ) : (
+            ) : (!isAuthenticated || isLandingPage) ? (
               <div className={styles.authLinks}>
                 <Link href="/login" className={styles.loginLink}>Login</Link>
                 <Link href="/register" className={styles.btnRegister}>Register</Link>
               </div>
-            )}
+            ) : null}
 
           </div>
 
@@ -396,7 +396,7 @@ export default function PatientNavbar() {
       >
         <div className={styles.mobileMenuInner}>
           {/* Mobile profile strip */}
-          {isAuthenticated && (
+          {isAuthenticated && !isLandingPage && (
             <div className={styles.mobileProfile}>
               <div className={styles.mobileProfileAvatar}>{patientName.charAt(0).toUpperCase()}</div>
               <div>
@@ -417,11 +417,11 @@ export default function PatientNavbar() {
             ))}
           </ul>
           <div className={styles.mobileActions}>
-            <Link href="/patient/book" className={styles.mobileBtnBook}
+            <Link href={isLandingPage ? "/login" : "/patient/book"} className={styles.mobileBtnBook}
                   id="mob-book-btn" onClick={() => setMenuOpen(false)}>
               Book Appointment
             </Link>
-            {isAuthenticated ? (
+            {isAuthenticated && !isLandingPage ? (
               <button className={styles.mobileLogoutBtn} onClick={handleLogout}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -430,11 +430,11 @@ export default function PatientNavbar() {
                 </svg>
                 Sign Out
               </button>
-            ) : (
+            ) : (!isAuthenticated || isLandingPage) ? (
               <Link href="/login" className={styles.mobileLogoutBtn} onClick={() => setMenuOpen(false)}>
                 Login
               </Link>
-            )}
+            ) : null}
           </div>
 
         </div>
