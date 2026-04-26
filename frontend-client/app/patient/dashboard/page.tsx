@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { PatientProvider, usePatientContext } from "@/app/context/PatientContext";
 import { PatientSidebar } from "@/app/components/patient-management/PatientSidebar";
 import { PatientTopBar } from "@/app/components/patient-management/PatientTopBar";
@@ -7,6 +9,7 @@ import { PatientDashboardContent } from "@/app/components/patient-management/Pat
 import { PatientAppointmentManagementContent } from "@/app/components/patient-management/PatientAppointmentManagementContent";
 import { PatientPrescriptionsContent } from "@/app/components/patient-management/PatientPrescriptionsContent";
 import { PatientTelemedicineContent } from "@/app/components/patient-management/PatientTelemedicineContent";
+import { PatientProfileContent } from "@/app/components/patient-management/PatientProfileContent";
 import { usePatientAuth } from "@/app/hooks/usePatientAuth";
 
 /* ── Loading screen ──────────────────────────────────────────── */
@@ -70,7 +73,13 @@ function ComingSoon({ title }: { title: string }) {
 /* ── Patient Shell ───────────────────────────────────────────── */
 function PatientShell() {
   const { session, loading } = usePatientAuth();
-  const { sidebarCollapsed, activeSection } = usePatientContext();
+  const { sidebarCollapsed, activeSection, setSession } = usePatientContext();
+
+  useEffect(() => {
+    if (session) {
+      setSession(session);
+    }
+  }, [session, setSession]);
 
   if (loading || !session) return <LoadingScreen />;
 
@@ -92,7 +101,8 @@ function PatientShell() {
           {activeSection === "appointments" && <PatientAppointmentManagementContent hideNavbar={true} />}
           {activeSection === "prescriptions" && <PatientPrescriptionsContent />}
           {activeSection === "telemedicine" && <PatientTelemedicineContent />}
-          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "telemedicine" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
+          {activeSection === "profile" && <PatientProfileContent />}
+          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "telemedicine" && activeSection !== "profile" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
         </div>
       </main>
     </div>
