@@ -19,6 +19,14 @@ import {
   CreateAppointmentRequest,
   AppointmentResponse,
   PrescriptionResponse,
+  CreateDoctorRequest,
+  PatientUpsertRequest,
+  MedicationReminder,
+  MedicalReportCreateRequest,
+  MedicalReportResponse,
+  DoctorResponse,
+  SupportMessageRequest,
+  SupportMessageResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -231,6 +239,15 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
+export async function terminateDoctorAccount(token: string, doctorId: number): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/admin/doctors/${doctorId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 
 export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
@@ -252,7 +269,7 @@ export async function fetchDoctorByEmail(token: string, email: string): Promise<
   return safeJson<DoctorProfile>(response);
 }
 
-export async function fetchDoctorByUserId(token: string, userId: number): Promise<DoctorProfile> {
+export async function fetchDoctorByUserId(token: string, userId: number): Promise<DoctorResponse> {
   const response = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -260,7 +277,22 @@ export async function fetchDoctorByUserId(token: string, userId: number): Promis
     cache: "no-store",
   });
 
-  return safeJson<DoctorProfile>(response);
+  return safeJson<DoctorResponse>(response);
+}
+
+export async function verifyDoctor(token: string, profileId: string, verified: boolean): Promise<DoctorResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/${profileId}/verify?verified=${verified}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return safeJson<DoctorResponse>(response);
+}
+
+export async function deleteDoctorProfile(token: string, profileId: string): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/doctors/${profileId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export async function updatePatientProfile(token: string, id: string, data: Partial<Patient>): Promise<Patient> {
@@ -408,4 +440,130 @@ export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalys
   });
 
   return safeJson<PaymentAnalysis>(response);
+}
+
+export async function createDoctorProfile(token: string, data: CreateDoctorRequest): Promise<void> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<void>(response);
+}
+
+export async function createPatientProfile(token: string, data: PatientUpsertRequest): Promise<void> {
+  let patientId = null;
+  try {
+    const getResponse = await fetch(`${API_GATEWAY}/api/v1/patients/email/${encodeURIComponent(data.email)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (getResponse.ok) {
+      const patient = await getResponse.json();
+      patientId = patient.id;
+    }
+  } catch (error) {
+    // ignore
+  }
+
+  const method = patientId ? "PUT" : "POST";
+  const url = patientId 
+    ? `${API_GATEWAY}/api/v1/patients/${patientId}`
+    : `${API_GATEWAY}/api/v1/patients`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<void>(response);
+}
+
+export async function fetchPatientReminders(token: string, patientId: string): Promise<MedicationReminder[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reminders`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicationReminder>(payload);
+}
+
+export async function markReminderCompleted(token: string, reminderId: string): Promise<MedicationReminder> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/reminders/${reminderId}/complete`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return safeJson<MedicationReminder>(response);
+}
+
+
+export async function fetchPatientReports(token: string, patientId: string): Promise<MedicalReportResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalReportResponse>(payload);
+}
+
+export async function uploadPatientReport(token: string, patientId: string, data: MedicalReportCreateRequest): Promise<MedicalReportResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return safeJson<MedicalReportResponse>(response);
+}
+
+export async function deletePatientReport(token: string, patientId: string, reportId: string): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports/${reportId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function sendSupportMessage(token: string, data: SupportMessageRequest): Promise<SupportMessageResponse> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return safeJson<SupportMessageResponse>(response);
+}
+
+export async function fetchChatHistory(token: string, withEmail: string): Promise<SupportMessageResponse[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/history?withEmail=${encodeURIComponent(withEmail)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<SupportMessageResponse[]>(response);
+}
+
+export async function fetchConversations(token: string): Promise<String[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/conversations`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<String[]>(response);
+}
+
+export async function fetchUnreadChatCount(token: string): Promise<number> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/unread-count`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<number>(response);
 }

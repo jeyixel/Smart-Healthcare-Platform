@@ -14,6 +14,7 @@ public record MedicalReportResponse(
         long fileSize,
         String checksum,
         String uploadedByRole,
+        String fileData,
         OffsetDateTime uploadedAt
 ) {
 }

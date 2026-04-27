@@ -15,9 +15,11 @@ export type PatientNavSection =
   | "dashboard"
   | "appointments"
   | "prescriptions"
+  | "reports"
   | "ai-suggestions"
   | "telemedicine"
-  | "profile";
+  | "profile"
+  | "help-support";
 
 interface PatientContextValue {
   session: PatientSession | null;
