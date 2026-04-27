@@ -65,6 +65,37 @@ export interface DoctorApprovalItem {
   approved: boolean;
 }
 
+export interface DoctorAvailabilityResponse {
+  id: string;
+  dayOfWeek: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+  startTime: string;
+  endTime: string;
+  status: "AVAILABLE" | "UNAVAILABLE";
+}
+
+export interface DoctorResponse {
+  id: string;
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  bio: string | null;
+  profileImageUrl: string | null;
+  licenseNumber: string;
+  verified: boolean;
+  active: boolean;
+  availabilities: DoctorAvailabilityResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CurrentUserProfile {
   email: string;
   role: UserRole;

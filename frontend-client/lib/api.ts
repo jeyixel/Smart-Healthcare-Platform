@@ -24,6 +24,7 @@ import {
   MedicationReminder,
   MedicalReportCreateRequest,
   MedicalReportResponse,
+  DoctorResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -236,6 +237,15 @@ export async function approveDoctor(token: string, doctorId: number): Promise<Do
   return safeJson<DoctorApprovalItem>(response);
 }
 
+export async function terminateDoctorAccount(token: string, doctorId: number): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/admin/doctors/${doctorId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
 
 export async function fetchPatientByEmail(token: string, email: string): Promise<Patient> {
   const response = await fetch(`${API_GATEWAY}/api/v1/patients/email/${email}`, {
@@ -257,7 +267,7 @@ export async function fetchDoctorByEmail(token: string, email: string): Promise<
   return safeJson<DoctorProfile>(response);
 }
 
-export async function fetchDoctorByUserId(token: string, userId: number): Promise<DoctorProfile> {
+export async function fetchDoctorByUserId(token: string, userId: number): Promise<DoctorResponse> {
   const response = await fetch(`${API_GATEWAY}/api/v1/doctors/user/${userId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -265,7 +275,22 @@ export async function fetchDoctorByUserId(token: string, userId: number): Promis
     cache: "no-store",
   });
 
-  return safeJson<DoctorProfile>(response);
+  return safeJson<DoctorResponse>(response);
+}
+
+export async function verifyDoctor(token: string, profileId: string, verified: boolean): Promise<DoctorResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors/${profileId}/verify?verified=${verified}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return safeJson<DoctorResponse>(response);
+}
+
+export async function deleteDoctorProfile(token: string, profileId: string): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/doctors/${profileId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export async function updatePatientProfile(token: string, id: string, data: Partial<Patient>): Promise<Patient> {

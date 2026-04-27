@@ -15,7 +15,6 @@ export default function AdminLayout({
   useEffect(() => {
     const token = localStorage.getItem("smart_admin_token");
     const role = localStorage.getItem("smart_admin_role");
-
     if (!token || role !== "ADMIN") {
       router.push("/login");
     } else {
@@ -25,17 +24,34 @@ export default function AdminLayout({
 
   if (!isAuthorized) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-white">
-        <p className="animate-pulse">Authorizing session...</p>
+      <div style={{
+        display: "flex", height: "100vh", width: "100%",
+        alignItems: "center", justifyContent: "center",
+        background: "linear-gradient(180deg,#0a1628,#0d1b3e)",
+        color: "white", fontSize: "14px", fontWeight: 600
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: "48px", height: "48px", borderRadius: "14px",
+            background: "linear-gradient(135deg,#6366f1,#a855f7)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 16px", animation: "pulse 2s infinite"
+          }}>
+            <svg width="24" height="24" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <p style={{ margin: 0, color: "#94a3b8" }}>Authorizing session...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "Inter, system-ui, sans-serif" }}>
       <AdminSidebar />
-      <main className="flex-1 pl-[260px]">
-        <div className="mx-auto max-w-7xl p-8">
+      <main style={{ flex: 1, paddingLeft: "260px", transition: "padding-left 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
+        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "32px" }}>
           {children}
         </div>
       </main>
