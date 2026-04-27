@@ -275,6 +275,29 @@
 .ctaPrimary:hover .ctaArrow {
   transform: translateX(4px);
 }
+ 
+.ctaAuthOutline {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.83rem 1.8rem;
+  background: transparent;
+  border: 1.5px solid rgba(56, 211, 203, 0.4);
+  color: #38d3cb;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 200ms ease;
+  backdrop-filter: blur(8px);
+}
+ 
+.ctaAuthOutline:hover {
+  background: rgba(56, 211, 203, 0.1);
+  border-color: #38d3cb;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 211, 203, 0.2);
+  color: #fff;
+}
 
 .ctaSecondary {
   display: inline-flex;
@@ -386,6 +409,7 @@
 /* Doctor image */
 .doctorImg {
   position: relative;
+  top: 15px;
   z-index: 3;
   width: 100%;
   max-width: 580px;

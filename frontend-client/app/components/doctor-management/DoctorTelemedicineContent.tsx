@@ -55,7 +55,7 @@ export function DoctorTelemedicineContent() {
         throw new Error("Could not extract your user ID from the login token. Please sign in again.");
       }
 
-      const doctor = await fetchDoctorByUserId(userId, token);
+      const doctor = await fetchDoctorByUserId(token, userId);
       if (!doctor || !doctor.id) {
         throw new Error("Could not load doctor profile");
       }

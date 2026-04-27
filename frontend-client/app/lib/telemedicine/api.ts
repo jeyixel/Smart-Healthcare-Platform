@@ -2,10 +2,18 @@ import type { TelemedicineSessionResponse } from "@/app/types/telemedicine";
 
 const TELEMEDICINE_BASE_URL = "http://localhost:8080/api/v1/telemedicine/sessions";
 
+function requireClientToken(): string {
+  const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : null;
+  if (!token || token.trim().length === 0) {
+    throw new Error("Authentication required. Please sign in again.");
+  }
+  return token;
+}
+
 export async function fetchSessionByAppointmentId(
   appointmentId: string,
 ): Promise<TelemedicineSessionResponse> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : "";
+  const token = requireClientToken();
   const response = await fetch(
     `${TELEMEDICINE_BASE_URL}/appointment/${encodeURIComponent(appointmentId)}`,
     {
@@ -29,7 +37,7 @@ export async function fetchSessionByAppointmentId(
 }
 
 export async function completeSession(sessionId: string): Promise<void> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : "";
+  const token = requireClientToken();
   const response = await fetch(
     `${TELEMEDICINE_BASE_URL}/${encodeURIComponent(sessionId)}/status`,
     {
