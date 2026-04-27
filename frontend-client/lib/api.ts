@@ -25,6 +25,8 @@ import {
   MedicalReportCreateRequest,
   MedicalReportResponse,
   DoctorResponse,
+  SupportMessageRequest,
+  SupportMessageResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -528,4 +530,40 @@ export async function deletePatientReport(token: string, patientId: string, repo
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+export async function sendSupportMessage(token: string, data: SupportMessageRequest): Promise<SupportMessageResponse> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return safeJson<SupportMessageResponse>(response);
+}
+
+export async function fetchChatHistory(token: string, withEmail: string): Promise<SupportMessageResponse[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/history?withEmail=${encodeURIComponent(withEmail)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<SupportMessageResponse[]>(response);
+}
+
+export async function fetchConversations(token: string): Promise<String[]> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/conversations`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<String[]>(response);
+}
+
+export async function fetchUnreadChatCount(token: string): Promise<number> {
+  const response = await fetch(`${ADMIN_API}/api/v1/admin/support/chat/unread-count`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  return safeJson<number>(response);
 }
