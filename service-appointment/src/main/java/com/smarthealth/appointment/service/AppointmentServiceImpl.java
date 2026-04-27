@@ -38,13 +38,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
 
         try {
-//            PatientResponse patient = serviceClient.getPatient(request.patientId());
-//            if (patient == null) {
-//                throw new ResourceNotFoundException("Patient not found: " + request.patientId());
-//            }
-//            if (!patient.active()) {
-//                throw new BusinessException("Patient is not active: " + request.patientId());
-//            }
 
             DoctorResponse doctor = serviceClient.getDoctor(request.doctorId());
             if (doctor == null) {
@@ -84,7 +77,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .reason(request.reason())
                 .status(AppointmentStatus.PENDING)
                 .paymentStatus(com.smarthealth.appointment.entity.PaymentStatus.PENDING_PAYMENT)
-                .paymentDeadline(LocalDateTime.now().plusMinutes(15))
+                .paymentDeadline(LocalDateTime.now().plusMinutes(120))
                 .paymentReference(UUID.randomUUID().toString())
                 .build();
 

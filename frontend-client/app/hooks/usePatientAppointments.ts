@@ -15,10 +15,18 @@ export interface PatientAppointment {
   appointmentTime: string;   // "HH:mm:ss"
   consultationType: ConsultationType;
   status: AppointmentStatus;
+  paymentStatus: "PENDING" | "COMPLETED" | "FAILED" | null;
   reason: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DoctorAvailability {
+  dayOfWeek: string; // "MONDAY", "TUESDAY", etc.
+  isAvailable: boolean;
+  startTime: string; // "09:00"
+  endTime: string; // "18:00"
 }
 
 export interface DoctorSearchResponse {
@@ -34,6 +42,8 @@ export interface DoctorSearchResponse {
   verified: boolean;
   active: boolean;
   profileImageUrl: string | null;
+  // Note: Backend DoctorSearchResponse doesn't include email, phone, bio, languages, etc.
+  // These fields are only available in DoctorResponse, not DoctorSearchResponse
 }
 
 export interface CreateAppointmentRequest {
@@ -164,7 +174,7 @@ function showToast(message: string, type: "success" | "error") {
   setTimeout(() => {
     toast.style.animation = "slideOut 0.3s ease-in";
     setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
-  }, 3000);
+  }, 7000);
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
