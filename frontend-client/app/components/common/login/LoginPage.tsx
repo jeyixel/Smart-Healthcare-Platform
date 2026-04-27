@@ -34,7 +34,7 @@ export default function LoginPage() {
 			localStorage.setItem("smart_admin_token", response.token);
 			localStorage.setItem("smart_admin_role", response.role);
 			localStorage.setItem("smart_admin_email", email);
-			const dashboardPath = response.role === "ADMIN" ? "/admin" : response.role === "DOCTOR" ? "/doctor" : "/patient-landing";
+			const dashboardPath = response.role === "ADMIN" ? "/admin" : response.role === "DOCTOR" ? "/doctor" : "/patient/dashboard";
 			router.push(dashboardPath);
 			router.refresh();
 		} catch (error) {

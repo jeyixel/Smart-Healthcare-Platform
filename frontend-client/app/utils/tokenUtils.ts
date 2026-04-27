@@ -39,3 +39,21 @@ export const getFirstName = (): string => {
   const decoded = decodeTokenPayload(token);
   return typeof decoded?.firstName === "string" ? decoded.firstName : "Doctor";
 };
+
+/**
+ * Extracts patient's full name from token or email
+ */
+export const getPatientName = (): string => {
+  const token = localStorage.getItem("smart_admin_token");
+  const email = localStorage.getItem("smart_admin_email") || "";
+  
+  if (!token) return email.split("@")[0] || "Patient";
+
+  const decoded = decodeTokenPayload(token);
+  if (typeof decoded?.firstName === "string" && typeof decoded?.lastName === "string") {
+    return `${decoded.firstName} ${decoded.lastName}`;
+  }
+  if (typeof decoded?.firstName === "string") return decoded.firstName;
+  
+  return email.split("@")[0] || "Patient";
+};
