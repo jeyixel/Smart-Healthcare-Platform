@@ -262,3 +262,29 @@ export interface MedicationReminder {
   endDate: string;
   status: "ACTIVE" | "COMPLETED" | "CANCELLED";
 }
+
+export interface MedicalReportCreateRequest {
+  reportType: string;
+  title: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  checksum?: string;
+  uploadedByRole: string;
+  fileData: string; // Base64
+}
+
+export interface MedicalReportResponse {
+  id: string;
+  patientId: string;
+  reportType: string;
+  title: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  uploadedByRole: string;
+  fileData?: string | null; // Base64, null for older records
+  uploadedAt: string;
+}

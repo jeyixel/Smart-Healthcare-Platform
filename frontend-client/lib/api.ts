@@ -22,6 +22,8 @@ import {
   CreateDoctorRequest,
   PatientUpsertRequest,
   MedicationReminder,
+  MedicalReportCreateRequest,
+  MedicalReportResponse,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -472,4 +474,33 @@ export async function markReminderCompleted(token: string, reminderId: string): 
     headers: { Authorization: `Bearer ${token}` },
   });
   return safeJson<MedicationReminder>(response);
+}
+
+
+export async function fetchPatientReports(token: string, patientId: string): Promise<MedicalReportResponse[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicalReportResponse>(payload);
+}
+
+export async function uploadPatientReport(token: string, patientId: string, data: MedicalReportCreateRequest): Promise<MedicalReportResponse> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return safeJson<MedicalReportResponse>(response);
+}
+
+export async function deletePatientReport(token: string, patientId: string, reportId: string): Promise<void> {
+  await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reports/${reportId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

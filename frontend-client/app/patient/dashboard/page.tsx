@@ -10,6 +10,7 @@ import { PatientAppointmentManagementContent } from "@/app/components/patient-ma
 import { PatientPrescriptionsContent } from "@/app/components/patient-management/PatientPrescriptionsContent";
 import { PatientTelemedicineContent } from "@/app/components/patient-management/PatientTelemedicineContent";
 import { PatientProfileContent } from "@/app/components/patient-management/PatientProfileContent";
+import { PatientReportsContent } from "@/app/components/patient-management/PatientReportsContent";
 import { usePatientAuth } from "@/app/hooks/usePatientAuth";
 
 /* ── Loading screen ──────────────────────────────────────────── */
@@ -100,9 +101,10 @@ function PatientShell() {
           {activeSection === "dashboard" && <PatientDashboardContent />}
           {activeSection === "appointments" && <PatientAppointmentManagementContent hideNavbar={true} />}
           {activeSection === "prescriptions" && <PatientPrescriptionsContent />}
+          {activeSection === "reports" && <PatientReportsContent />}
           {activeSection === "telemedicine" && <PatientTelemedicineContent />}
           {activeSection === "profile" && <PatientProfileContent />}
-          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "telemedicine" && activeSection !== "profile" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
+          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "reports" && activeSection !== "telemedicine" && activeSection !== "profile" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
         </div>
       </main>
     </div>

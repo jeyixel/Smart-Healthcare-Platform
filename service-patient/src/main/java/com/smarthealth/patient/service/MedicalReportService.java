@@ -8,7 +8,9 @@ import com.smarthealth.patient.model.Patient;
 import com.smarthealth.patient.repository.MedicalReportRepository;
 import com.smarthealth.patient.repository.PatientRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +39,20 @@ public class MedicalReportService {
         report.setFileSize(request.getFileSize());
         report.setChecksum(request.getChecksum());
         report.setUploadedByRole(request.getUploadedByRole());
+        report.setFileData(Base64.getDecoder().decode(request.getFileData()));
 
         MedicalReport saved = medicalReportRepository.save(report);
         return map(saved);
+    }
+
+    @Transactional
+    public void delete(UUID patientId, UUID reportId) {
+        MedicalReport report = medicalReportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found for id " + reportId));
+        if (!report.getPatient().getId().equals(patientId)) {
+            throw new ResourceNotFoundException("Report does not belong to patient " + patientId);
+        }
+        medicalReportRepository.deleteById(reportId);
     }
 
     public List<MedicalReportResponse> getByPatient(UUID patientId) {
@@ -54,6 +67,9 @@ public class MedicalReportService {
     }
 
     private MedicalReportResponse map(MedicalReport report) {
+        String fileDataBase64 = (report.getFileData() != null)
+                ? Base64.getEncoder().encodeToString(report.getFileData())
+                : null;
         return new MedicalReportResponse(
                 report.getId(),
                 report.getPatient().getId(),
@@ -65,6 +81,7 @@ public class MedicalReportService {
                 report.getFileSize(),
                 report.getChecksum(),
                 report.getUploadedByRole(),
+                fileDataBase64,
                 report.getUploadedAt()
         );
     }

@@ -15,6 +15,7 @@ export type PatientNavSection =
   | "dashboard"
   | "appointments"
   | "prescriptions"
+  | "reports"
   | "ai-suggestions"
   | "telemedicine"
   | "profile";
