@@ -319,3 +319,17 @@ export interface MedicalReportResponse {
   fileData?: string | null; // Base64, null for older records
   uploadedAt: string;
 }
+
+export interface SupportMessageRequest {
+  recipientEmail: string;
+  content: string;
+}
+
+export interface SupportMessageResponse {
+  id: number;
+  senderEmail: string;
+  recipientEmail: string;
+  content: string;
+  timestamp: string;
+  read: boolean;
+}
