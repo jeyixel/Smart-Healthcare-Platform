@@ -248,3 +248,17 @@ export interface PatientUpsertRequest {
   emergencyContactName?: string;
   emergencyContactPhone?: string;
 }
+
+export interface MedicationReminder {
+  id: string;
+  patientId: string;
+  prescriptionId: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+}

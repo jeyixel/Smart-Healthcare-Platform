@@ -3,6 +3,7 @@
 import { usePatientContext } from "@/app/context/PatientContext";
 import { usePatientAppointments } from "@/app/hooks/usePatientAppointments";
 import { usePatientPrescriptions } from "@/app/hooks/usePatientPrescriptions";
+import { usePatientReminders } from "@/app/hooks/usePatientReminders";
 import { useMemo, useEffect, useState } from "react";
 import { getPatientName } from "@/app/utils/tokenUtils";
 
@@ -52,6 +53,7 @@ export function PatientDashboardContent() {
   const { setActiveSection } = usePatientContext();
   const { appointments, loading: apptsLoading } = usePatientAppointments();
   const { prescriptions, loading: prescLoading } = usePatientPrescriptions();
+  const { reminders, completeReminder, loading: remLoading } = usePatientReminders();
   const patientName = getPatientName();
 
   const nextAppt = useMemo(() => {
@@ -151,10 +153,10 @@ export function PatientDashboardContent() {
           border="rgba(139,92,246,0.15)"
         />
         <KpiCard
-          label="Reports Shared"
-          value="12"
-          delta="Total shared"
-          icon={<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
+          label="Active Reminders"
+          value={reminders.length.toString()}
+          delta="Medications"
+          icon={<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
           color="#f43f5e"
           bg="linear-gradient(135deg,rgba(244,63,94,0.1),rgba(225,29,72,0.05))"
           border="rgba(244,63,94,0.15)"
@@ -184,19 +186,42 @@ export function PatientDashboardContent() {
           </div>
         </div>
 
-        {/* AI Recommendations */}
+        {/* Daily Medications */}
         <div style={{ background: "#fff", borderRadius: "18px", border: "1px solid #e2e8f0", padding: "24px", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-          <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>AI Health Insights</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ padding: "16px", borderRadius: "16px", background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.1)" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "#6d28d9", fontWeight: 700 }}>Sleep Improvement</p>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#7c3aed", lineHeight: 1.5 }}>Based on your last consultation, try maintaining a consistent sleep schedule to improve your heart rate variability.</p>
-            </div>
-            <div style={{ padding: "16px", borderRadius: "16px", background: "rgba(6,182,212,0.05)", border: "1px solid rgba(6,182,212,0.1)" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "#0891b2", fontWeight: 700 }}>Activity Goal</p>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#0e7490", lineHeight: 1.5 }}>You are close to your 7-day activity streak! Keep up the morning walks for better metabolism.</p>
-            </div>
-            <button onClick={() => setActiveSection("ai-suggestions")} style={{ width: "100%", padding: "10px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "white", color: "#64748b", fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>View All Insights</button>
+          <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Daily Medications</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {reminders.length === 0 ? (
+               <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "13px", padding: "20px 0" }}>No active medications.</p>
+            ) : (
+              reminders.map((rem) => (
+                <div key={rem.id} style={{ 
+                  padding: "16px", borderRadius: "16px", border: "1px solid #e2e8f0",
+                  display: "flex", flexDirection: "column", gap: "8px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{rem.medicineName}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>{rem.dosage} • {rem.frequency}</p>
+                    </div>
+                    <button 
+                      onClick={() => completeReminder(rem.id)}
+                      style={{
+                        background: "#06b6d4", color: "white", border: "none",
+                        borderRadius: "8px", padding: "6px 12px", fontSize: "11px",
+                        fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                  {rem.instructions && (
+                     <div style={{ background: "#f8fafc", padding: "8px", borderRadius: "8px", fontSize: "11px", color: "#475569" }}>
+                       <span style={{ fontWeight: 600 }}>Note:</span> {rem.instructions}
+                     </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 

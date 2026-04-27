@@ -21,6 +21,7 @@ import {
   PrescriptionResponse,
   CreateDoctorRequest,
   PatientUpsertRequest,
+  MedicationReminder,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -454,4 +455,21 @@ export async function createPatientProfile(token: string, data: PatientUpsertReq
   });
 
   return safeJson<void>(response);
+}
+
+export async function fetchPatientReminders(token: string, patientId: string): Promise<MedicationReminder[]> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/${patientId}/reminders`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const payload = await safeJson<unknown>(response);
+  return normalizeListResponse<MedicationReminder>(payload);
+}
+
+export async function markReminderCompleted(token: string, reminderId: string): Promise<MedicationReminder> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/patients/reminders/${reminderId}/complete`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return safeJson<MedicationReminder>(response);
 }
