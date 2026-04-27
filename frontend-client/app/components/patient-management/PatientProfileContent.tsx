@@ -24,6 +24,8 @@ export function PatientProfileContent() {
       setFormData({
         firstName: patient.firstName,
         lastName: patient.lastName,
+        email: patient.email,
+        authUserId: patient.authUserId || undefined,
         phoneNumber: patient.phoneNumber,
         dateOfBirth: dob,
         gender: patient.gender,
