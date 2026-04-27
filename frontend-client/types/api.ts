@@ -217,3 +217,34 @@ export interface PrescriptionResponse {
   updatedAt: string;
   digitalSignature: string | null;
 }
+
+export interface CreateDoctorRequest {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  bio?: string;
+  profileImageUrl?: string;
+  licenseNumber: string;
+}
+
+export interface PatientUpsertRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  authUserId?: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}

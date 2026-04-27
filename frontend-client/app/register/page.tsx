@@ -32,25 +32,14 @@ export default function RegisterPage() {
         role,
       });
 
-      if (role === "DOCTOR") {
-        localStorage.removeItem("smart_admin_token");
-        localStorage.removeItem("smart_admin_role");
-        localStorage.removeItem("smart_admin_email");
-        setNoticeType("success");
-        setNotice("Doctor registration submitted! Awaiting admin verification. Redirecting to login...");
-        setTimeout(() => router.push("/login"), 3000);
-        return;
-      }
-
       if (response.token) {
+        // Temporarily store the token. For DOCTOR, it will be removed after profile creation.
         localStorage.setItem("smart_admin_token", response.token);
         localStorage.setItem("smart_admin_role", response.role);
         localStorage.setItem("smart_admin_email", email);
       }
 
-      setNoticeType("success");
-      setNotice("Account created successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 1500);
+      router.push(`/register/profile?role=${role}`);
     } catch (error) {
       setNoticeType("error");
       setNotice(error instanceof Error ? error.message : "Registration failed");

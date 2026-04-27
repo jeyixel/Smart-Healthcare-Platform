@@ -19,6 +19,8 @@ import {
   CreateAppointmentRequest,
   AppointmentResponse,
   PrescriptionResponse,
+  CreateDoctorRequest,
+  PatientUpsertRequest,
 } from "@/types/api";
 
 // API Gateway - Routes all requests through a single endpoint
@@ -408,4 +410,48 @@ export async function fetchPaymentAnalysis(token: string): Promise<PaymentAnalys
   });
 
   return safeJson<PaymentAnalysis>(response);
+}
+
+export async function createDoctorProfile(token: string, data: CreateDoctorRequest): Promise<void> {
+  const response = await fetch(`${API_GATEWAY}/api/v1/doctors`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<void>(response);
+}
+
+export async function createPatientProfile(token: string, data: PatientUpsertRequest): Promise<void> {
+  let patientId = null;
+  try {
+    const getResponse = await fetch(`${API_GATEWAY}/api/v1/patients/email/${encodeURIComponent(data.email)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (getResponse.ok) {
+      const patient = await getResponse.json();
+      patientId = patient.id;
+    }
+  } catch (error) {
+    // ignore
+  }
+
+  const method = patientId ? "PUT" : "POST";
+  const url = patientId 
+    ? `${API_GATEWAY}/api/v1/patients/${patientId}`
+    : `${API_GATEWAY}/api/v1/patients`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  return safeJson<void>(response);
 }
