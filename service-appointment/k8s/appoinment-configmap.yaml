@@ -8,3 +8,7 @@ metadata:
 data:
   SPRING_APPLICATION_NAME: "service-appointment"
   SERVER_PORT: "8083"
+  PATIENT_SERVICE_URL: "http://patient-service:8081/api/v1/patients"
+  DOCTOR_SERVICE_URL: "http://service-doctor:8082/api/v1/doctors"
+  TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:8085/api/v1/telemedicine/sessions"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"

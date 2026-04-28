@@ -24,8 +24,24 @@ spec:
           envFrom:
             - configMapRef:
                 name: patient-service-config
-            - secretRef:
-                name: patient-service-secret
+          env:
+            - name: PATIENT_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: PATIENT_DB_URL
+            - name: PATIENT_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: PATIENT_DB_USERNAME
+            - name: PATIENT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: PATIENT_DB_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
           readinessProbe:
             httpGet:
               path: /actuator/health

@@ -24,8 +24,49 @@ spec:
           envFrom:
             - configMapRef:
                 name: admin-service-config
-            - secretRef:
-                name: admin-service-secret
+          env:
+            - name: ADMIN_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: ADMIN_DB_URL
+            - name: ADMIN_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: ADMIN_DB_USERNAME
+            - name: ADMIN_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: ADMIN_DB_PASSWORD
+            - name: APPLICATION_SECURITY_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_SECRET_KEY
+            - name: APPLICATION_SECURITY_JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_EXPIRATION
+            - name: APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: MAIL_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
           readinessProbe:
             httpGet:
               path: /actuator/health

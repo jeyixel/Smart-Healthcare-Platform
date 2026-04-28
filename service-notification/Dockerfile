@@ -25,6 +25,6 @@ COPY --from=builder --chown=appuser:appgroup /app/target/*.jar app.jar
 
 USER appuser
 
-EXPOSE 8087
+EXPOSE 8086
 
 ENTRYPOINT ["sh", "-c", "java -Xmx256m -Xms256m -jar app.jar"]

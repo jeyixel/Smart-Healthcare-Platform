@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: service-prescription
-          image: service-prescription:v1
+          image: service-prescription:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8088
@@ -25,21 +25,38 @@ spec:
             - configMapRef:
                 name: service-prescription-config
           env:
-            - name: DB_URL
+            - name: PRESCRIPTION_DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: database-secret
-                  key: DB_URL
-            - name: DB_USER
+                  name: smart-healthcare-secrets
+                  key: PRESCRIPTION_DB_URL
+            - name: PRESCRIPTION_DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: database-secret
-                  key: DB_USER
-            - name: DB_PASSWORD
+                  name: smart-healthcare-secrets
+                  key: PRESCRIPTION_DB_USERNAME
+            - name: PRESCRIPTION_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: database-secret
-                  key: DB_PASSWORD
+                  name: smart-healthcare-secrets
+                  key: PRESCRIPTION_DB_PASSWORD
+            - name: APPLICATION_SECURITY_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_SECRET_KEY
+            - name: APPLICATION_SECURITY_JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_EXPIRATION
+            - name: APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
           resources:
             requests:
               memory: "256Mi"

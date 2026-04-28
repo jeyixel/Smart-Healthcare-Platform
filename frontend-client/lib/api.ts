@@ -38,7 +38,9 @@ import {
 // - /api/v1/appointments/** → Appointment Service (8083)
 // - /api/v1/prescriptions/** → Prescription Service (8088)
 // - /api/notifications/** → Notification Service (8086)
-const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://127.0.0.1:8080";
+const API_GATEWAY_PUBLIC = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://127.0.0.1:8080";
+const API_GATEWAY_INTERNAL = process.env.API_GATEWAY_INTERNAL_URL ?? API_GATEWAY_PUBLIC;
+const API_GATEWAY = typeof window === "undefined" ? API_GATEWAY_INTERNAL : API_GATEWAY_PUBLIC;
 const ADMIN_API = API_GATEWAY;
 
 export interface DoctorProfile {

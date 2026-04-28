@@ -8,3 +8,7 @@ metadata:
 data:
   SPRING_APPLICATION_NAME: "service-prescription"
   SERVER_PORT: "8088"
+  SERVICE_DOCTOR_URL: "http://service-doctor:8082/api/v1/doctors"
+  SERVICE_APPOINTMENT_URL: "http://service-appointment:8083/api/v1/appointments"
+  SERVICE_PATIENT_URL: "http://patient-service:8081/api/v1/patients"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"

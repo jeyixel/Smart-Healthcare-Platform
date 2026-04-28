@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: smart-healthcare
+  labels:
+    app: api-gateway
+data:
+  PATIENT_SERVICE_URL: "http://patient-service:8081"
+  PATIENT_SERVICE_BASE_URL: "http://patient-service:8081"
+  ADMIN_SERVICE_URL: "http://admin-service:8087"
+  AUTH_SERVICE_URL: "http://admin-service:8087"
+  DOCTOR_SERVICE_URL: "http://service-doctor:8082"
+  APPOINTMENT_SERVICE_URL: "http://service-appointment:8083"
+  PAYMENT_SERVICE_URL: "http://service-payment:8084"
+  TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:8085"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8086"
+  PRESCRIPTION_SERVICE_URL: "http://service-prescription:8088"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:30000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: smart-healthcare
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api-gateway-config
+          env:
+            - name: APPLICATION_SECURITY_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_SECRET_KEY
+            - name: APPLICATION_SECURITY_JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: smart-healthcare-secrets
+                  key: APPLICATION_SECURITY_JWT_EXPIRATION
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: smart-healthcare
+  labels:
+    app: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  type: NodePort

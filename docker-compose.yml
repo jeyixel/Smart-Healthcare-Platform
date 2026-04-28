@@ -1,4 +1,5 @@
 services:
+  # ── Redpanda Kafka ────────────────────────────────────────────
   kafka:
     image: redpandadata/redpanda:latest
     container_name: smart-healthcare-kafka
@@ -17,6 +18,375 @@ services:
       - --kafka-addr
       - PLAINTEXT://0.0.0.0:29092
       - --advertise-kafka-addr
-      - PLAINTEXT://localhost:29092
+      - PLAINTEXT://kafka:29092
     ports:
       - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster info --brokers=localhost:29092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # ── API Gateway ───────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+    image: api-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      API_GATEWAY_URL: http://api-gateway:8080
+      PATIENT_SERVICE_URL: http://patient-service:8081
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8081
+      ADMIN_SERVICE_URL: http://admin-service:8087
+      AUTH_SERVICE_URL: http://admin-service:8087
+      DOCTOR_SERVICE_URL: http://service-doctor:8082
+      APPOINTMENT_SERVICE_URL: http://service-appointment:8083
+      PAYMENT_SERVICE_URL: http://service-payment:8084
+      TELEMEDICINE_SERVICE_URL: http://telemedicine-service:8085
+      NOTIFICATION_SERVICE_URL: http://notification-service:8086
+      PRESCRIPTION_SERVICE_URL: http://service-prescription:8088
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${APPLICATION_SECURITY_JWT_SECRET_KEY}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${APPLICATION_SECURITY_JWT_EXPIRATION}
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Patient Service ───────────────────────────────────────────
+  patient-service:
+    build:
+      context: ./service-patient
+    image: patient-service:latest
+    ports:
+      - "8081:8081"
+    environment:
+      PATIENT_DB_URL: ${PATIENT_DB_URL}
+      PATIENT_DB_USERNAME: ${PATIENT_DB_USERNAME}
+      PATIENT_DB_PASSWORD: ${PATIENT_DB_PASSWORD}
+      PATIENT_DB_DDL_AUTO: ${PATIENT_DB_DDL_AUTO}
+      PATIENT_DB_SHOW_SQL: ${PATIENT_DB_SHOW_SQL}
+      PATIENT_DB_SCHEMA: ${PATIENT_DB_SCHEMA}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      PATIENT_EVENTS_TOPIC: ${PATIENT_EVENTS_TOPIC}
+      NOTIFICATION_EVENTS_TOPIC: ${NOTIFICATION_EVENTS_TOPIC}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8081'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Admin Service ─────────────────────────────────────────────
+  admin-service:
+    build:
+      context: ./service-admin
+    image: admin-service:latest
+    ports:
+      - "8087:8087"
+    environment:
+      ADMIN_DB_URL: ${ADMIN_DB_URL}
+      ADMIN_DB_USERNAME: ${ADMIN_DB_USERNAME}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD}
+      ADMIN_DB_DDL_AUTO: ${ADMIN_DB_DDL_AUTO}
+      ADMIN_DB_SHOW_SQL: ${ADMIN_DB_SHOW_SQL}
+      ADMIN_DB_SCHEMA: ${ADMIN_DB_SCHEMA}
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8081
+      PATIENT_SERVICE_SET_STATUS_ENDPOINT: /api/v1/internal/patients/{patientId}/status
+      PATIENT_SERVICE_UPSERT_PRESCRIPTION_ENDPOINT: /api/v1/internal/prescription-snapshots
+      APPOINTMENT_SERVICE_BASE_URL: http://service-appointment:8083
+      PAYMENT_SERVICE_BASE_URL: http://service-payment:8084
+      DOCTOR_SERVICE_BASE_URL: http://service-doctor:8082
+      NOTIFICATION_SERVICE_URL: http://notification-service:8086
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      PATIENT_EVENTS_TOPIC: ${PATIENT_EVENTS_TOPIC}
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${APPLICATION_SECURITY_JWT_SECRET_KEY}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${APPLICATION_SECURITY_JWT_EXPIRATION}
+      APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION: ${APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS}
+      OTP_EXPIRATION_MINUTES: ${OTP_EXPIRATION_MINUTES}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8087'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Doctor Service ────────────────────────────────────────────
+  service-doctor:
+    build:
+      context: ./service-doctor
+    image: service-doctor:latest
+    ports:
+      - "8082:8082"
+    environment:
+      DOCTOR_DB_URL: ${DOCTOR_DB_URL}
+      DOCTOR_DB_USERNAME: ${DOCTOR_DB_USERNAME}
+      DOCTOR_DB_PASSWORD: ${DOCTOR_DB_PASSWORD}
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${APPLICATION_SECURITY_JWT_SECRET_KEY}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${APPLICATION_SECURITY_JWT_EXPIRATION}
+      APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION: ${APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8082'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Appointment Service ───────────────────────────────────────
+  service-appointment:
+    build:
+      context: ./service-appointment
+    image: service-appointment:latest
+    ports:
+      - "8083:8083"
+    environment:
+      APPOINTMENT_DB_URL: ${APPOINTMENT_DB_URL}
+      APPOINTMENT_DB_USERNAME: ${APPOINTMENT_DB_USERNAME}
+      APPOINTMENT_DB_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
+      PATIENT_SERVICE_URL: http://patient-service:8081/api/v1/patients
+      DOCTOR_SERVICE_URL: http://service-doctor:8082/api/v1/doctors
+      TELEMEDICINE_SERVICE_URL: http://telemedicine-service:8085/api/v1/telemedicine/sessions
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${APPLICATION_SECURITY_JWT_SECRET_KEY}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${APPLICATION_SECURITY_JWT_EXPIRATION}
+      APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION: ${APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8083'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Payment Service ───────────────────────────────────────────
+  service-payment:
+    build:
+      context: ./service-payment
+    image: service-payment:latest
+    ports:
+      - "8084:8084"
+    environment:
+      DB_URL: ${PAYMENT_DB_URL}
+      DB_USER: ${PAYMENT_DB_USER}
+      DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      PAYHERE_MERCHANT_ID: ${PAYHERE_MERCHANT_ID}
+      PAYHERE_MERCHANT_SECRET: ${PAYHERE_MERCHANT_SECRET}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8084'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Prescription Service ──────────────────────────────────────
+  service-prescription:
+    build:
+      context: ./service-prescription
+    image: service-prescription:latest
+    ports:
+      - "8088:8088"
+    environment:
+      PRESCRIPTION_DB_URL: ${PRESCRIPTION_DB_URL}
+      PRESCRIPTION_DB_USERNAME: ${PRESCRIPTION_DB_USERNAME}
+      PRESCRIPTION_DB_PASSWORD: ${PRESCRIPTION_DB_PASSWORD}
+      SERVICE_DOCTOR_URL: http://service-doctor:8082/api/v1/doctors
+      SERVICE_APPOINTMENT_URL: http://service-appointment:8083/api/v1/appointments
+      SERVICE_PATIENT_URL: http://patient-service:8081/api/v1/patients
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APPLICATION_SECURITY_JWT_SECRET_KEY: ${APPLICATION_SECURITY_JWT_SECRET_KEY}
+      APPLICATION_SECURITY_JWT_EXPIRATION: ${APPLICATION_SECURITY_JWT_EXPIRATION}
+      APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION: ${APPLICATION_SECURITY_JWT_REFRESH_EXPIRATION}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8088'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Notification Service ──────────────────────────────────────
+  notification-service:
+    build:
+      context: ./service-notification
+    image: notification-service:latest
+    ports:
+      - "8086:8086"
+    environment:
+      DB_URL: ${NOTIFICATION_DB_URL}
+      DB_USER: ${NOTIFICATION_DB_USER}
+      DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      MAIL_USERNAME: ${NOTIFICATION_MAIL_USERNAME}
+      MAIL_PASSWORD: ${NOTIFICATION_MAIL_PASSWORD}
+      NOTIFY_USER_ID: ${NOTIFY_USER_ID}
+      NOTIFY_API_KEY: ${NOTIFY_API_KEY}
+      NOTIFY_SENDER_ID: ${NOTIFY_SENDER_ID}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8086'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Telemedicine Service ──────────────────────────────────────
+  telemedicine-service:
+    build:
+      context: ./service-telemedicine
+    image: telemedicine-service:latest
+    ports:
+      - "8085:8085"
+    environment:
+      DB_URL: ${TELEMEDICINE_DB_URL}
+      DB_USER: ${TELEMEDICINE_DB_USER}
+      DB_PASSWORD: ${TELEMEDICINE_DB_PASSWORD}
+      JAAS_APP_ID: ${JAAS_APP_ID}
+      JAAS_API_KEY_ID: ${JAAS_API_KEY_ID}
+      JAAS_PRIVATE_KEY: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCYsyjwphi8rcU5
+        ezfbLuLIrD4vOWKEuz09idWjLQsENSbE7FVvsf/7fVnetb1xjVIzv9rTfFJkk5p
+        s/Te7WcCM60b2vT0+yqEsRQ6RK/2fTuYzYuM0AoPtM1WobXpY+Xo5gkX5csM6dJj
+        E98HyXweoLeNGVC+rj17UjzcsXvGJdT/w+91xQyiesuikLrIA8+uY7Tw+qnyo1oR
+        Ks0mHCrNTwFy2fQQF74fEH+Yybpej3LH1IeXX+97zPDT5h6qGWrX97ZqyjTO7suN
+        sb7CpKeZnzX6LlEtmzsxU7/kbgdcT72rQbLKR2nxuNNkozdpMeYT4ltAdzEcRClc
+        uBNRKqqRTAgMBAAECggEAMrlA3j+uc+6dVyzRLyPx/YsJ1RIQ4dp4y1pf9yZdRHaL
+        fFqtPr84M0g+dDaWyYOSTNJsVFg13mcRoyayPq/fwG/fUNMn5xXUWCpQXnToeOTyn
+        xs4Meyr+j1VNO+49plYuoXFzMkMhPx6SuOqL2LV3k3v80q/0xN7AszYHQsk3O3r6Q
+        0OIG1qYWIhySUbRXRLp2wu5qSwF7DDiqLnY0oANmvKTjyO3mEGpw3/0HxV4exRDLk
+        HuZzXUfeg/ZwO8gSG0f55IuQZlPP15yNztQ6fE5jGBZb2onGW2sss7ClsWH7Ff3YCR
+        ARoBTjOg1XqYmP6FSOYyLGAP1ulAv2HEuZfMQKBgQDZzcvDoZFGwRkEWVe8H/PvHHU
+        6C+RdhOXvulr2RAchO826eViQBzq70Xq5s2TLJdfnbmnP9J8igvc37jiFtxNvGDyn1
+        AyIQyKaigD1v5+8Kr5U+VWXG/saaafiXTQJYbOWpzeCgQKK8eJ0z5Po47WcgMXqsbu
+        KQcVwlAzgYIu4NQKBgQCzeoxTsllZSKDW6zPao0TJ5qg9zuszqu0t3XsV4D41Ws+nLW
+        v7088+M0REVqGtd9rAfr7OemReYM59jwxMIcOuNVVgo1C1tnJJ1fmrB/4QJ2B4ftSb9
+        R9c0wKSOU1ZxiQNMNtro1tFT3BJiSDyLodppIFPZL9sM4e8fuRufQxLZwKBgQDIUdL7
+        Fvp6zNapfVKIIAtG/DGFNbLPoI+qsQdAQMkd89b/juO5dCy82am6ahhmD2RH4vFG5oIG
+        R9YAhwVNVlh1cSE4anssSDLnV84SODA97EIp/TiPRpjobgyO0ZIunsGB6kHPscAY8ueI7
+        /Hl3KkITBe8B8OpIVzqcgB1zdYzkQKBgQCU9QiyDjuJlnWm6d5Hf2oAB6dqZOlgIGRoxI
+        D7TvlSXuQo49HTV5+RCAuIjD3zMp4jVQ4XYA0dJ0s5ehfCt+MoGquZYPIDXkDMdwKXqDJ8
+        RbITT3A1X+N/rsFbiqNf9srFB9+UHigKBjwzS9REK8nHK/kGY59btgjZsJb1/GLP0QKBgDk
+        j5+MmlPQibrO3FVs4O9td4g2sRyPKkJhRnpwre5370uXUVlLK/SNB7I7EQhsAOQzoFFJqs
+        DC2o1Ilaz/WjSfBw1mHnhwtjeFTclLIkJZFITE45Ra0gnaj2vVrAksuhFsBWXNI69zVYBd4
+        AVQsHIwgbxTPWcCYa9Rq/T1YBp8o
+        -----END PRIVATE KEY-----
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8085'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+
+  # ── Frontend (Next.js) ────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend-client
+      args:
+        NEXT_PUBLIC_API_GATEWAY_BASE: http://localhost:8080
+        NEXT_PUBLIC_API_GATEWAY: http://localhost:8080
+        NEXT_PUBLIC_API_GATEWAY_URL: http://localhost:8080
+        NEXT_PUBLIC_ADMIN_API_BASE: http://localhost:8087
+        NEXT_PUBLIC_PATIENT_API_BASE: http://localhost:8081
+    image: frontend-client:latest
+    ports:
+      - "3000:3000"
+    environment:
+      API_GATEWAY_INTERNAL_URL: http://api-gateway:8080
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      NEXT_PUBLIC_API_GATEWAY_BASE: http://localhost:8080
+      NEXT_PUBLIC_API_GATEWAY: http://localhost:8080
+      NEXT_PUBLIC_API_GATEWAY_URL: http://localhost:8080
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
