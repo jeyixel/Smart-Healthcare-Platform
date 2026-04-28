@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchDashboardSummary, fetchServiceStatus, fetchNotificationLogs } from "@/lib/api";
+import { fetchDashboardSummary, fetchNotificationLogs } from "@/lib/api";
 import { DashboardSummary, NotificationLog } from "@/types/api";
 
 /* === Sub-components === */
@@ -71,14 +71,14 @@ export default function AdminDashboard() {
         const token = localStorage.getItem("smart_admin_token");
         if (!token) return;
 
-        const [s, svc, n] = await Promise.all([
+        const [s, n] = await Promise.all([
           fetchDashboardSummary(token),
-          fetchServiceStatus(token),
           fetchNotificationLogs(token)
         ]);
 
         setStats(s);
-        setServices(svc);
+        // fetchServiceStatus isn't implemented in the API module — keep services empty
+        setServices([]);
         setNotifications(n);
       } catch (err) {
         console.error("Dashboard failed to load:", err);
