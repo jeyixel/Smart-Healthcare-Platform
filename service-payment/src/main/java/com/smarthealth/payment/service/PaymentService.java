@@ -199,6 +199,61 @@ public class PaymentService {
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional
+    public PaymentResponse updateAppointmentPaymentStatus(UUID appointmentId, String userEmail, PaymentStatusUpdateRequest request) {
+        List<Payment> payments = paymentRepository.findByAppointmentId(appointmentId);
+        Payment payment;
+        if (payments.isEmpty()) {
+            String safeEmail = (userEmail == null || userEmail.isBlank()) ? "system@smarthealth.local" : userEmail;
+            String orderId = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            payment = Payment.builder()
+                .orderId(orderId)
+                .appointmentId(appointmentId)
+                .patientId(safeEmail)
+                .patientEmail(safeEmail)
+                .patientPhone("N/A")
+                .patientFirstName("System")
+                .patientLastName("User")
+                .doctorName("Unknown")
+                .appointmentDate("N/A")
+                .amount(request.getAmount() != null ? request.getAmount() : BigDecimal.ZERO)
+                .currency("LKR")
+                .status("PAID".equalsIgnoreCase(request.getStatus()) ? PaymentStatus.SUCCESS : PaymentStatus.FAILED)
+                .payherePaymentId(request.getTransactionId())
+                .itemDescription("Doctor Consultation Fee")
+                .paymentReference(orderId)
+                .build();
+        } else {
+            payment = payments.get(0);
+            if ("PAID".equalsIgnoreCase(request.getStatus())) {
+                payment.setStatus(PaymentStatus.SUCCESS);
+            } else {
+                payment.setStatus(PaymentStatus.FAILED);
+            }
+            payment.setPayherePaymentId(request.getTransactionId());
+        }
+        paymentRepository.save(payment);
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            String patientId = payment.getPatientId() != null ? payment.getPatientId() : "system";
+            try {
+                eventProducer.sendPaymentCompleted(
+                        new com.smarthealth.payment.dto.PaymentCompletedEventDto(
+                                payment.getAppointmentId().toString(),
+                                patientId,
+                                payment.getAmount(),
+                                "SUCCESS",
+                                payment.getPayherePaymentId()
+                        )
+                );
+            } catch (Exception e) {
+                log.error("Payment marked SUCCESS but Kafka publish failed for appointmentId={}", payment.getAppointmentId(), e);
+            }
+        }
+
+        return mapToResponse(payment);
+    }
+
     // Generate MD5 hash for PayHere
     private String generateHash(String merchantId, String orderId, String amount, String currency) {
         try {
