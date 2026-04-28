@@ -1,6 +1,7 @@
 import type { TelemedicineSessionResponse } from "@/app/types/telemedicine";
 
-const TELEMEDICINE_BASE_URL = "http://localhost:8080/api/v1/telemedicine/sessions";
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+const TELEMEDICINE_BASE_URL = `${API_GATEWAY}/api/v1/telemedicine/sessions`;
 
 function requireClientToken(): string {
   const token = typeof window !== "undefined" ? localStorage.getItem("smart_admin_token") : null;

@@ -10,7 +10,7 @@ import { NotificationLog } from "@/types/api";
 const NAV_LINKS = [
   { label: "Home",            href: "/patient#home" },
   { label: "Telemedicine",    href: "/patient/telemedicine" },
-  { label: "AI Suggestions",  href: "/patient/ai-suggestions" },
+  { label: "AI Suggestions",  href: "/patient/dashboard?section=ai-suggestions" },
   { label: "Services",        href: "/patient#services" },
   { label: "About Us",        href: "/patient#about" },
   { label: "Blog",            href: "/patient#blog" },
@@ -195,7 +195,7 @@ export default function PatientNavbar() {
               const isActive = (isLandingPage && i === 0 && link.href.startsWith("#")) || 
                                pathname === link.href || 
                                (pathname.startsWith(link.href) && link.href !== "/" && link.href !== "/patient");
-              
+
               return (
                 <li key={link.label}>
                   <a

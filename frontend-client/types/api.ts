@@ -249,6 +249,21 @@ export interface PrescriptionResponse {
   digitalSignature: string | null;
 }
 
+// TODO: check if this is used
+export interface Doctor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  licenseNumber: string;
+  specialization: string;
+  consultationFee: number;
+  approved: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateDoctorRequest {
   userId: number;
   fullName: string;
