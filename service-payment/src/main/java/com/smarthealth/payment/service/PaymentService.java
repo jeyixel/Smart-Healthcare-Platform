@@ -8,10 +8,15 @@ import com.smarthealth.payment.kafka.PaymentEventProducer;
 import com.smarthealth.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +32,11 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PayHereConfig payHereConfig;
     private final PaymentEventProducer eventProducer;
+
+    @Value("${appointment.service.base-url:http://localhost:8083}")
+    private String appointmentServiceBaseUrl;
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     // Step 1: Initiate payment — create order and return PayHere form data
     public PaymentInitiateResponse initiatePayment(PaymentInitiateRequest request) {
@@ -131,6 +141,7 @@ public class PaymentService {
                                 payment.getPaymentReference()
                         )
                 );
+                tryUpdateAppointmentPaymentStatus(payment.getAppointmentId().toString(), "PAYMENT_COMPLETED");
                 log.info("Payment successful for order: {}", notify.getOrder_id());
             }
             case "-1" -> {
@@ -249,9 +260,31 @@ public class PaymentService {
             } catch (Exception e) {
                 log.error("Payment marked SUCCESS but Kafka publish failed for appointmentId={}", payment.getAppointmentId(), e);
             }
+            tryUpdateAppointmentPaymentStatus(payment.getAppointmentId().toString(), "PAYMENT_COMPLETED");
         }
 
         return mapToResponse(payment);
+    }
+
+    private void tryUpdateAppointmentPaymentStatus(String appointmentId, String paymentStatus) {
+        try {
+            String json = """
+                    {"appointmentId":"%s","paymentStatus":"%s"}
+                    """.formatted(appointmentId, paymentStatus);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(appointmentServiceBaseUrl + "/api/v1/appointments/payment-status"))
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                    .header("Content-Type", "application/json")
+                    .build();
+
+            HttpResponse<String> res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (res.statusCode() != 204) {
+                log.warn("Appointment paymentStatus update failed: status={} body={}", res.statusCode(), res.body());
+            }
+        } catch (Exception e) {
+            log.warn("Appointment paymentStatus update call failed", e);
+        }
     }
 
     // Generate MD5 hash for PayHere
