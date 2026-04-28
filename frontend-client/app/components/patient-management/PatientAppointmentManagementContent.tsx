@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePatientAppointments, ConsultationType, AppointmentStatus } from "@/app/hooks/usePatientAppointments";
 import PatientNavbar from "@/app/components/common/navbar/PatientNavbar";
+
+const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
 
 // ─── Palette helpers ──────────────────────────────────────────────────────────
 
@@ -55,6 +57,20 @@ const PAYMENT_STATUS_META: Record<string, { label: string; bg: string; color: st
     border: "rgba(245,158,11,0.25)",
   },
   PAID: {
+    label: "Paid",
+    bg: "rgba(16,185,129,0.10)",
+    color: "#059669",
+    dot: "#10b981",
+    border: "rgba(16,185,129,0.25)",
+  },
+  COMPLETED: {
+    label: "Paid",
+    bg: "rgba(16,185,129,0.10)",
+    color: "#059669",
+    dot: "#10b981",
+    border: "rgba(16,185,129,0.25)",
+  },
+  SUCCESS: {
     label: "Paid",
     bg: "rgba(16,185,129,0.10)",
     color: "#059669",
@@ -214,7 +230,7 @@ function getRelativeDateLabel(dateStr: string): string {
 }
 
 export function PatientAppointmentManagementContent({ hideNavbar = false }: { hideNavbar?: boolean }) {
-  const { appointments, patient, doctors, loading, error, createAppointment, rescheduleAppointment, deleteAppointment } = usePatientAppointments();
+  const { appointments, patient, doctors, loading, error, refetch, createAppointment, rescheduleAppointment, deleteAppointment } = usePatientAppointments();
   const [activeTab, setActiveTab] = useState<'my-appointments' | 'today-appointments' | 'book-appointment'>('my-appointments');
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -223,6 +239,7 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [showDoctorDetailsModal, setShowDoctorDetailsModal] = useState(false);
   const [viewingDoctor, setViewingDoctor] = useState<any>(null);
+  const [successBooking, setSuccessBooking] = useState<{ id: string, amount: number, doctorName: string } | null>(null);
 
   // Book New Filters
   const [doctorSearch, setDoctorSearch] = useState('');
@@ -262,6 +279,53 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
     appointmentDate: "",
     appointmentTime: "",
   });
+
+  useEffect(() => {
+    let ignore = false;
+
+    const syncPaymentFromReturn = async () => {
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get("order_id");
+      const paymentId = params.get("payment_id");
+
+      if (!orderId) return;
+
+      const token = localStorage.getItem("smart_admin_token");
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_GATEWAY}/api/payments/appointments/${orderId}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: "PAID",
+            transactionId: paymentId || `PAYHERE_${Date.now()}`,
+            amount: 0,
+          }),
+        });
+
+        if (response.ok && !ignore) {
+          refetch();
+        }
+      } catch {
+        // If sync fails, keep current UI state and let normal fetch flow continue.
+      } finally {
+        params.delete("order_id");
+        params.delete("payment_id");
+        const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+        window.history.replaceState({}, "", next);
+      }
+    };
+
+    void syncPaymentFromReturn();
+    return () => {
+      ignore = true;
+    };
+  }, [refetch]);
 
   // Filtered appointments
   const filteredAppointments = useMemo(() => {
@@ -402,9 +466,13 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
     
     setIsCreating(true);
     try {
-      await createAppointment({ ...createForm, patientId: patient.id });
+      const createdAppt = await createAppointment({ ...createForm, patientId: patient.id });
       setShowBookModal(false);
-      setSelectedDoctor(null);
+      setSuccessBooking({
+        id: createdAppt.id,
+        amount: selectedDoctor.consultationFee,
+        doctorName: selectedDoctor.fullName
+      });
       setCreateForm({ doctorId: "", appointmentDate: "", appointmentTime: "", consultationType: "PHYSICAL", reason: "" });
       setFormErrors({ appointmentDate: "", appointmentTime: "", reason: "" });
     } finally {
@@ -702,6 +770,8 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                       const today = isToday(appt.appointmentDate);
                       const upcoming = isFuture(appt.appointmentDate);
                       const hue = avatarColor(appt.doctorId);
+                      const normalizedPaymentStatus = String(appt.paymentStatus ?? "PENDING").trim().toUpperCase();
+                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS"].includes(normalizedPaymentStatus);
                       
                       return (
                         <tr 
@@ -807,10 +877,21 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                             {statusPill(appt.status)}
                           </td>
                           <td className="px-6 py-4">
-                            {paymentStatusPill(appt.paymentStatus || 'PENDING')}
+                            <div className="flex flex-col gap-2">
+                              {paymentStatusPill(normalizedPaymentStatus)}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {isUnpaid && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
+                                <Link 
+                                  href={`/patient/payment/${appt.id}?amount=${doctor?.consultationFee || 0}`}
+                                  className="px-3 py-1.5 bg-[#4fd1c5] text-white text-xs font-bold rounded-lg hover:bg-[#0891b2] transition-colors shadow-sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Pay Now
+                                </Link>
+                              )}
                               <button 
                                 onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); }} 
                                 className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" 
@@ -896,6 +977,8 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                       const doctor = doctors.find(d => d.id === appt.doctorId);
                       const typeMeta = TYPE_META[appt.consultationType] ?? TYPE_META.PHYSICAL;
                       const hue = avatarColor(appt.doctorId);
+                      const normalizedPaymentStatus = String(appt.paymentStatus ?? "PENDING").trim().toUpperCase();
+                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS"].includes(normalizedPaymentStatus);
                       
                       return (
                         <tr 
@@ -986,10 +1069,21 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                             {statusPill(appt.status)}
                           </td>
                           <td className="px-6 py-4">
-                            {paymentStatusPill(appt.paymentStatus || 'PENDING')}
+                            <div className="flex flex-col gap-2">
+                              {paymentStatusPill(normalizedPaymentStatus)}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {isUnpaid && appt.status !== "CANCELLED" && appt.status !== "COMPLETED" && (
+                                <Link 
+                                  href={`/patient/payment/${appt.id}?amount=${doctor?.consultationFee || 0}`}
+                                  className="px-3 py-1.5 bg-[#4fd1c5] text-white text-xs font-bold rounded-lg hover:bg-[#0891b2] transition-colors shadow-sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Pay Now
+                                </Link>
+                              )}
                               <button 
                                 onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); }} 
                                 className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" 
@@ -2593,6 +2687,68 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
         </div>
       )}
       
+      {/* Success Booking Modal / Payment Prompt */}
+      {successBooking && (
+        <div 
+          onClick={() => { setSuccessBooking(null); setSelectedDoctor(null); setActiveTab('my-appointments'); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            backdropFilter: "blur(4px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: "20px",
+              width: "100%",
+              maxWidth: "400px",
+              boxShadow: "0 25px 80px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+              animation: "slideUp 0.25s ease",
+            }}
+          >
+            <div style={{ padding: "30px", textAlign: "center" }}>
+              <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-4">
+                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                 </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Booking Successful!</h3>
+              <p className="text-slate-500 mb-6 text-sm">Your appointment with Dr. {successBooking.doctorName} has been scheduled. Would you like to pay the consultation fee (LKR {successBooking.amount}) now?</p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => { setSuccessBooking(null); setSelectedDoctor(null); setActiveTab('my-appointments'); }} 
+                  className="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                >
+                  Pay Later
+                </button>
+                <Link
+                  href={`/patient/payment/${successBooking.id}?amount=${successBooking.amount}`}
+                  className="flex-1 rounded-xl font-bold text-white flex items-center justify-center transition"
+                  style={{
+                    background: "linear-gradient(135deg,#06b6d4,#0891b2)",
+                    boxShadow: "0 4px 14px rgba(6,182,212,0.4)",
+                  }}
+                  onClick={() => { setSuccessBooking(null); setSelectedDoctor(null); }}
+                >
+                  Proceed & Pay
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       <style jsx>{`
         @keyframes slideUp {
           from {

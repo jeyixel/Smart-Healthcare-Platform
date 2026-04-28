@@ -7,7 +7,7 @@ import { ConfirmationModal } from "../doctor-management/ConfirmationModal";
 import { getPatientName } from "@/app/utils/tokenUtils";
 
 export function PatientTopBar() {
-  const { activeSection, sidebarCollapsed, logout } = usePatientContext();
+  const { activeSection, setActiveSection, sidebarCollapsed, logout } = usePatientContext();
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>("");

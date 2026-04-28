@@ -41,18 +41,29 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   const [activeSection, setActiveSection] = useState<PatientNavSection>("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem("smart_admin_token");
+    localStorage.removeItem("smart_admin_role");
+    localStorage.removeItem("smart_admin_email");
+    setSession(null);
+    window.location.href = "/login";
+  }, []);
+
   const refreshProfile = useCallback(async () => {
     if (!session) return;
     setLoadingProfile(true);
     try {
       const data = await fetchPatientByEmail(session.token, session.email);
       setPatient(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to refresh patient profile:", err);
+      if (err.message?.includes("Invalid or expired token") || err.message?.includes("401") || err.message?.includes("status 401") || err.message?.includes("Unauthorized")) {
+        logout();
+      }
     } finally {
       setLoadingProfile(false);
     }
-  }, [session]);
+  }, [session, logout]);
 
   useEffect(() => {
     if (session && !patient) {
@@ -61,14 +72,6 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   }, [session, patient, refreshProfile]);
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((c) => !c), []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem("smart_admin_token");
-    localStorage.removeItem("smart_admin_role");
-    localStorage.removeItem("smart_admin_email");
-    setSession(null);
-    window.location.href = "/login";
-  }, []);
 
   return (
     <PatientContext.Provider

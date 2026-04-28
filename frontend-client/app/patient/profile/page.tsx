@@ -51,7 +51,9 @@ export default function PatientProfilePage() {
       setError(null);
       setSuccess(null);
       
-      const updated = await updatePatientProfile(patient.id, formData);
+      const token = localStorage.getItem("smart_admin_token");
+      if (!token) throw new Error("Authentication error");
+      const updated = await updatePatientProfile(token, patient.id, formData);
       setPatient(updated);
       setFormData(updated);
       setEditMode(false);

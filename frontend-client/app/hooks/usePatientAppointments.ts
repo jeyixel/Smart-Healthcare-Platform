@@ -22,6 +22,10 @@ export interface PatientAppointment {
   updatedAt: string;
 }
 
+type PaymentResponseLike = {
+  status?: string;
+};
+
 export interface DoctorAvailability {
   dayOfWeek: string; // "MONDAY", "TUESDAY", etc.
   isAvailable: boolean;
@@ -67,7 +71,7 @@ export interface UsePatientAppointmentsResult {
   loading: boolean;
   error: string | null;
   refetch: () => void;
-  createAppointment: (data: CreateAppointmentRequest) => Promise<void>;
+  createAppointment: (data: CreateAppointmentRequest) => Promise<PatientAppointment>;
   rescheduleAppointment: (id: string, data: RescheduleAppointmentRequest) => Promise<void>;
   deleteAppointment: (id: string) => Promise<void>;
 }
@@ -220,7 +224,43 @@ export function usePatientAppointments(): UsePatientAppointmentsResult {
         });
         const apptData = await safeJson<unknown>(apptRes);
         if (cancelled) return;
-        setAppointments(normalizeListResponse<PatientAppointment>(apptData));
+        const loadedAppointments = normalizeListResponse<PatientAppointment>(apptData);
+        setAppointments(loadedAppointments);
+
+        // 2b. Overlay payment status from payment service (source of truth)
+        // This keeps UI accurate even if appointment service lags behind.
+        try {
+          const candidates = loadedAppointments.filter(
+            (a) => !a.paymentStatus || a.paymentStatus === "PENDING"
+          );
+          if (candidates.length > 0) {
+            const updates = await Promise.all(
+              candidates.map(async (appt) => {
+                const res = await fetch(`${API_GATEWAY}/api/payments/appointment/${appt.id}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                  cache: "no-store",
+                });
+                if (!res.ok) return { id: appt.id, paymentStatus: appt.paymentStatus };
+                const payload = (await res.json()) as unknown;
+                const payments = normalizeListResponse<PaymentResponseLike>(payload);
+                const status = payments[0]?.status?.toUpperCase();
+                if (status === "SUCCESS") return { id: appt.id, paymentStatus: "COMPLETED" as const };
+                if (status === "FAILED" || status === "CANCELLED") return { id: appt.id, paymentStatus: "FAILED" as const };
+                return { id: appt.id, paymentStatus: appt.paymentStatus };
+              })
+            );
+
+            if (cancelled) return;
+            setAppointments((prev) =>
+              prev.map((a) => {
+                const u = updates.find((x) => x.id === a.id);
+                return u ? { ...a, paymentStatus: u.paymentStatus ?? a.paymentStatus } : a;
+              })
+            );
+          }
+        } catch {
+          // Non-fatal: fall back to appointment service's paymentStatus field.
+        }
 
         // 3. Get list of doctors for creation dropdown
         const doctorsRes = await fetch(`${API_GATEWAY}/api/v1/doctors`, {
@@ -263,6 +303,7 @@ export function usePatientAppointments(): UsePatientAppointmentsResult {
       const created = await safeJson<PatientAppointment>(response);
       setAppointments((prev) => [...prev, created]);
       showToast("Appointment created successfully!", "success");
+      return created;
     } catch (e) {
       console.error("Create appointment error:", e);
       showToast(e instanceof Error ? e.message : "Failed to create appointment", "error");
