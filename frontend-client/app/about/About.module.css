@@ -1,0 +1,133 @@
+.pageWrapper {
+  background: #060e1e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+}
+
+.hero {
+  position: relative;
+  padding: 10rem 0 6rem;
+  background: radial-gradient(circle at 50% 0%, rgba(56, 211, 203, 0.1) 0%, transparent 70%);
+  text-align: center;
+}
+
+.heroContent {
+  width: min(1000px, 90%);
+  margin: 0 auto;
+}
+
+.title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.accent {
+  background: linear-gradient(135deg, #38d3cb 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: rgba(200, 215, 235, 0.6);
+  line-height: 1.6;
+  max-width: 70ch;
+  margin: 0 auto;
+}
+
+.contentSection {
+  padding: 4rem 0 8rem;
+}
+
+.container {
+  width: min(1200px, 90%);
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 6rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(56, 211, 203, 0.15);
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(56, 211, 203, 0.4);
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(56, 211, 203, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38d3cb;
+  margin-bottom: 1.5rem;
+}
+
+.card h3 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.card p {
+  color: rgba(200, 215, 235, 0.5);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.story {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 4rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.story h2 {
+  color: #fff;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.story p {
+  color: rgba(200, 215, 235, 0.7);
+  line-height: 1.8;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 8rem 0 4rem;
+  }
+  
+  .story {
+    padding: 2rem;
+  }
+}

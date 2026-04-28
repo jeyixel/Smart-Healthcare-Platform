@@ -8,13 +8,13 @@ import { fetchNotifications } from "@/lib/api";
 import { NotificationLog } from "@/types/api";
 
 const NAV_LINKS = [
-  { label: "Home",            href: "/patient#home" },
+  { label: "Home",            href: "/#home" },
   { label: "Telemedicine",    href: "/patient/telemedicine" },
   { label: "AI Suggestions",  href: "/patient/dashboard?section=ai-suggestions" },
-  { label: "Services",        href: "/patient#services" },
-  { label: "About Us",        href: "/patient#about" },
-  { label: "Blog",            href: "/patient#blog" },
-  { label: "Contact Us",      href: "/patient#contact" },
+  { label: "About Us",        href: "/about" },
+  { label: "Privacy Policy",  href: "/privacy" },
+  { label: "Terms",           href: "/terms" },
+  { label: "Contact Us",      href: "/#contact" },
 ];
 
 function NotificationIcon({ type }: { type: string }) {
