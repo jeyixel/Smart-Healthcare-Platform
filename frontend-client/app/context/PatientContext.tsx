@@ -75,13 +75,13 @@ export function PatientProvider({ children }: { children: ReactNode }) {
 
   return (
     <PatientContext.Provider
-      value={{ 
-        session, setSession, 
+      value={{
+        session, setSession,
         patient, loadingProfile,
-        activeSection, setActiveSection, 
-        sidebarCollapsed, toggleSidebar, 
+        activeSection, setActiveSection,
+        sidebarCollapsed, toggleSidebar,
         refreshProfile,
-        logout 
+        logout
       }}
     >
       {children}

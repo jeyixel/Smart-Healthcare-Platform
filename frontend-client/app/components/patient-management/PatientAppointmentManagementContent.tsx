@@ -77,6 +77,13 @@ const PAYMENT_STATUS_META: Record<string, { label: string; bg: string; color: st
     dot: "#10b981",
     border: "rgba(16,185,129,0.25)",
   },
+  PAYMENT_COMPLETED: {
+    label: "Paid",
+    bg: "rgba(16,185,129,0.10)",
+    color: "#059669",
+    dot: "#10b981",
+    border: "rgba(16,185,129,0.25)",
+  },
   EXPIRED: {
     label: "Expired",
     bg: "rgba(239,68,68,0.10)",
@@ -92,6 +99,13 @@ const PAYMENT_STATUS_META: Record<string, { label: string; bg: string; color: st
     border: "rgba(239,68,68,0.25)",
   },
   FAILED: {
+    label: "Failed",
+    bg: "rgba(239,68,68,0.10)",
+    color: "#dc2626",
+    dot: "#ef4444",
+    border: "rgba(239,68,68,0.25)",
+  },
+  PAYMENT_FAILED: {
     label: "Failed",
     bg: "rgba(239,68,68,0.10)",
     color: "#dc2626",
@@ -771,7 +785,7 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                       const upcoming = isFuture(appt.appointmentDate);
                       const hue = avatarColor(appt.doctorId);
                       const normalizedPaymentStatus = String(appt.paymentStatus ?? "PENDING").trim().toUpperCase();
-                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS"].includes(normalizedPaymentStatus);
+                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS", "PAYMENT_COMPLETED"].includes(normalizedPaymentStatus);
                       
                       return (
                         <tr 
@@ -978,7 +992,7 @@ export function PatientAppointmentManagementContent({ hideNavbar = false }: { hi
                       const typeMeta = TYPE_META[appt.consultationType] ?? TYPE_META.PHYSICAL;
                       const hue = avatarColor(appt.doctorId);
                       const normalizedPaymentStatus = String(appt.paymentStatus ?? "PENDING").trim().toUpperCase();
-                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS"].includes(normalizedPaymentStatus);
+                      const isUnpaid = !["PAID", "COMPLETED", "SUCCESS", "PAYMENT_COMPLETED"].includes(normalizedPaymentStatus);
                       
                       return (
                         <tr 
