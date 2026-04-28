@@ -1,7 +1,6 @@
 
 # IDE folders
 .idea/
-.vscode/
 *.iml
 
 # Build output
@@ -29,3 +28,4 @@ node_modules/
 .classpath
 .project
 .settings/
+config.bat
