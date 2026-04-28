@@ -62,7 +62,8 @@ export default function JitsiVideoCall({ meetingUrl, userName, sessionId }: Vide
 
         // Send the raw room name (without appId prefix) to the backend token endpoint
         const rawRoom = appId ? roomName.replace(`${appId}/`, "") : roomName;
-        const response = await fetch(`http://localhost:8080/api/v1/telemedicine/meet/token?room=${encodeURIComponent(rawRoom)}`, {
+        const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+        const response = await fetch(`${API_GATEWAY}/api/v1/telemedicine/meet/token?room=${encodeURIComponent(rawRoom)}`, {
           headers: {
             Authorization: `Bearer ${userToken}`,
           },

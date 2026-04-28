@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDoctorContext, DoctorNavSection } from "@/app/context/DoctorContext";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { getDoctorName } from "@/app/utils/tokenUtils";
@@ -89,6 +90,7 @@ const navItems: NavItem[] = [
 ];
 
 export function DoctorSidebar() {
+  const router = useRouter();
   const { session, activeSection, setActiveSection, sidebarCollapsed, toggleSidebar, logout } = useDoctorContext();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -179,7 +181,13 @@ export function DoctorSidebar() {
           return (
             <button
               key={item.id}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => {
+                if (item.id === "telemedicine") {
+                  router.push("/doctor/telemedicine");
+                } else {
+                  setActiveSection(item.id);
+                }
+              }}
               title={sidebarCollapsed ? item.label : undefined}
               style={{
                 display: "flex",
