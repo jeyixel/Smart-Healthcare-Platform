@@ -1,7 +1,6 @@
 
 # IDE folders
 .idea/
-.vscode/
 *.iml
 
 # Build output
@@ -30,3 +29,4 @@ node_modules/
 .project
 .settings/
 k8s/smart-healthcare-secret.yaml
+config.bat
