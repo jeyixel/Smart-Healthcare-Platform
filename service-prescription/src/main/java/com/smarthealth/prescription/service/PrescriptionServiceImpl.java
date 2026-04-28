@@ -4,6 +4,7 @@ import com.smarthealth.prescription.client.ServiceClient;
 import com.smarthealth.prescription.dto.*;
 import com.smarthealth.prescription.dto.external.AppointmentResponse;
 import com.smarthealth.prescription.dto.external.DoctorResponse;
+import com.smarthealth.prescription.dto.external.PatientResponse;
 import com.smarthealth.prescription.entity.Prescription;
 import com.smarthealth.prescription.entity.PrescriptionItem;
 import com.smarthealth.prescription.entity.PrescriptionStatus;
@@ -32,6 +33,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final PrescriptionRepository prescriptionRepository;
     private final ServiceClient serviceClient;
     private final PrescriptionEventPublisher eventPublisher;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Override
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
@@ -97,6 +99,24 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         Prescription saved = prescriptionRepository.save(prescription);
         eventPublisher.publishPrescriptionEvent("prescription-created", "PRESCRIPTION_CREATED", saved);
+        try {
+            DoctorResponse doctor = serviceClient.getDoctor(saved.getDoctorId());
+            PatientResponse patient = serviceClient.getPatient(saved.getPatientId());
+            notificationEventPublisher.publishPrescriptionCreated(
+                    new PrescriptionNotificationEvent(
+                            "PRESCRIPTION_CREATED",
+                            saved.getId().toString(),
+                            patient != null ? (patient.firstName() + " " + patient.lastName()).trim() : "",
+                            saved.getDoctorId().toString(),
+                            doctor != null ? doctor.fullName() : "",
+                            doctor != null ? doctor.email() : "",
+                            doctor != null ? doctor.phone() : "",
+                            saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : Instant.now().toString()
+                    )
+            );
+        } catch (Exception ignored) {
+            // Best-effort async notification publishing; never block prescription creation flow.
+        }
 
         return PrescriptionMapper.toResponse(prescription);
     }
