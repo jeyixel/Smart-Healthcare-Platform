@@ -23,4 +23,6 @@ public interface AppointmentService {
 
     boolean isDoctorAppointment(UUID appointmentId, UUID doctorId);
 
+    void updatePaymentStatus(UpdatePaymentStatusDto dto);
+
 }

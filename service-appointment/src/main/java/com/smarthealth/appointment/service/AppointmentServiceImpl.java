@@ -6,6 +6,7 @@ import com.smarthealth.appointment.dto.external.PatientResponse;
 import com.smarthealth.appointment.entity.Appointment;
 import com.smarthealth.appointment.entity.ConsultationType;
 import com.smarthealth.appointment.entity.AppointmentStatus;
+import com.smarthealth.appointment.entity.PaymentStatus;
 import com.smarthealth.appointment.event.OnlineAppointmentCreatedEvent;
 import com.smarthealth.appointment.exception.BusinessException;
 import com.smarthealth.appointment.exception.ResourceNotFoundException;
@@ -31,6 +32,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final ServiceClient serviceClient;
     private final AppointmentEventPublisher appointmentEventPublisher;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -83,6 +85,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointment = appointmentRepository.save(appointment);
         appointmentEventPublisher.publishAppointmentEvent("appointment-created", "APPOINTMENT_CREATED", appointment);
+        try {
+            PatientResponse patient = serviceClient.getPatient(appointment.getPatientId());
+            DoctorResponse doctor = serviceClient.getDoctor(appointment.getDoctorId());
+            notificationEventPublisher.publishAppointmentBooked(
+                    toNotificationEvent(appointment, patient, doctor)
+            );
+        } catch (Exception ignored) {
+            // Best-effort async notification publishing; never block booking flow.
+        }
 
         if (appointment.getConsultationType() == ConsultationType.ONLINE) {
             applicationEventPublisher.publishEvent(new OnlineAppointmentCreatedEvent(
@@ -139,6 +150,17 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointment = appointmentRepository.save(appointment);
         appointmentEventPublisher.publishAppointmentEvent("appointment-status-changed", "APPOINTMENT_STATUS_CHANGED", appointment);
+        if (request.status() == AppointmentStatus.CANCELLED) {
+            try {
+                PatientResponse patient = serviceClient.getPatient(appointment.getPatientId());
+                DoctorResponse doctor = serviceClient.getDoctor(appointment.getDoctorId());
+                notificationEventPublisher.publishAppointmentCancelled(
+                        toNotificationEvent(appointment, patient, doctor)
+                );
+            } catch (Exception ignored) {
+                // Best-effort async notification publishing; never block cancellation flow.
+            }
+        }
 
         return AppointmentMapper.toResponse(appointment);
     }
@@ -200,5 +222,46 @@ public class AppointmentServiceImpl implements AppointmentService {
         return appointmentRepository.findById(appointmentId)
                 .map(appointment -> appointment.getDoctorId().equals(doctorId))
                 .orElse(false);
+    }
+
+    @Override
+    public void updatePaymentStatus(UpdatePaymentStatusDto dto) {
+        UUID appointmentId;
+        try {
+            appointmentId = UUID.fromString(dto.getAppointmentId());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Invalid appointmentId: " + dto.getAppointmentId());
+        }
+
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + appointmentId));
+
+        try {
+            PaymentStatus next = PaymentStatus.valueOf(dto.getPaymentStatus().trim().toUpperCase());
+            appointment.setPaymentStatus(next);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Invalid paymentStatus: " + dto.getPaymentStatus());
+        }
+
+        appointmentRepository.save(appointment);
+    }
+
+    private AppointmentNotificationEvent toNotificationEvent(
+            Appointment appointment,
+            PatientResponse patient,
+            DoctorResponse doctor
+    ) {
+        return new AppointmentNotificationEvent(
+                null,
+                appointment.getId().toString(),
+                appointment.getPatientId().toString(),
+                patient != null ? (patient.firstName() + " " + patient.lastName()).trim() : "",
+                patient != null ? patient.email() : "",
+                patient != null ? patient.phoneNumber() : "",
+                doctor != null ? doctor.fullName() : "",
+                doctor != null ? doctor.specialty() : "",
+                LocalDateTime.of(appointment.getAppointmentDate(), appointment.getAppointmentTime()).toString(),
+                appointment.getConsultationType() != null ? appointment.getConsultationType().name() : ""
+        );
     }
 }

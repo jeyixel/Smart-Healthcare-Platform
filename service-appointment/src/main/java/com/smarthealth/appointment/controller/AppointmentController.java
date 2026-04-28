@@ -76,6 +76,12 @@ public class AppointmentController {
         return appointmentService.reschedule(id, request);
     }
 
+    @PatchMapping("/payment-status")
+    public ResponseEntity<Void> updatePaymentStatus(@Valid @RequestBody UpdatePaymentStatusDto dto) {
+        appointmentService.updatePaymentStatus(dto);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PATIENT') and @appointmentService.isAppointmentOwner(#id, authentication.principal.userId) or hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
