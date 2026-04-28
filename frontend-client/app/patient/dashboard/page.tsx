@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { PatientProvider, usePatientContext } from "@/app/context/PatientContext";
 import { PatientSidebar } from "@/app/components/patient-management/PatientSidebar";
@@ -12,7 +13,19 @@ import { PatientTelemedicineContent } from "@/app/components/patient-management/
 import { PatientProfileContent } from "@/app/components/patient-management/PatientProfileContent";
 import { PatientReportsContent } from "@/app/components/patient-management/PatientReportsContent";
 import { PatientSupportContent } from "@/app/components/patient-management/PatientSupportContent";
+import { PatientAiSuggestionsContent } from "@/app/components/patient-management/PatientAiSuggestionsContent";
 import { usePatientAuth } from "@/app/hooks/usePatientAuth";
+
+const VALID_SECTIONS = [
+  "dashboard",
+  "appointments",
+  "prescriptions",
+  "reports",
+  "ai-suggestions",
+  "telemedicine",
+  "profile",
+  "help-support",
+];
 
 /* ── Loading screen ──────────────────────────────────────────── */
 function LoadingScreen() {
@@ -75,7 +88,15 @@ function ComingSoon({ title }: { title: string }) {
 /* ── Patient Shell ───────────────────────────────────────────── */
 function PatientShell() {
   const { session, loading } = usePatientAuth();
-  const { sidebarCollapsed, activeSection, setSession } = usePatientContext();
+  const { sidebarCollapsed, activeSection, setSession, setActiveSection } = usePatientContext();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section && VALID_SECTIONS.includes(section) && section !== activeSection) {
+      setActiveSection(section as typeof activeSection);
+    }
+  }, [searchParams, activeSection, setActiveSection]);
 
   useEffect(() => {
     if (session) {
@@ -103,10 +124,11 @@ function PatientShell() {
           {activeSection === "appointments" && <PatientAppointmentManagementContent hideNavbar={true} />}
           {activeSection === "prescriptions" && <PatientPrescriptionsContent />}
           {activeSection === "reports" && <PatientReportsContent />}
+          {activeSection === "ai-suggestions" && <PatientAiSuggestionsContent />}
           {activeSection === "telemedicine" && <PatientTelemedicineContent />}
           {activeSection === "profile" && <PatientProfileContent />}
           {activeSection === "help-support" && <PatientSupportContent />}
-          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "reports" && activeSection !== "telemedicine" && activeSection !== "profile" && activeSection !== "help-support" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
+          {activeSection !== "dashboard" && activeSection !== "appointments" && activeSection !== "prescriptions" && activeSection !== "reports" && activeSection !== "ai-suggestions" && activeSection !== "telemedicine" && activeSection !== "profile" && activeSection !== "help-support" && <ComingSoon title={activeSection.charAt(0).toUpperCase() + activeSection.slice(1).replace("-", " ")} />}
         </div>
       </main>
     </div>

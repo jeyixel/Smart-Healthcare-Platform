@@ -4,6 +4,51 @@ import { useEffect, useState } from "react";
 import { fetchPaymentAnalysis } from "@/lib/api";
 import { PaymentAnalysis, DailyRevenue } from "@/types/api";
 
+/* === Sub-components === */
+
+function MetricCard({ label, value, delta, icon, color }: { label: string; value: string | number; delta: string; icon: React.ReactNode; color: string }) {
+  return (
+    <div style={{
+      background: "#fff",
+      border: "1px solid #e8f0fe",
+      borderRadius: "16px",
+      padding: "24px",
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+      transition: "transform 0.2s",
+      position: "relative",
+      overflow: "hidden"
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px)")}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{
+          width: "44px", height: "44px", borderRadius: "12px",
+          background: `${color}15`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: color,
+        }}>
+          {icon}
+        </div>
+        <span style={{
+          fontSize: "11px", fontWeight: 700, color: "#06b6d4",
+          background: "rgba(6,182,212,0.1)",
+          padding: "3px 10px", borderRadius: "999px",
+        }}>
+          {delta}
+        </span>
+      </div>
+      <div>
+        <h3 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#0f172a" }}>{value}</h3>
+        <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b", fontWeight: 500 }}>{label}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const [analysis, setAnalysis] = useState<PaymentAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,11 +58,7 @@ export default function AnalyticsPage() {
     const loadAnalysis = async () => {
       try {
         const token = localStorage.getItem("smart_admin_token");
-        if (!token) {
-          setError("No authentication token found");
-          setLoading(false);
-          return;
-        }
+        if (!token) return;
         const data = await fetchPaymentAnalysis(token);
         setAnalysis(data);
       } catch (err) {
@@ -31,133 +72,122 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 font-medium">
-        Error: {error}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", flexDirection: "column", gap: "16px" }}>
+        <div style={{ animation: "spin 1s linear infinite", width: "32px", height: "32px", border: "3px solid #e2e8f0", borderTopColor: "#06b6d4", borderRadius: "50%" }}></div>
+        <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em" }}>Aggregating telemetry...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">System Analytics</h1>
-        <p className="text-slate-500">Deep dive into platform usage, revenue trends, and operational metrics.</p>
-      </header>
-
-      {/* Payment Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Revenue</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-black text-slate-900">LKR {analysis?.totalRevenue.toLocaleString()}</h3>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Transactions</p>
-          <h3 className="text-2xl font-black text-slate-900">{analysis?.totalTransactions}</h3>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Success Rate</p>
-          <h3 className="text-2xl font-black text-indigo-600">{analysis?.successRate.toFixed(1)}%</h3>
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+      
+      {/* === KPI Row === */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+        <MetricCard 
+          label="Total Revenue" 
+          value={`LKR ${analysis?.totalRevenue.toLocaleString()}`} 
+          delta="+12% vs last month"
+          color="#06b6d4"
+          icon={<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
+        <MetricCard 
+          label="Transaction Yield" 
+          value={analysis?.totalTransactions || 0} 
+          delta="Nominal"
+          color="#10b981"
+          icon={<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+        />
+        <MetricCard 
+          label="Success Rate" 
+          value={`${analysis?.successRate.toFixed(1)}%`} 
+          delta="High Priority"
+          color="#8b5cf6"
+          icon={<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Revenue Trends Chart */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-900 font-display">Revenue Trend (Daily)</h2>
-            <select className="text-xs font-bold text-slate-500 bg-slate-50 border-none rounded-lg px-2 py-1 outline-none">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "28px" }}>
+        
+        {/* Revenue Trends (Doctor Style Chart) */}
+        <section style={{ background: "#fff", borderRadius: "24px", border: "1px solid #e8f0fe", boxShadow: "0 4px 24px rgba(0,0,0,0.03)", padding: "28px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Fiscal Trajectory</h2>
+              <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8", fontWeight: 500 }}>Daily revenue performance (LKR)</p>
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <span style={{ fontSize: "10px", fontWeight: 800, color: "#06b6d4", background: "rgba(6,182,212,0.1)", padding: "4px 10px", borderRadius: "8px", textTransform: "uppercase" }}>7-Day Span</span>
+            </div>
           </div>
-          <div className="h-64 w-full bg-slate-50 rounded-xl flex items-end justify-between px-8 py-4 border border-dashed border-slate-200 gap-2">
-            {analysis?.trends.length ? (
-              analysis.trends.slice(-7).map((day, i) => {
-                const maxRevenue = Math.max(...analysis.trends.map(t => day.revenue), 100);
-                const height = (day.revenue / maxRevenue) * 100;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                    <div className="relative w-full flex flex-col items-center">
-                       <div 
-                         className="w-full max-w-[24px] bg-indigo-500 rounded-t-lg transition-all hover:bg-indigo-600 peer" 
-                         style={{ height: `${Math.max(height, 5)}%` }}
-                       ></div>
-                       {/* Tooltip */}
-                       <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-slate-900 text-white text-[10px] font-bold py-1 px-2 rounded whitespace-nowrap z-10">
-                         LKR {day.revenue.toLocaleString()}
-                       </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 rotate-45 mt-2">{day.date.substring(5)}</span>
+          
+          <div style={{ height: "240px", width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "0 12px", gap: "12px", borderBottom: "1px solid #f1f5f9" }}>
+            {analysis?.trends.slice(-7).map((day, i) => {
+              const maxRevenue = Math.max(...analysis.trends.map(t => t.revenue), 100);
+              const height = (day.revenue / maxRevenue) * 100;
+              return (
+                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", height: "100%", justifyContent: "flex-end" }}>
+                  <div style={{ position: "relative", width: "100%", maxWidth: "36px", height: "100%", display: "flex", alignItems: "flex-end" }}>
+                    <div style={{ 
+                      width: "100%", height: `${Math.max(height, 8)}%`, 
+                      background: i === 6 ? "linear-gradient(180deg, #06b6d4, #0891b2)" : "linear-gradient(180deg, rgba(6,182,212,0.4), rgba(8,145,178,0.2))",
+                      borderRadius: "8px 8px 0 0",
+                      transition: "height 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                      boxShadow: i === 6 ? "0 4px 12px rgba(6,182,212,0.3)" : "none"
+                    }} />
                   </div>
-                );
-              })
-            ) : (
-              <div className="w-full flex items-center justify-center text-slate-400 font-medium italic">
-                No revenue data for the selected period
-              </div>
-            )}
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: i === 6 ? "#06b6d4" : "#94a3b8", textTransform: "uppercase", paddingBottom: "12px" }}>
+                    {new Date(day.date).toLocaleDateString([], { weekday: 'short' })}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* Status Breakdown */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-6 font-display">Transaction Status</h2>
-          <div className="space-y-4">
+        {/* Transmission Integrity (Doctor Style Status) */}
+        <section style={{ background: "#fff", borderRadius: "24px", border: "1px solid #e8f0fe", boxShadow: "0 4px 24px rgba(0,0,0,0.03)", padding: "28px" }}>
+          <h2 style={{ margin: "0 0 24px 0", fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Transmission Integrity</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {analysis && Object.entries(analysis.statusBreakdown).map(([status, count]) => {
               const percentage = (count / analysis.totalTransactions) * 100;
-              const colorClass = status === 'SUCCESS' ? 'bg-emerald-500' : status === 'FAILED' ? 'bg-rose-500' : 'bg-amber-500';
+              const color = status === 'SUCCESS' ? '#10b981' : status === 'FAILED' ? '#ef4444' : '#f59e0b';
               return (
-                <div key={status} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold text-slate-600">
-                    <span>{status}</span>
-                    <span>{count} ({percentage.toFixed(0)}%)</span>
+                <div key={status} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em" }}>{status}</span>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>{percentage.toFixed(0)}%</span>
                   </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${colorClass}`} style={{ width: `${percentage}%` }}></div>
+                  <div style={{ height: "8px", width: "100%", background: "#f1f5f9", borderRadius: "4px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${percentage}%`, background: color, borderRadius: "4px", transition: "width 1s ease-out" }} />
                   </div>
                 </div>
               );
             })}
-            {!analysis || Object.keys(analysis.statusBreakdown).length === 0 && (
-              <p className="text-center text-slate-400 italic py-8">No transaction data available</p>
-            )}
           </div>
         </section>
 
-        <section className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-           <h2 className="text-lg font-bold text-slate-900 mb-4 font-display">System Utilization Summary</h2>
-           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Peak Hour</p>
-                 <p className="text-lg font-black text-slate-900">10:00 AM</p>
+        {/* Global Performance Hub */}
+        <section style={{ gridColumn: "1 / -1", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0fe", boxShadow: "0 4px 24px rgba(0,0,0,0.03)", padding: "28px" }}>
+          <h2 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>System Performance Benchmarks</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
+            {[
+              { label: "Peak Activity", value: "10:00 AM", sub: "Regional Load Spike" },
+              { label: "Avg Engagement", value: "12.5 min", sub: "User Session Depth" },
+              { label: "Growth Index", value: "+42", sub: "Daily New Uplinks" },
+              { label: "System Latency", value: "99.98%", sub: "Service Uptime", highlight: true },
+            ].map((bench) => (
+              <div key={bench.label} style={{ padding: "16px", borderRadius: "14px", background: "#f8fafc", border: "1px solid #f1f5f9", textAlign: "center" }}>
+                <p style={{ margin: 0, fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>{bench.label}</p>
+                <p style={{ margin: "4px 0 0", fontSize: "18px", fontWeight: 900, color: bench.highlight ? "#06b6d4" : "#0f172a" }}>{bench.value}</p>
+                <p style={{ margin: "2px 0 0", fontSize: "10px", color: "#64748b", fontWeight: 500 }}>{bench.sub}</p>
               </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avg Patient Session</p>
-                 <p className="text-lg font-black text-slate-900">12.5 min</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Daily New Users</p>
-                 <p className="text-lg font-black text-slate-900">42</p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Service Uptime</p>
-                 <p className="text-lg font-black text-emerald-600">99.98%</p>
-              </div>
-           </div>
+            ))}
+          </div>
         </section>
+
       </div>
     </div>
   );
 }
-

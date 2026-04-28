@@ -11,12 +11,15 @@ import {
   MOCK_DOCTOR,
   MOCK_PATIENT,
 } from "@/app/lib/telemedicine/mocks";
+import { useRouter } from "next/navigation";
 
 function TelemedicineContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const rawId = searchParams.get("appointmentId");
-  // Safely fallback if no appointmentId is provided (or keep using the dev mock ID if we want)
-  const appointmentId = rawId || "apt0002"; // Fallback to existing mock ID if none provided
+  
+  // Try to use the actual ID; we'll handle redirection in a useEffect if it's missing
+  const appointmentId = rawId || "";
 
   const [meetingUrl, setMeetingUrl] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -34,6 +37,17 @@ function TelemedicineContent() {
 
   // Check for JWT token in local storage on mount
   useEffect(() => {
+    if (!rawId) {
+      // Redirect back to dashboard if no appointment ID is provided
+      const role = localStorage.getItem("smart_admin_role") || "PATIENT";
+      if (role === "DOCTOR") {
+        router.push("/doctor");
+      } else {
+        router.push("/patient");
+      }
+      return;
+    }
+
     const token = localStorage.getItem("smart_admin_token");
     const role = localStorage.getItem("smart_admin_role") || "PATIENT";
     setHasToken(!!token);
@@ -41,7 +55,8 @@ function TelemedicineContent() {
 
     // Optionally we could fetch real appointment details here using fetch(/api/v1/appointments/${appointmentId})
     if (token && rawId) {
-      fetch(`http://localhost:8080/api/v1/appointments/${rawId}`, {
+      const API_GATEWAY = process.env.NEXT_PUBLIC_API_GATEWAY_BASE ?? "http://localhost:8080";
+      fetch(`${API_GATEWAY}/api/v1/appointments/${rawId}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
       .then(res => res.ok ? res.json() : null)
@@ -52,7 +67,7 @@ function TelemedicineContent() {
       })
       .catch(err => console.error("Failed to load appointment data:", err));
     }
-  }, [rawId]);
+  }, [rawId, router]);
 
   const userDisplayName =
     userRole === "DOCTOR" ? `${MOCK_DOCTOR.fullName} (Doctor)` : `${MOCK_PATIENT.fullName} (Patient)`;
@@ -107,8 +122,12 @@ function TelemedicineContent() {
           />
 
           <div className="space-y-6">
-            <ParticipantDetailsCard role={userRole as any} doctor={MOCK_DOCTOR} patient={MOCK_PATIENT} />
-            {userRole === "DOCTOR" ? <MedicalHistoryList history={MOCK_PATIENT.medicalHistory} /> : null}
+            <ParticipantDetailsCard 
+              role={userRole as any} 
+              doctor={appointmentData.doctor || MOCK_DOCTOR} 
+              patient={appointmentData.patient || MOCK_PATIENT} 
+            />
+            {userRole === "DOCTOR" ? <MedicalHistoryList history={appointmentData.patient?.medicalHistory || MOCK_PATIENT.medicalHistory} /> : null}
           </div>
         </div>
 

@@ -1,144 +1,203 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { fetchAdminAppointments, updateAppointmentStatus } from "@/lib/api";
-import { AdminAppointment } from "@/types/api";
-import { useEffect, useState } from "react";
+import { Appointment } from "@/types/api";
+
+/* === Sub-components === */
+
+function MetricCard({ label, value, icon, color }: { label: string; value: string | number; icon: React.ReactNode; color: string }) {
+  return (
+    <div style={{
+      background: "#fff",
+      border: "1px solid #e8f0fe",
+      borderRadius: "16px",
+      padding: "20px 22px",
+      display: "flex",
+      alignItems: "center",
+      gap: "20px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+      transition: "transform 0.2s",
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px)")}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+    >
+      <div style={{
+        width: "52px", height: "52px", borderRadius: "14px",
+        background: `${color}15`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: color,
+        flexShrink: 0
+      }}>
+        {icon}
+      </div>
+      <div>
+        <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
+        <p style={{ margin: "2px 0 0", fontSize: "24px", fontWeight: 800, color: "#0f172a" }}>{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function AppointmentsManagementPage() {
-  const [appointments, setAppointments] = useState<AdminAppointment[]>([]);
+  const router = useRouter();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
-  const loadAppointments = async () => {
-    const token = localStorage.getItem("smart_admin_token");
-    if (!token) return;
-
+  const loadAppointments = useCallback(async () => {
     try {
+      setLoading(true);
+      const token = localStorage.getItem("smart_admin_token");
+      if (!token) {
+        router.push("/login?role=ADMIN");
+        return;
+      }
+
       const data = await fetchAdminAppointments(token);
       setAppointments(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load appointments");
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
-  const handleStatusChange = async (id: string, status: "SCHEDULED" | "COMPLETED" | "CANCELLED") => {
-    const token = localStorage.getItem("smart_admin_token");
-    if (!token) return;
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      await updateAppointmentStatus(token, id, status);
-      await loadAppointments();
-    } catch (err) {
-      alert("Failed to update status: " + (err instanceof Error ? err.message : "Unknown error"));
+      const token = localStorage.getItem("smart_admin_token");
+      if (!token) return;
+
+      await updateAppointmentStatus(token, id, newStatus);
+      
+      // Update local state
+      setAppointments(prev => prev.map(appt => 
+        appt.id === id ? { ...appt, status: newStatus } : appt
+      ));
+    } catch (err: any) {
+      alert("Error updating appointment status: " + err.message);
     }
   };
 
-  const virtualCount = appointments.filter(a => a.consultationType === "VIRTUAL").length;
-  const virtualRatio = appointments.length > 0 ? Math.round((virtualCount / appointments.length) * 100) : 0;
-  const completionRate = appointments.length > 0 ? Math.round((appointments.filter(a => a.status === "COMPLETED").length / appointments.length) * 100) : 0;
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return { bg: "rgba(16,185,129,0.1)", color: "#10b981" };
+      case 'CONFIRMED': return { bg: "rgba(6,182,212,0.1)", color: "#06b6d4" };
+      case 'PENDING': return { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" };
+      case 'CANCELLED': return { bg: "rgba(239,68,68,0.1)", color: "#ef4444" };
+      default: return { bg: "#f1f5f9", color: "#64748b" };
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Appointment Ledger</h1>
-        <p className="text-slate-500">Global view and scheduling oversight for all micro-clinics.</p>
-      </header>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total System Load</p>
-           <h3 className="text-2xl font-black text-slate-900">{appointments.length} Appointments</h3>
-        </div>
-        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Virtual Ratio</p>
-           <h3 className="text-2xl font-black text-indigo-600">{virtualRatio}% Remote</h3>
-        </div>
-        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Completion Rate</p>
-           <h3 className="text-2xl font-black text-emerald-600">{completionRate}% Compliance</h3>
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+      
+      {/* === KPI Row === */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+        <MetricCard 
+          label="Total Ledger" 
+          value={appointments.length} 
+          color="#06b6d4"
+          icon={<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+        />
+        <MetricCard 
+          label="Fulfilling" 
+          value={appointments.filter(a => a.status === 'CONFIRMED').length} 
+          color="#10b981"
+          icon={<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
+        <MetricCard 
+          label="Pending Queue" 
+          value={appointments.filter(a => a.status === 'PENDING').length} 
+          color="#f59e0b"
+          icon={<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+        />
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
-          <h2 className="font-bold text-slate-900">Live Consultation Registry</h2>
-          <button onClick={loadAppointments} className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
-            Refresh Stream 🔄
-          </button>
+      {/* === Appointment List === */}
+      <section style={{ background: "#fff", borderRadius: "24px", border: "1px solid #e8f0fe", boxShadow: "0 4px 24px rgba(0,0,0,0.03)", overflow: "hidden" }}>
+        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#0f172a" }}>Scheduling Ledger</h2>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <span style={{ fontSize: "12px", color: "#64748b", background: "#f8fafc", padding: "6px 12px", borderRadius: "10px", border: "1px solid #f1f5f9" }}>
+              Total: {appointments.length} Records
+            </span>
+          </div>
         </div>
 
-        {loading && <div className="py-20 text-center text-slate-400 animate-pulse">Syncing with appointment microservice...</div>}
-        {error && <div className="py-20 text-center text-red-500">{error}</div>}
-
-        {!loading && !error && (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 font-bold text-slate-600">
-              <tr>
-                <th className="px-6 py-4">Ref ID</th>
-                <th className="px-6 py-4">Patient Name</th>
-                <th className="px-6 py-4">Doctor Name</th>
-                <th className="px-6 py-4">Schedule</th>
-                <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Admin Action</th>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", textAlign: "left" }}>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Patient & ID</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Provider ID</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Schedule</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</th>
+                <th style={{ padding: "16px 24px", fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {appointments.map((apt) => (
-                <tr key={apt.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-xs font-bold text-slate-400">{apt.id.substring(0, 8)}...</td>
-                  <td className="px-6 py-4 font-bold text-slate-900">{apt.patientName || "Unknown Patient"}</td>
-                  <td className="px-6 py-4 font-bold text-indigo-600">{apt.doctorName || "Unknown Doctor"}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-slate-900">{apt.appointmentDate}</span>
-                      <span className="text-xs text-slate-500">{apt.appointmentTime}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${apt.consultationType === 'VIRTUAL' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'}`}>
-                      {apt.consultationType === 'VIRTUAL' ? '🌐 Virtual' : '📍 Physical'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
-                      apt.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : 
-                      apt.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {apt.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <select 
-                      className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/20"
-                      value={apt.status}
-                      onChange={(e) => handleStatusChange(apt.id, e.target.value as any)}
-                    >
-                      <option value="SCHEDULED">Re-Schedule</option>
-                      <option value="COMPLETED">Mark Complete</option>
-                      <option value="CANCELLED">Cancel</option>
-                    </select>
-                  </td>
-                </tr>
-              ))}
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}><td colSpan={5} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>Aggregating records...</td></tr>
+                ))
+              ) : (
+                appointments.map((appt) => {
+                  const s = getStatusStyle(appt.status);
+                  return (
+                    <tr key={appt.id} style={{ borderBottom: "1px solid #f8fafc", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "#fcfdfe"}>
+                      <td style={{ padding: "18px 24px" }}>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>Patient-{appt.patientId.substring(0, 8)}</span>
+                          <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 500 }}>ID: {appt.id.substring(0, 12)}...</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "18px 24px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#f1f5f9", border: "1px solid #e2e8f0", fontSize: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#64748b" }}>D</div>
+                          <span style={{ fontSize: "13px", color: "#475569", fontWeight: 600 }}>{appt.doctorId.substring(0, 12)}...</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "18px 24px" }}>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#334155" }}>{appt.appointmentDate}</span>
+                          <span style={{ fontSize: "12px", color: "#64748b" }}>{appt.appointmentTime}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "18px 24px" }}>
+                        <span style={{
+                          padding: "4px 12px", borderRadius: "999px", fontSize: "10px", fontWeight: 700,
+                          background: s.bg, color: s.color, display: "inline-block", border: `1px solid ${s.color}22`
+                        }}>
+                          {appt.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: "18px 24px", textAlign: "right" }}>
+                        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                          <button 
+                            onClick={() => handleStatusChange(appt.id, 'CANCELLED')}
+                            style={{ padding: "6px 12px", borderRadius: "8px", background: "#fff", color: "#ef4444", border: "1px solid #fee2e2", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}
+                          >Revoke</button>
+                          <button 
+                            onClick={() => handleStatusChange(appt.id, 'COMPLETED')}
+                            style={{ padding: "6px 12px", borderRadius: "8px", background: "#06b6d4", color: "#fff", border: "none", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}
+                          >Finish</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
-        )}
-        
-        {!loading && appointments.length === 0 && (
-          <div className="py-20 text-center text-slate-400 italic">
-            No appointments found in the system.
-          </div>
-        )}
+        </div>
       </section>
+
     </div>
   );
 }
