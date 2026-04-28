@@ -1,7 +1,9 @@
 package com.smarthealth.notification.service;
 
 import com.smarthealth.notification.dto.AppointmentEventDto;
+import com.smarthealth.notification.dto.AppointmentNotificationEvent;
 import com.smarthealth.notification.dto.PaymentEventDto;
+import com.smarthealth.notification.dto.PrescriptionNotificationEvent;
 import com.smarthealth.notification.dto.PrescriptionEventDto;
 import org.springframework.stereotype.Service;
 
@@ -187,5 +189,74 @@ public class NotificationTemplateService {
         } else {
             return "Payment FAILED for Dr. " + event.getDoctorName() + " on " + event.getAppointmentDate() + ". Please retry.";
         }
+    }
+
+    // --- New async notification templates ---
+
+    public String appointmentBookedEmailSubject(AppointmentNotificationEvent e) {
+        return "Appointment Booked Successfully - Smart Healthcare";
+    }
+
+    public String appointmentBookedEmailBody(AppointmentNotificationEvent e) {
+        return "Dear " + safe(e.getPatientName(), "Patient") + ",\n\n"
+                + "Your appointment has been booked successfully.\n"
+                + "Doctor: Dr. " + safe(e.getDoctorName(), "N/A") + " (" + safe(e.getSpecialty(), "General") + ")\n"
+                + "Date & Time: " + safe(e.getAppointmentDateTime(), "N/A") + "\n"
+                + "Mode: " + safe(e.getMode(), "N/A") + "\n"
+                + "Appointment ID: " + safe(e.getAppointmentId(), "N/A") + "\n\n"
+                + "Regards,\nSmart Healthcare Team";
+    }
+
+    public String appointmentBookedSms(AppointmentNotificationEvent e) {
+        return truncate160("Booked: Dr." + safe(e.getDoctorName(), "N/A")
+                + " " + safe(e.getAppointmentDateTime(), "N/A")
+                + " (" + safe(e.getMode(), "N/A") + "). ID " + safe(e.getAppointmentId(), ""));
+    }
+
+    public String appointmentCancelledEmailSubject(AppointmentNotificationEvent e) {
+        return "Appointment Cancelled - Smart Healthcare";
+    }
+
+    public String appointmentCancelledEmailBody(AppointmentNotificationEvent e) {
+        return "Dear " + safe(e.getPatientName(), "Patient") + ",\n\n"
+                + "Your appointment has been cancelled.\n"
+                + "Doctor: Dr. " + safe(e.getDoctorName(), "N/A") + " (" + safe(e.getSpecialty(), "General") + ")\n"
+                + "Date & Time: " + safe(e.getAppointmentDateTime(), "N/A") + "\n"
+                + "Mode: " + safe(e.getMode(), "N/A") + "\n"
+                + "Appointment ID: " + safe(e.getAppointmentId(), "N/A") + "\n\n"
+                + "Regards,\nSmart Healthcare Team";
+    }
+
+    public String appointmentCancelledSms(AppointmentNotificationEvent e) {
+        return truncate160("Cancelled: Dr." + safe(e.getDoctorName(), "N/A")
+                + " " + safe(e.getAppointmentDateTime(), "N/A")
+                + ". ID " + safe(e.getAppointmentId(), ""));
+    }
+
+    public String prescriptionCreatedEmailSubject(PrescriptionNotificationEvent e) {
+        return "Prescription Created for Your Patient - Smart Healthcare";
+    }
+
+    public String prescriptionCreatedEmailBody(PrescriptionNotificationEvent e) {
+        return "Dear Dr. " + safe(e.getDoctorName(), "Doctor") + ",\n\n"
+                + "A prescription has been created for patient: " + safe(e.getPatientName(), "N/A") + ".\n"
+                + "Prescription ID: " + safe(e.getPrescriptionId(), "N/A") + "\n"
+                + "Issued Date: " + safe(e.getIssuedDate(), "N/A") + "\n\n"
+                + "Regards,\nSmart Healthcare Team";
+    }
+
+    public String prescriptionCreatedSms(PrescriptionNotificationEvent e) {
+        return truncate160("Prescription created for " + safe(e.getPatientName(), "patient")
+                + ". ID " + safe(e.getPrescriptionId(), "N/A")
+                + ". " + safe(e.getIssuedDate(), ""));
+    }
+
+    private String safe(String value, String fallback) {
+        return (value == null || value.isBlank()) ? fallback : value;
+    }
+
+    private String truncate160(String value) {
+        if (value == null) return "";
+        return value.length() <= 160 ? value : value.substring(0, 157) + "...";
     }
 }

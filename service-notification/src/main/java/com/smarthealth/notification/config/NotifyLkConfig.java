@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class NotifyLkConfig {
 
-    @Value("${notify.lk.user.id}")
+    @Value("${notifylk.user.id:${notify.lk.user.id}}")
     private String userId;
 
-    @Value("${notify.lk.api.key}")
+    @Value("${notifylk.api.key:${notify.lk.api.key}}")
     private String apiKey;
 
-    @Value("${notify.lk.sender.id}")
+    @Value("${notifylk.sender.id:${notify.lk.sender.id}}")
     private String senderId;
 }
