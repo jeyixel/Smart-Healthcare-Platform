@@ -5,6 +5,8 @@ import { usePatientContext } from "@/app/context/PatientContext";
 import { fetchPatientByEmail, fetchPatientMedicalHistory } from "@/lib/api";
 import type { MedicalHistory } from "@/types/api";
 
+type InputMode = "auto" | "manual";
+
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (err && typeof err === "object" && "message" in err) {
     const message = (err as { message?: unknown }).message;
@@ -24,6 +26,10 @@ export function PatientAiSuggestionsContent() {
 
   const [patientId, setPatientId] = useState<string | null>(null);
   const { setActiveSection } = usePatientContext();
+
+  /* ─── Mode toggle state ─── */
+  const [inputMode, setInputMode] = useState<InputMode>("auto");
+  const [manualText, setManualText] = useState("");
 
   const STORAGE_KEY = (id: string) => `ai_history_${id}`;
 
@@ -99,6 +105,7 @@ export function PatientAiSuggestionsContent() {
     };
   }, []);
 
+  /* ─── AI suggestion handler (supports both modes) ─── */
   const handleGetAISuggestions = async () => {
     setAiLoading(true);
     setAiError(null);
@@ -106,23 +113,47 @@ export function PatientAiSuggestionsContent() {
 
     try {
       const token = localStorage.getItem("smart_admin_token");
-      if (!token || !patientId) {
-        setAiError("You must be logged in to request suggestions.");
-        setAiLoading(false);
-        return;
-      }
 
-      const res = await fetch("/api/suggestions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientId, token }),
-      });
+      if (inputMode === "manual") {
+        // Manual mode: send the typed text directly
+        if (!manualText.trim()) {
+          setAiError("Please enter your medical history before generating suggestions.");
+          setAiLoading(false);
+          return;
+        }
 
-      const data = await res.json();
-      if (!res.ok) {
-        setAiError(data?.error || "Failed to generate suggestions.");
+        const res = await fetch("/api/suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ manualHistory: manualText }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setAiError(data?.error || "Failed to generate suggestions.");
+        } else {
+          setSuggestions(data.suggestions || null);
+        }
       } else {
-        setSuggestions(data.suggestions || null);
+        // Auto mode: existing DB-based flow
+        if (!token || !patientId) {
+          setAiError("You must be logged in to request suggestions.");
+          setAiLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patientId, token }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setAiError(data?.error || "Failed to generate suggestions.");
+        } else {
+          setSuggestions(data.suggestions || null);
+        }
       }
     } catch (err: unknown) {
       setAiError(getErrorMessage(err, "Unexpected error while fetching suggestions."));
@@ -136,6 +167,12 @@ export function PatientAiSuggestionsContent() {
     setAiError(null);
   };
 
+  const handleModeSwitch = (mode: InputMode) => {
+    setInputMode(mode);
+    setSuggestions(null);
+    setAiError(null);
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -143,33 +180,86 @@ export function PatientAiSuggestionsContent() {
         <p className="text-sm text-slate-600 mt-1">Personalized preliminary tips generated from your recent medical history.</p>
       </div>
 
+      {/* ─── Mode Toggle ─── */}
+      <div className="mb-4 flex items-center gap-1 rounded-lg bg-slate-100 p-1 w-fit">
+        <button
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            inputMode === "auto"
+              ? "bg-white text-blue-700 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+          onClick={() => handleModeSwitch("auto")}
+        >
+          🗂️ Auto (From Records)
+        </button>
+        <button
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-all ${
+            inputMode === "manual"
+              ? "bg-white text-blue-700 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+          onClick={() => handleModeSwitch("manual")}
+        >
+          ✏️ Manual Input
+        </button>
+      </div>
+
       <div className="rounded-lg bg-white p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Medical History */}
+          {/* Left: Medical History / Manual Input */}
           <section className="lg:w-1/2 p-4 border rounded-md bg-gray-50">
-            <h3 className="text-lg font-semibold mb-3">Recent Medical History</h3>
-            {historyLoading ? (
-              <div className="text-center py-8 text-slate-500">Loading medical history…</div>
-            ) : historyError ? (
-              <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{historyError}</div>
-            ) : history.length === 0 ? (
-              <div className="text-slate-600">No recent medical history found. When your doctor updates records, they&#39;ll appear here.</div>
+            {inputMode === "auto" ? (
+              <>
+                <h3 className="text-lg font-semibold mb-3">Recent Medical History</h3>
+                {historyLoading ? (
+                  <div className="text-center py-8 text-slate-500">Loading medical history…</div>
+                ) : historyError ? (
+                  <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">{historyError}</div>
+                ) : history.length === 0 ? (
+                  <div className="text-slate-600">No recent medical history found. When your doctor updates records, they&#39;ll appear here.</div>
+                ) : (
+                  <ul className="space-y-3 max-h-[480px] overflow-auto pr-2">
+                    {history.map((item) => (
+                      <li key={item.id} className="rounded-md bg-white p-3 shadow-sm">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-sm font-medium text-slate-900">{item.diagnosis || item.symptoms || "Medical Entry"}</h4>
+                            <p className="text-xs text-slate-500">{item.date ? new Date(item.date).toLocaleDateString() : "Unknown date"}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">
+                          {item.notes || item.treatment || item.symptoms || "—"}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             ) : (
-              <ul className="space-y-3 max-h-[480px] overflow-auto pr-2">
-                {history.map((item) => (
-                  <li key={item.id} className="rounded-md bg-white p-3 shadow-sm">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-900">{item.diagnosis || item.symptoms || "Medical Entry"}</h4>
-                        <p className="text-xs text-slate-500">{item.date ? new Date(item.date).toLocaleDateString() : "Unknown date"}</p>
-                      </div>
-                    </div>
-                    <div className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">
-                      {item.notes || item.treatment || item.symptoms || "—"}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <h3 className="text-lg font-semibold mb-1">Describe Your Medical History</h3>
+                <p className="text-sm text-slate-500 mb-3">
+                  Type any recent symptoms, conditions, medications, or health concerns you&apos;d like the AI to consider.
+                </p>
+                <textarea
+                  id="manual-history-input"
+                  className="w-full min-h-[280px] rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none resize-y transition-all"
+                  placeholder={"e.g.\n• I've been having persistent headaches for the past 2 weeks\n• Currently taking Metformin 500mg for Type 2 diabetes\n• Recent blood work showed slightly elevated cholesterol\n• Experiencing mild joint pain in knees after exercise"}
+                  value={manualText}
+                  onChange={(e) => setManualText(e.target.value)}
+                />
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+                  <span>{manualText.length} characters</span>
+                  {manualText.length > 0 && (
+                    <button
+                      className="text-red-400 hover:text-red-600 transition-colors"
+                      onClick={() => setManualText("")}
+                    >
+                      Clear text
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </section>
 
@@ -178,16 +268,28 @@ export function PatientAiSuggestionsContent() {
             <div className="flex flex-col h-full">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Generate Suggestions</h3>
-                <p className="text-sm text-slate-500">Click the button below to generate AI suggestions based on the medical history shown.</p>
+                <p className="text-sm text-slate-500">
+                  {inputMode === "auto"
+                    ? "Click the button below to generate AI suggestions based on the medical history shown."
+                    : "Click the button below to generate AI suggestions based on your manually entered history."}
+                </p>
               </div>
 
               <div className="mb-4">
                 <button
-                  className={`rounded-lg px-5 py-2 font-semibold text-white ${aiLoading ? "bg-slate-400" : "bg-blue-600 hover:bg-blue-700"}`}
+                  className={`rounded-lg px-5 py-2 font-semibold text-white transition-colors ${
+                    aiLoading
+                      ? "bg-slate-400"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                   onClick={handleGetAISuggestions}
-                  disabled={aiLoading || historyLoading || !patientId}
+                  disabled={
+                    aiLoading ||
+                    (inputMode === "auto" && (historyLoading || !patientId)) ||
+                    (inputMode === "manual" && !manualText.trim())
+                  }
                 >
-                  {aiLoading ? "Generating…" : "Get AI suggestions"}
+                  {aiLoading ? "Generating…" : "Get AI Suggestions"}
                 </button>
                 <button
                   className="ml-3 rounded bg-slate-100 px-4 py-2"
@@ -205,7 +307,7 @@ export function PatientAiSuggestionsContent() {
                 ) : suggestions ? (
                   <div className="prose max-w-none whitespace-pre-wrap text-slate-800">{suggestions}</div>
                 ) : (
-                  <div className="text-slate-500">No suggestions yet. Click &ldquo;Get AI suggestions&rdquo; to start.</div>
+                  <div className="text-slate-500">No suggestions yet. Click &ldquo;Get AI Suggestions&rdquo; to start.</div>
                 )}
               </div>
 
@@ -233,4 +335,3 @@ export function PatientAiSuggestionsContent() {
     </div>
   );
 }
-
