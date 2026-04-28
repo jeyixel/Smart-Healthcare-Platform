@@ -26,7 +26,9 @@ public class AuthenticationFilter implements Filter {
     private static final List<String> WHITE_LISTED_PREFIXES = List.of(
             "/api/v1/auth/login",
             "/api/v1/auth/register",
-            "/api/v1/auth/forgot-password/"
+            "/api/v1/auth/forgot-password/",
+            "/api/payments/hash",
+            "/api/payments/notify"
     );
 
     @Override

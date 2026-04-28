@@ -35,6 +35,9 @@ public class GatewayRoutesConfig {
     @Value("${TELEMEDICINE_SERVICE_URL:http://localhost:8085}")
     private String telemedicineServiceUrl;
 
+    @Value("${PAYMENT_SERVICE_URL:http://localhost:8084}")
+    private String paymentServiceUrl;
+
     @Bean
     RouterFunction<ServerResponse> patientRoute() {
         return route("patient-service")
@@ -88,6 +91,14 @@ public class GatewayRoutesConfig {
         return route("telemedicine-service")
                 .before(uri(telemedicineServiceUrl))
                 .route(path("/api/v1/telemedicine/**", "/api/telemedicine/**"), http())
+                .build();
+    }
+
+    @Bean
+    RouterFunction<ServerResponse> paymentRoute() {
+        return route("payment-service")
+                .before(uri(paymentServiceUrl))
+                .route(path("/api/v1/payments/**", "/api/payments/**"), http())
                 .build();
     }
 
