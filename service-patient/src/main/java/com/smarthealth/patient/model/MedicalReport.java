@@ -48,6 +48,9 @@ public class MedicalReport {
     @Column(nullable = false)
     private String uploadedByRole;
 
+    @Column(name = "file_data", columnDefinition = "bytea")
+    private byte[] fileData;
+
     @Column(nullable = false)
     private OffsetDateTime uploadedAt;
 
@@ -134,6 +137,14 @@ public class MedicalReport {
 
     public void setUploadedByRole(String uploadedByRole) {
         this.uploadedByRole = uploadedByRole;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
     }
 
     public OffsetDateTime getUploadedAt() {

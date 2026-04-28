@@ -65,6 +65,37 @@ export interface DoctorApprovalItem {
   approved: boolean;
 }
 
+export interface DoctorAvailabilityResponse {
+  id: string;
+  dayOfWeek: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+  startTime: string;
+  endTime: string;
+  status: "AVAILABLE" | "UNAVAILABLE";
+}
+
+export interface DoctorResponse {
+  id: string;
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  bio: string | null;
+  profileImageUrl: string | null;
+  licenseNumber: string;
+  verified: boolean;
+  active: boolean;
+  availabilities: DoctorAvailabilityResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CurrentUserProfile {
   email: string;
   role: UserRole;
@@ -217,6 +248,8 @@ export interface PrescriptionResponse {
   updatedAt: string;
   digitalSignature: string | null;
 }
+
+// TODO: check if this is used
 export interface Doctor {
   id: string;
   firstName: string;
@@ -229,4 +262,89 @@ export interface Doctor {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateDoctorRequest {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  specialty: string;
+  category: string;
+  qualification: string;
+  experienceYears: number;
+  hospitalOrClinic: string;
+  consultationFee: number;
+  consultationMode: "PHYSICAL" | "VIRTUAL" | "BOTH";
+  bio?: string;
+  profileImageUrl?: string;
+  licenseNumber: string;
+}
+
+export interface PatientUpsertRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  authUserId?: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
+export interface MedicationReminder {
+  id: string;
+  patientId: string;
+  prescriptionId: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+}
+
+export interface MedicalReportCreateRequest {
+  reportType: string;
+  title: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  checksum?: string;
+  uploadedByRole: string;
+  fileData: string; // Base64
+}
+
+export interface MedicalReportResponse {
+  id: string;
+  patientId: string;
+  reportType: string;
+  title: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  uploadedByRole: string;
+  fileData?: string | null; // Base64, null for older records
+  uploadedAt: string;
+}
+
+export interface SupportMessageRequest {
+  recipientEmail: string;
+  content: string;
+}
+
+export interface SupportMessageResponse {
+  id: number;
+  senderEmail: string;
+  recipientEmail: string;
+  content: string;
+  timestamp: string;
+  read: boolean;
 }

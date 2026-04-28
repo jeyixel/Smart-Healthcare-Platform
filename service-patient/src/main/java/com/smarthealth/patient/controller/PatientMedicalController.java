@@ -10,6 +10,7 @@ import com.smarthealth.patient.service.MedicalReportService;
 import com.smarthealth.patient.service.PrescriptionSnapshotService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +60,12 @@ public class PatientMedicalController {
     @GetMapping("/reports")
     public List<MedicalReportResponse> listReports(@PathVariable UUID patientId) {
         return medicalReportService.getByPatient(patientId);
+    }
+
+    @DeleteMapping("/reports/{reportId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteReport(@PathVariable UUID patientId, @PathVariable UUID reportId) {
+        medicalReportService.delete(patientId, reportId);
     }
 
     @GetMapping("/prescriptions")

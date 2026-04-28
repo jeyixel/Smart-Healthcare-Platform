@@ -53,6 +53,15 @@ public class DoctorApprovalController {
         return ResponseEntity.ok(toResponse(saved));
     }
 
+    @org.springframework.web.bind.annotation.DeleteMapping("/{doctorId}")
+    public ResponseEntity<Void> terminateDoctorAccount(@PathVariable Long doctorId) {
+        User doctor = userRepository.findByIdAndRole(doctorId, Role.DOCTOR)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor account not found"));
+
+        userRepository.delete(doctor);
+        return ResponseEntity.noContent().build();
+    }
+
     private DoctorApprovalResponse toResponse(User user) {
         return DoctorApprovalResponse.builder()
                 .id(user.getId())

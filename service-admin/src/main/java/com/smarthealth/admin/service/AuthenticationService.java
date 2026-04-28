@@ -70,7 +70,7 @@ public class AuthenticationService {
             }
         }
 
-        var jwtToken = doctorPendingApproval ? "" : jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
         return AuthResponse.builder()
                 .token(jwtToken)
                 .userId(user.getId())

@@ -23,9 +23,11 @@ import java.util.UUID;
 public class PatientController {
 
     private final PatientService patientService;
+    private final com.smarthealth.patient.service.MedicationReminderService reminderService;
 
-    public PatientController(PatientService patientService) {
+    public PatientController(PatientService patientService, com.smarthealth.patient.service.MedicationReminderService reminderService) {
         this.patientService = patientService;
+        this.reminderService = reminderService;
     }
 
     @PostMapping
@@ -58,5 +60,15 @@ public class PatientController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id) {
         patientService.delete(id);
+    }
+
+    @GetMapping("/{patientId}/reminders")
+    public List<com.smarthealth.patient.model.MedicationReminder> getReminders(@PathVariable UUID patientId) {
+        return reminderService.getActivePatientReminders(patientId);
+    }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/reminders/{reminderId}/complete")
+    public com.smarthealth.patient.model.MedicationReminder completeReminder(@PathVariable UUID reminderId) {
+        return reminderService.completeReminder(reminderId);
     }
 }

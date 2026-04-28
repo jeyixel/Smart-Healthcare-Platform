@@ -36,6 +36,8 @@ public class MedicalReportCreateRequest {
     @Size(max = 50, message = "Uploader role must be less than 50 characters")
     private String uploadedByRole;
 
+    private String fileData;
+
     public String getReportType() {
         return reportType;
     }
@@ -98,5 +100,13 @@ public class MedicalReportCreateRequest {
 
     public void setUploadedByRole(String uploadedByRole) {
         this.uploadedByRole = uploadedByRole;
+    }
+
+    public String getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(String fileData) {
+        this.fileData = fileData;
     }
 }

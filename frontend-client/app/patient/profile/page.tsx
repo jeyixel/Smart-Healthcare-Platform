@@ -56,12 +56,13 @@ export default function PatientProfilePage() {
       setError(null);
       setSuccess(null);
       
+      const token = localStorage.getItem("smart_admin_token") || "";
       const updated = await updatePatientProfile(token, patient.id, formData);
       setPatient(updated);
       setFormData(updated);
       setEditMode(false);
       setSuccess("Profile updated successfully!");
-      
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
@@ -170,7 +171,7 @@ export default function PatientProfilePage() {
                   )}
                 </h2>
                 <p className="text-slate-500 font-medium text-sm mt-1">{patient.email}</p>
-                
+
                 <div className="mt-8 w-full space-y-4">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#06b6d4]">
@@ -202,7 +203,7 @@ export default function PatientProfilePage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm text-center">
@@ -215,7 +216,7 @@ export default function PatientProfilePage() {
               </div>
             </div>
           </div>
-          
+
           {/* Right Column: Detailed Info */}
           <div className="w-full lg:w-7/12 xl:w-8/12 flex flex-col gap-6">
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -223,7 +224,7 @@ export default function PatientProfilePage() {
                  <span className="w-1.5 h-6 bg-[#06b6d4] rounded-full"></span>
                  Medical Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block ml-1">Full First Name</label>
@@ -266,7 +267,7 @@ export default function PatientProfilePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
                <div className="absolute top-0 right-0 p-8 opacity-10">
                   <svg width="120" height="120" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>

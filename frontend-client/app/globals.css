@@ -1,5 +1,7 @@
 @import "tailwindcss";
-
+nextjs-portal {
+  display: none !important;
+}
 :root {
   --font-sans: var(--font-chivo);
   --font-mono: var(--font-space-mono);
